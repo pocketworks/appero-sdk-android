@@ -2,6 +2,11 @@ package com.example.appero_sdk_android
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import com.example.appero_sdk_android.ui.FeedbackPrompt
+import com.example.appero_sdk_android.ui.FeedbackPromptConfig
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -21,6 +26,10 @@ object Appero {
     private var apiKey: String? = null
     private var clientId: String? = null
     private var isInitialized: Boolean = false
+    
+    // UI state for feedback prompt
+    private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
+    private var _feedbackPromptConfig: MutableState<FeedbackPromptConfig?> = mutableStateOf(null)
     
     /**
      * Initialize the Appero SDK with API key and client ID
@@ -91,6 +100,46 @@ object Appero {
     }
     
     /**
+     * Show the feedback prompt UI
+     * This will display the modal bottom sheet with emoji rating and text input
+     * 
+     * @param config Configuration object containing all text content for the prompt
+     */
+    fun showFeedbackPrompt(config: FeedbackPromptConfig) {
+        requireInitialized()
+        _feedbackPromptConfig.value = config
+        _showFeedbackPrompt.value = true
+    }
+    
+    /**
+     * Composable function to display the feedback prompt
+     * Add this to your Compose UI hierarchy
+     * 
+     * @param config Configuration object containing all text content for the prompt
+     */
+    @Composable
+    fun FeedbackPromptUI(config: FeedbackPromptConfig) {
+        requireInitialized()
+        
+        // Use the provided config or the stored one from showFeedbackPrompt
+        val currentConfig = _feedbackPromptConfig.value ?: config
+        
+        FeedbackPrompt(
+            visible = _showFeedbackPrompt.value,
+            config = currentConfig,
+            onSubmit = { rating, feedback ->
+                handleFeedbackSubmission(rating, feedback)
+                _showFeedbackPrompt.value = false
+                _feedbackPromptConfig.value = null
+            },
+            onDismiss = {
+                _showFeedbackPrompt.value = false
+                _feedbackPromptConfig.value = null
+            }
+        )
+    }
+    
+    /**
      * Get/set the rating threshold for when to prompt for feedback
      */
     var ratingThreshold: Int
@@ -118,6 +167,19 @@ object Appero {
     fun getExperienceState(): ExperienceState? {
         requireInitialized()
         return experienceTracker?.getExperienceState()
+    }
+    
+    /**
+     * Handle feedback submission
+     * TODO: Implement API call to submit feedback
+     */
+    private fun handleFeedbackSubmission(rating: Int, feedback: String) {
+        // Mark feedback as submitted to prevent re-prompting
+        markFeedbackSubmitted()
+        
+        // TODO: Implement API call to submit feedback
+        // For now, just log the feedback
+        println("Feedback submitted: Rating=$rating, Feedback='$feedback'")
     }
     
     /**

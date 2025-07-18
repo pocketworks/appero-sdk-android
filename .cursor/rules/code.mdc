@@ -10,3 +10,4 @@ alwaysApply: true
 - When we change the version of the SDK we should change the version we are injecting on the sample project
 - Every time we create a new method on the library we should create a correspondant test
 - We will create a flutter wrapper around this SDK so keep this in mind
+- Don't use toml files use direct dependencies
