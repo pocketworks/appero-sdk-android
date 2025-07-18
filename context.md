@@ -1,5 +1,6 @@
 - We are building an android library (sdk)
 - We are also buidling a sample android native app to test this library
-- Use Kotlin
+- Use Kotlin, Gradle and Jetpack Compose
 - Use Gradlew scripts to build and publish the sdk locally - no need to ask to run these
 - When we change the version of the SDK we should change the version we are injecting on the sample project
+- We will create a flutter wrapper around this SDK so keep this in mind
