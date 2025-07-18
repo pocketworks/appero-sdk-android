@@ -2,3 +2,4 @@
 - We are also buidling a sample android native app to test this library
 - Use Kotlin
 - Use Gradlew scripts to build and publish the sdk locally - no need to ask to run these
+- When we change the version of the SDK we should change the version we are injecting on the sample project

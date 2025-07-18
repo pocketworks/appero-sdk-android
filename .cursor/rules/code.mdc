@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+#Code standards
+- We are building an android library (sdk)
+- We are also buidling a sample android native app to test this library
+- Use Kotlin and Gradle 
+- Use Gradlew scripts to build and publish the sdk locally - no need to ask to run these
+- When we change the version of the SDK we should change the version we are injecting on the sample project
+- Every time we create a new method on the library we should create a correspondant test
