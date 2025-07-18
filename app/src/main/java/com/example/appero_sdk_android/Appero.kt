@@ -16,6 +16,7 @@ object Appero {
     
     private var context: Context? = null
     private var sharedPreferences: SharedPreferences? = null
+    private var experienceTracker: ExperienceTracker? = null
     
     private var apiKey: String? = null
     private var clientId: String? = null
@@ -63,6 +64,63 @@ object Appero {
     }
     
     /**
+     * Log an experience event using predefined Experience enum
+     * @param experience The experience level to log
+     */
+    fun log(experience: Experience) {
+        requireInitialized()
+        experienceTracker?.log(experience)
+    }
+    
+    /**
+     * Log experience points using custom scoring
+     * @param points The number of points to add (can be negative)
+     */
+    fun log(points: Int) {
+        requireInitialized()
+        experienceTracker?.log(points)
+    }
+    
+    /**
+     * Check if the feedback prompt should be shown
+     * @return true if experience score crosses threshold AND user hasn't submitted feedback
+     */
+    fun shouldShowAppero(): Boolean {
+        requireInitialized()
+        return experienceTracker?.shouldShowAppero() ?: false
+    }
+    
+    /**
+     * Get/set the rating threshold for when to prompt for feedback
+     */
+    var ratingThreshold: Int
+        get() {
+            requireInitialized()
+            return experienceTracker?.ratingThreshold ?: 5
+        }
+        set(value) {
+            requireInitialized()
+            experienceTracker?.ratingThreshold = value
+        }
+    
+    /**
+     * Reset experience points and feedback status
+     * Use carefully - recommend tracking last prompt date
+     */
+    fun resetExperienceAndPrompt() {
+        requireInitialized()
+        experienceTracker?.resetExperienceAndPrompt()
+    }
+    
+    /**
+     * Get current experience tracking state for debugging
+     */
+    fun getExperienceState(): ExperienceState? {
+        requireInitialized()
+        return experienceTracker?.getExperienceState()
+    }
+    
+    /**
      * Get the current API key (for internal use)
      */
     internal fun getApiKey(): String? {
@@ -84,13 +142,31 @@ object Appero {
     }
     
     /**
+     * Mark that the user has submitted feedback (for internal use)
+     */
+    internal fun markFeedbackSubmitted() {
+        experienceTracker?.markFeedbackSubmitted()
+    }
+    
+    /**
      * Initialize core SDK components
      */
     private fun initializeCoreComponents() {
+        // Initialize experience tracking
+        sharedPreferences?.let { prefs ->
+            experienceTracker = ExperienceTracker(prefs)
+        }
+        
         // TODO: Initialize networking components
         // TODO: Initialize user session management
-        // TODO: Initialize experience tracking
         // TODO: Initialize UI components
+    }
+    
+    /**
+     * Ensure SDK is initialized before calling methods
+     */
+    private fun requireInitialized() {
+        require(isInitialized) { "Appero SDK must be initialized before use. Call Appero.start() first." }
     }
     
     /**

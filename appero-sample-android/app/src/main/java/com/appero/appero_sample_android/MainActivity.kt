@@ -1,15 +1,20 @@
 package com.appero.appero_sample_android
 
 import android.os.Bundle
+import android.widget.Button
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.appero_sdk_android.Appero
+import com.example.appero_sdk_android.Experience
 import com.example.appero_sdk_android.HelloWorld
 
 class MainActivity : AppCompatActivity() {
+    
+    private lateinit var statusTextView: TextView
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -27,11 +32,54 @@ class MainActivity : AppCompatActivity() {
             clientId = "beeec9b8-3908-4605-9b45-faded129d41e" // Sample client ID
         )
         
-        // Display SDK status and greeting
+        statusTextView = findViewById(R.id.textView)
+        
+        // Set up experience tracking demonstration
+        setupExperienceDemo()
+        
+        // Update display
+        updateStatusDisplay()
+    }
+    
+    private fun setupExperienceDemo() {
+        // Create buttons for different experience levels (you'll need to add these to your layout)
+        // For now, we'll simulate some experience tracking
+        
+        // Simulate some positive experiences after a delay
+        statusTextView.postDelayed({
+            // Log some positive experiences
+            Appero.log(Experience.POSITIVE)
+            Appero.log(Experience.VERY_POSITIVE)
+            Appero.log(Experience.POSITIVE)
+            updateStatusDisplay()
+        }, 1000)
+    }
+    
+    private fun updateStatusDisplay() {
         val greeting = HelloWorld.greet()
         val isInitialized = Appero.isInitialized()
-        val statusText = "$greeting\n\nSDK Initialized: $isInitialized"
+        val experienceState = Appero.getExperienceState()
         
-        findViewById<TextView>(R.id.textView)?.text = statusText
+        val statusText = buildString {
+            appendLine(greeting)
+            appendLine()
+            appendLine("SDK Initialized: $isInitialized")
+            
+            if (experienceState != null) {
+                appendLine()
+                appendLine("Experience Tracking:")
+                appendLine("• Points: ${experienceState.experiencePoints}")
+                appendLine("• Threshold: ${experienceState.ratingThreshold}")
+                appendLine("• Should Show Prompt: ${experienceState.shouldShowPrompt}")
+                appendLine("• Has Submitted Feedback: ${experienceState.hasSubmittedFeedback}")
+                
+                if (experienceState.shouldShowPrompt) {
+                    appendLine()
+                    appendLine("🎉 Ready to ask for feedback!")
+                }
+            }
+        }
+        
+        statusTextView.text = statusText
     }
 }
