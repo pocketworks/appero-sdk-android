@@ -1,0 +1,4 @@
+- We are building an android library (sdk)
+- We are also buidling a sample android native app to test this library
+- Use Kotlin
+- Use Gradlew scripts to build and publish the sdk locally - no need to ask to run these
