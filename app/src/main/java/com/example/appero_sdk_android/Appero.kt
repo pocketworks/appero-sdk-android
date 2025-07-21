@@ -5,8 +5,13 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.example.appero_sdk_android.api.FeedbackRepository
+import com.example.appero_sdk_android.api.FeedbackSubmissionResult
 import com.example.appero_sdk_android.ui.FeedbackPrompt
 import com.example.appero_sdk_android.ui.FeedbackPromptConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -22,6 +27,7 @@ object Appero {
     private var context: Context? = null
     private var sharedPreferences: SharedPreferences? = null
     private var experienceTracker: ExperienceTracker? = null
+    private var feedbackRepository: FeedbackRepository? = null
     
     private var apiKey: String? = null
     private var clientId: String? = null
@@ -30,6 +36,9 @@ object Appero {
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
     private var _feedbackPromptConfig: MutableState<FeedbackPromptConfig?> = mutableStateOf(null)
+    
+    // Callback for feedback submission results
+    private var onFeedbackSubmissionResult: ((Boolean, String) -> Unit)? = null
     
     /**
      * Initialize the Appero SDK with API key and client ID
@@ -100,15 +109,49 @@ object Appero {
     }
     
     /**
+     * Set a specific user ID (for account-based systems)
+     * This will switch the active user and load their experience data
+     * 
+     * @param userId The user ID to set as active
+     */
+    fun setUser(userId: String) {
+        requireInitialized()
+        experienceTracker?.setUser(userId)
+    }
+    
+    /**
+     * Reset the current user (for logout scenarios)
+     * Clears user data and generates a new anonymous user ID
+     */
+    fun resetUser() {
+        requireInitialized()
+        experienceTracker?.resetUser()
+    }
+    
+    /**
+     * Get the current user ID
+     * @return Current user ID (auto-generated UUID if none was set)
+     */
+    fun getCurrentUserId(): String? {
+        requireInitialized()
+        return experienceTracker?.getCurrentUserId()
+    }
+    
+    /**
      * Show the feedback prompt UI
      * This will display the modal bottom sheet with emoji rating and text input
      * 
      * @param config Configuration object containing all text content for the prompt
+     * @param onResult Optional callback to receive feedback submission results
      */
-    fun showFeedbackPrompt(config: FeedbackPromptConfig) {
+    fun showFeedbackPrompt(
+        config: FeedbackPromptConfig,
+        onResult: ((success: Boolean, message: String) -> Unit)? = null
+    ) {
         requireInitialized()
         _feedbackPromptConfig.value = config
         _showFeedbackPrompt.value = true
+        onFeedbackSubmissionResult = onResult
     }
     
     /**
@@ -116,9 +159,13 @@ object Appero {
      * Add this to your Compose UI hierarchy
      * 
      * @param config Configuration object containing all text content for the prompt
+     * @param onResult Optional callback to receive feedback submission results
      */
     @Composable
-    fun FeedbackPromptUI(config: FeedbackPromptConfig) {
+    fun FeedbackPromptUI(
+        config: FeedbackPromptConfig,
+        onResult: ((success: Boolean, message: String) -> Unit)? = null
+    ) {
         requireInitialized()
         
         // Use the provided config or the stored one from showFeedbackPrompt
@@ -128,13 +175,14 @@ object Appero {
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
             onSubmit = { rating, feedback ->
-                handleFeedbackSubmission(rating, feedback)
+                handleFeedbackSubmission(rating, feedback, onResult)
                 _showFeedbackPrompt.value = false
                 _feedbackPromptConfig.value = null
             },
             onDismiss = {
                 _showFeedbackPrompt.value = false
                 _feedbackPromptConfig.value = null
+                onFeedbackSubmissionResult = null
             }
         )
     }
@@ -170,16 +218,51 @@ object Appero {
     }
     
     /**
-     * Handle feedback submission
-     * TODO: Implement API call to submit feedback
+     * Handle feedback submission with API call
      */
-    private fun handleFeedbackSubmission(rating: Int, feedback: String) {
-        // Mark feedback as submitted to prevent re-prompting
+    private fun handleFeedbackSubmission(
+        rating: Int,
+        feedback: String,
+        onResult: ((success: Boolean, message: String) -> Unit)? = null
+    ) {
+        // Mark feedback as submitted immediately to prevent re-prompting
         markFeedbackSubmitted()
         
-        // TODO: Implement API call to submit feedback
-        // For now, just log the feedback
-        println("Feedback submitted: Rating=$rating, Feedback='$feedback'")
+        // Submit feedback to backend asynchronously
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = submitFeedbackToBackend(rating, feedback)
+            
+            // Call the callback on the main thread
+            CoroutineScope(Dispatchers.Main).launch {
+                when (result) {
+                    is FeedbackSubmissionResult.Success -> {
+                        onResult?.invoke(true, result.message)
+                        onFeedbackSubmissionResult?.invoke(true, result.message)
+                    }
+                    is FeedbackSubmissionResult.Error -> {
+                        onResult?.invoke(false, result.message)
+                        onFeedbackSubmissionResult?.invoke(false, result.message)
+                    }
+                }
+                onFeedbackSubmissionResult = null
+            }
+        }
+    }
+    
+    /**
+     * Submit feedback to the backend
+     */
+    private suspend fun submitFeedbackToBackend(rating: Int, feedback: String): FeedbackSubmissionResult {
+        val repository = feedbackRepository ?: return FeedbackSubmissionResult.Error("Repository not initialized")
+        val apiKey = getApiKey() ?: return FeedbackSubmissionResult.Error("API key not available")
+        val clientId = getClientId() ?: return FeedbackSubmissionResult.Error("Client ID not available")
+        
+        return repository.submitFeedback(
+            apiKey = apiKey,
+            clientId = clientId,
+            rating = rating,
+            feedback = feedback
+        )
     }
     
     /**
@@ -214,14 +297,13 @@ object Appero {
      * Initialize core SDK components
      */
     private fun initializeCoreComponents() {
-        // Initialize experience tracking
+        // Initialize experience tracking with user session management
         sharedPreferences?.let { prefs ->
             experienceTracker = ExperienceTracker(prefs)
         }
         
-        // TODO: Initialize networking components
-        // TODO: Initialize user session management
-        // TODO: Initialize UI components
+        // Initialize networking components
+        feedbackRepository = FeedbackRepository()
     }
     
     /**

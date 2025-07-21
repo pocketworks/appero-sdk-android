@@ -1,0 +1,4 @@
+- Check Retrofit and HTTP Setup Versions
+- Keyboard is pushing the bottom sheet off the screen when it appears
+- Improvements on Backend - When not sending the userID that API doens't complain
+- Add offline feedback handling to our tasks lists

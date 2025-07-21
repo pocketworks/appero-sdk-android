@@ -159,7 +159,7 @@ The key insight is that instead of randomly prompting users for feedback (which 
 ## API Endpoint Details
 - **URL**: https://app.appero.co.uk/api/feedback
 - **Method**: POST
-- **Content-Type**: application/x-www-form-urlencoded
+- **Content-Type**: multipart/form-data
 - **Required Fields**:
   - api_key: String (UUID format)
   - client_id: String (UUID format)
@@ -301,4 +301,105 @@ Appero.getContext(): Context?
 - Internal API prepared for feedback submission integration
 - State management ready for UI component integration
 - Threshold system ready for smart prompt timing
+
+### 🔄 **Step 3: Offline Support & Caching System** (Next Priority)
+
+**Goal**: Implement comprehensive offline support for experience tracking and feedback submission, ensuring no data loss and seamless user experience regardless of network connectivity.
+
+**Core Components to Implement:**
+
+1. **Offline Experience Caching**
+   - Cache all experience logs locally when offline
+   - Implement queue system for pending experience submissions
+   - Batch sync experiences when connectivity returns
+   - Maintain experience point calculations offline
+   - Preserve threshold crossing detection while offline
+
+2. **Offline Feedback Submission Queue**
+   - Implement local feedback storage for offline submissions
+   - Queue feedback submissions with retry mechanism
+   - Store complete feedback data (rating, text, metadata, timestamp)
+   - Background sync when network becomes available
+   - Handle submission failures gracefully with exponential backoff
+
+3. **Smart Prompt State Caching**
+   - Cache "ready to show feedback UI" decision locally
+   - Store prompt eligibility flag independent of network state
+   - Preserve developer's control over UI timing
+   - Cache UI strings and localization data locally
+   - Store flow type decisions (positive/neutral/negative paths)
+
+4. **UI Content Caching**
+   - Download and cache feedback UI strings from backend
+   - Store multiple language support locally
+   - Cache flow-specific content (positive vs negative feedback flows)
+   - Implement content versioning and updates
+   - Fallback to default strings if cache unavailable
+
+5. **Network State Management**
+   - Monitor network connectivity changes
+   - Implement intelligent sync strategy
+   - Handle partial sync scenarios
+   - Provide network state callbacks to developers
+   - Queue operations during connectivity gaps
+
+6. **Data Persistence Architecture**
+   - Implement robust local database (Room/SQLite)
+   - Design schema for cached experiences, feedback, and UI data
+   - Handle data migrations and versioning
+   - Implement data cleanup policies
+   - Ensure GDPR compliance for cached user data
+
+**Technical Implementation Details:**
+
+```kotlin
+// Example API extensions for offline support
+Appero.setOfflineModeEnabled(true)
+Appero.getOfflineQueueStatus(): OfflineQueueStatus
+Appero.forceSyncWhenOnline(): Boolean
+
+// Network state callbacks
+Appero.setNetworkStateListener { isOnline ->
+    // Handle connectivity changes
+}
+
+// Offline-aware experience logging
+Appero.log(Experience.POSITIVE) // Works offline, queues for sync
+
+// Cached prompt availability
+Appero.shouldShowAppero() // Returns cached decision offline
+```
+
+**Database Schema Design:**
+- `cached_experiences` table: Experience logs waiting for sync
+- `feedback_queue` table: Feedback submissions pending upload
+- `ui_cache` table: Cached strings, flows, and configurations
+- `sync_metadata` table: Last sync timestamps and versioning
+
+**Key Features from iOS SDK Reference:**
+- ✅ Experience logging continues offline (cached locally)
+- ✅ Feedback submissions queued and retried automatically
+- ✅ "Ready to show" state cached independently of network
+- ✅ UI strings and flow types stored locally
+- ✅ Developer maintains control over UI presentation timing
+- ✅ Seamless sync when connectivity returns
+
+**Flutter Wrapper Considerations:**
+- Expose offline queue status to Flutter layer
+- Provide network state events via platform channels
+- Cache management accessible from Flutter
+- Consistent offline behavior across platforms
+
+**Testing Requirements:**
+- Unit tests for offline queue management
+- Integration tests for sync scenarios
+- Network simulation testing (airplane mode, poor connectivity)
+- Data persistence verification across app restarts
+- Cache invalidation and cleanup testing
+
+**Success Metrics:**
+- Zero data loss during offline periods
+- Smooth user experience regardless of connectivity
+- Efficient background sync without battery drain
+- Consistent behavior with iOS SDK offline capabilities
 

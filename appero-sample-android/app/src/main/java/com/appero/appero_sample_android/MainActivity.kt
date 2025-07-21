@@ -1,6 +1,7 @@
 package com.appero.appero_sample_android
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,7 +31,7 @@ class MainActivity : ComponentActivity() {
         // Initialize the Appero SDK
         Appero.start(
             context = this,
-            apiKey = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", // Sample API key
+            apiKey = "9d7d6790-7d9b-42ab-8f08-b5d07e8d9dc0", // Updated API key to match curl
             clientId = "beeec9b8-3908-4605-9b45-faded129d41e" // Sample client ID
         )
         
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun ApperoSampleApp() {
     var experienceState by remember { mutableStateOf(Appero.getExperienceState()) }
+    val context = LocalContext.current
     
     // Configuration for the feedback prompt
     val feedbackConfig = remember {
@@ -106,6 +109,61 @@ fun ApperoSampleApp() {
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
+            }
+        }
+        
+        // User Session Info
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "User Session",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text("• User ID: ${Appero.getCurrentUserId()?.take(8)}...", fontSize = 14.sp)
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { 
+                            Appero.setUser("test-user-123")
+                            experienceState = Appero.getExperienceState()
+                            Toast.makeText(context, "Set user to: test-user-123", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF9C27B0)
+                        )
+                    ) {
+                        Text("Set Test User", fontSize = 12.sp)
+                    }
+                    
+                    Button(
+                        onClick = { 
+                            Appero.resetUser()
+                            experienceState = Appero.getExperienceState()
+                            Toast.makeText(context, "Reset to new anonymous user", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF607D8B)
+                        )
+                    ) {
+                        Text("Reset User", fontSize = 12.sp)
+                    }
+                }
             }
         }
         
@@ -247,7 +305,18 @@ fun ApperoSampleApp() {
                 ) {
                     Button(
                         onClick = { 
-                            Appero.showFeedbackPrompt(feedbackConfig)
+                            Appero.showFeedbackPrompt(
+                                config = feedbackConfig,
+                                onResult = { success, message ->
+                                    val toastMessage = if (success) {
+                                        "✅ Feedback submitted: $message"
+                                    } else {
+                                        "❌ Failed to submit: $message"
+                                    }
+                                    Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                    experienceState = Appero.getExperienceState()
+                                }
+                            )
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
@@ -261,6 +330,7 @@ fun ApperoSampleApp() {
                         onClick = { 
                             Appero.resetExperienceAndPrompt()
                             experienceState = Appero.getExperienceState()
+                            Toast.makeText(context, "Experience and feedback status reset", Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
@@ -276,8 +346,19 @@ fun ApperoSampleApp() {
         Spacer(modifier = Modifier.weight(1f))
     }
     
-    // Appero Feedback Prompt UI
-    Appero.FeedbackPromptUI(config = feedbackConfig)
+    // Appero Feedback Prompt UI with result callback
+    Appero.FeedbackPromptUI(
+        config = feedbackConfig,
+        onResult = { success, message ->
+            val toastMessage = if (success) {
+                "✅ Feedback submitted successfully!"
+            } else {
+                "❌ Failed to submit feedback: $message"
+            }
+            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+            experienceState = Appero.getExperienceState()
+        }
+    )
 }
 
 @Preview(showBackground = true)

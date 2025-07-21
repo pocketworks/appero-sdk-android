@@ -11,3 +11,4 @@ alwaysApply: true
 - Every time we create a new method on the library we should create a correspondant test
 - We will create a flutter wrapper around this SDK so keep this in mind
 - Don't use toml files use direct dependencies
+- Always have the iOS SDK in consideration 
