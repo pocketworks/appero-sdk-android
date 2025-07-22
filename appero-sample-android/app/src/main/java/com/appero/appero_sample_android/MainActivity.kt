@@ -184,10 +184,11 @@ fun ApperoSampleApp() {
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    Text("• Points: ${state.experiencePoints}")
-                    Text("• Threshold: ${state.ratingThreshold}")
-                    Text("• Should Show Prompt: ${state.shouldShowPrompt}")
-                    Text("• Has Submitted Feedback: ${state.hasSubmittedFeedback}")
+                                    Text("• Points: ${state.experiencePoints}")
+                Text("• Threshold: ${state.ratingThreshold}")
+                Text("• Should Show Prompt: ${state.shouldShowPrompt}")
+                Text("• Has Submitted Feedback: ${state.hasSubmittedFeedback}")
+                Text("• Queued Feedback: ${Appero.getQueuedFeedbackCount()}")
                     
                     if (state.shouldShowPrompt) {
                         Spacer(modifier = Modifier.height(8.dp))

@@ -3,5 +3,7 @@
     
     <!-- Required for API calls to submit feedback -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required for network connectivity detection -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
 </manifest>

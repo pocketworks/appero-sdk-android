@@ -2,6 +2,11 @@ package com.example.appero_sdk_android
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +33,15 @@ object Appero {
     private var sharedPreferences: SharedPreferences? = null
     private var experienceTracker: ExperienceTracker? = null
     private var feedbackRepository: FeedbackRepository? = null
+    private var offlineFeedbackQueue: OfflineFeedbackQueue? = null
     
     private var apiKey: String? = null
     private var clientId: String? = null
     private var isInitialized: Boolean = false
+    
+    // Network monitoring (similar to iOS NWPathMonitor)
+    private var connectivityManager: ConnectivityManager? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
     
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
@@ -218,16 +228,53 @@ object Appero {
     }
     
     /**
+     * Get the number of queued feedback submissions waiting to be sent
+     * @return Number of feedback items in the offline queue
+     */
+    fun getQueuedFeedbackCount(): Int {
+        requireInitialized()
+        return offlineFeedbackQueue?.getQueueSize() ?: 0
+    }
+    
+    /**
+     * Manually process queued feedback submissions
+     * Useful for retry when connectivity returns or manual sync
+     * Similar to iOS SDK's immediate processing functionality
+     */
+    fun processQueuedFeedback() {
+        requireInitialized()
+        offlineFeedbackQueue?.processQueue()
+    }
+    
+    /**
+     * Force offline mode for testing (similar to iOS SDK's forceOfflineMode)
+     * When enabled, all feedback will be queued regardless of network status
+     * @param forceOffline true to force offline behavior
+     */
+    fun setForceOfflineMode(forceOffline: Boolean) {
+        requireInitialized()
+        // Implementation would depend on offline queue supporting force offline mode
+        // For now, this is a placeholder for the API
+    }
+    
+    /**
+     * Clear all queued feedback (for testing/reset purposes)
+     * WARNING: This will permanently delete all queued feedback
+     */
+    fun clearQueuedFeedback() {
+        requireInitialized()
+        offlineFeedbackQueue?.clearQueue()
+    }
+    
+    /**
      * Handle feedback submission with API call
+     * FIXED: Only mark as submitted after successful API response
      */
     private fun handleFeedbackSubmission(
         rating: Int,
         feedback: String,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
-        // Mark feedback as submitted immediately to prevent re-prompting
-        markFeedbackSubmitted()
-        
         // Submit feedback to backend asynchronously
         CoroutineScope(Dispatchers.IO).launch {
             val result = submitFeedbackToBackend(rating, feedback)
@@ -236,12 +283,22 @@ object Appero {
             CoroutineScope(Dispatchers.Main).launch {
                 when (result) {
                     is FeedbackSubmissionResult.Success -> {
+                        // ✅ Only mark as submitted after successful API response
+                        markFeedbackSubmitted()
                         onResult?.invoke(true, result.message)
                         onFeedbackSubmissionResult?.invoke(true, result.message)
                     }
                     is FeedbackSubmissionResult.Error -> {
+                        // ❌ Don't mark as submitted on failure - user can be prompted again
                         onResult?.invoke(false, result.message)
                         onFeedbackSubmissionResult?.invoke(false, result.message)
+                        
+                        // ✅ Queue for offline retry
+                        apiKey?.let { key ->
+                            clientId?.let { id ->
+                                offlineFeedbackQueue?.queueFeedback(key, id, rating, feedback)
+                            }
+                        }
                     }
                 }
                 onFeedbackSubmissionResult = null
@@ -300,10 +357,69 @@ object Appero {
         // Initialize experience tracking with user session management
         sharedPreferences?.let { prefs ->
             experienceTracker = ExperienceTracker(prefs)
+            
+            // Initialize offline feedback queue with retry timer
+            context?.let { ctx ->
+                offlineFeedbackQueue = OfflineFeedbackQueue(ctx, prefs)
+                // Set up network monitoring (similar to iOS NWPathMonitor)
+                setupNetworkMonitoring(ctx)
+                // Process any queued feedback from previous sessions
+                offlineFeedbackQueue?.processQueue()
+            }
         }
         
         // Initialize networking components
         feedbackRepository = FeedbackRepository()
+    }
+    
+    /**
+     * Setup network monitoring similar to iOS SDK's NWPathMonitor
+     * Monitors network connectivity and triggers immediate queue processing when connectivity returns
+     */
+    private fun setupNetworkMonitoring(context: Context) {
+        connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                // Network became available - notify offline queue (similar to iOS pathUpdateHandler)
+                offlineFeedbackQueue?.onNetworkStateChanged(true)
+            }
+            
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                // Network lost - notify offline queue
+                offlineFeedbackQueue?.onNetworkStateChanged(false)
+            }
+            
+            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+                super.onCapabilitiesChanged(network, networkCapabilities)
+                val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                offlineFeedbackQueue?.onNetworkStateChanged(hasInternet)
+            }
+        }
+        
+        // Register network callback
+        networkCallback?.let { callback ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                connectivityManager?.registerDefaultNetworkCallback(callback)
+            } else {
+                val networkRequest = NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build()
+                connectivityManager?.registerNetworkCallback(networkRequest, callback)
+            }
+        }
+    }
+    
+    /**
+     * Clean up network monitoring and timers (similar to iOS deinit)
+     */
+    private fun cleanup() {
+        networkCallback?.let { callback ->
+            connectivityManager?.unregisterNetworkCallback(callback)
+        }
+        offlineFeedbackQueue?.cleanup()
     }
     
     /**

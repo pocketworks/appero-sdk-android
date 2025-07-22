@@ -52,7 +52,7 @@ class ExperienceTrackerTest {
         experienceTracker.log(Experience.VERY_POSITIVE)
         
         // Verify that experience points were updated (0 + 2 = 2)
-        verify(mockEditor).putInt(contains("experience_points"), eq(2))
+        verify(mockEditor).putInt(eq("experience_points"), eq(2))
         verify(mockEditor).apply()
     }
     
