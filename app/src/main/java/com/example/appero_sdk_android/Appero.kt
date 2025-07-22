@@ -12,6 +12,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.example.appero_sdk_android.api.FeedbackRepository
 import com.example.appero_sdk_android.api.FeedbackSubmissionResult
+import com.example.appero_sdk_android.ui.ApperoTheme
+import com.example.appero_sdk_android.ui.DefaultTheme
 import com.example.appero_sdk_android.ui.FeedbackPrompt
 import com.example.appero_sdk_android.ui.FeedbackPromptConfig
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +44,9 @@ object Appero {
     // Network monitoring (similar to iOS NWPathMonitor)
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    
+    // Theming system (matches iOS Appero.instance.theme)
+    var theme: ApperoTheme = DefaultTheme()
     
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
@@ -184,6 +189,7 @@ object Appero {
         FeedbackPrompt(
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
+            theme = theme,
             onSubmit = { rating, feedback ->
                 handleFeedbackSubmission(rating, feedback, onResult)
                 _showFeedbackPrompt.value = false

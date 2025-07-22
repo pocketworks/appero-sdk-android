@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,7 +23,12 @@ import com.appero.appero_sample_android.ui.theme.ApperoSampleAndroidTheme
 import com.example.appero_sdk_android.Appero
 import com.example.appero_sdk_android.Experience
 import com.example.appero_sdk_android.HelloWorld
+import com.example.appero_sdk_android.ui.ApperoTheme
+import com.example.appero_sdk_android.ui.CustomTheme
+import com.example.appero_sdk_android.ui.DarkTheme
+import com.example.appero_sdk_android.ui.DefaultTheme
 import com.example.appero_sdk_android.ui.FeedbackPromptConfig
+import com.example.appero_sdk_android.ui.LightTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,9 +77,12 @@ fun ApperoSampleApp() {
         experienceState = Appero.getExperienceState()
     }
     
+    val scrollState = rememberScrollState()
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -184,10 +194,10 @@ fun ApperoSampleApp() {
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                                    Text("• Points: ${state.experiencePoints}")
-                Text("• Threshold: ${state.ratingThreshold}")
-                Text("• Should Show Prompt: ${state.shouldShowPrompt}")
-                Text("• Has Submitted Feedback: ${state.hasSubmittedFeedback}")
+                    Text("• Points: ${state.experiencePoints}")
+                    Text("• Threshold: ${state.ratingThreshold}")
+                    Text("• Should Show Prompt: ${state.shouldShowPrompt}")
+                    Text("• Has Submitted Feedback: ${state.hasSubmittedFeedback}")
                 Text("• Queued Feedback: ${Appero.getQueuedFeedbackCount()}")
                     
                     if (state.shouldShowPrompt) {
@@ -284,7 +294,199 @@ fun ApperoSampleApp() {
             }
         }
         
-        // Feedback Prompt Controls
+        // Theme Selection
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🎨 Theme Selection (iOS-Style)",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            Appero.theme = DefaultTheme()
+                            Toast.makeText(context, "🔄 System Theme Applied (Auto Light/Dark)", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF))
+                    ) {
+                        Text("System", fontSize = 10.sp)
+                    }
+                    
+                    Button(
+                        onClick = {
+                            Appero.theme = LightTheme()
+                            Toast.makeText(context, "☀️ Light Theme Applied", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFFFFF), contentColor = Color.Black)
+                    ) {
+                        Text("Light", fontSize = 10.sp)
+                    }
+                    
+                    Button(
+                        onClick = {
+                            Appero.theme = DarkTheme()
+                            Toast.makeText(context, "🌙 Dark Theme Applied", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1C1C1E))
+                    ) {
+                        Text("Dark", fontSize = 10.sp)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Button(
+                    onClick = {
+                        // Custom brand theme with purple/pink colors
+                        Appero.theme = CustomTheme(
+                            primaryColor = Color(0xFF6B46C1),
+                            accentColor = Color(0xFF8B5CF6),
+                            buttonBackgroundColor = Color(0xFF9333EA),
+                            veryPositiveColor = Color(0xFF10B981),
+                            positiveColor = Color(0xFF3B82F6),
+                            neutralColor = Color(0xFFF59E0B),
+                            negativeColor = Color(0xFFEF4444),
+                            veryNegativeColor = Color(0xFFDC2626)
+                        )
+                        Toast.makeText(context, "🎨 Custom Brand Theme Applied!", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9333EA))
+                ) {
+                    Text("Custom Brand Theme")
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• Themes are applied instantly\n• Same API as iOS: Appero.theme = CustomTheme()\n• Supports light/dark/custom branding",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        
+        // Themed Feedback Prompt Demos
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🎨 Themed Feedback Demos",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Default System Theme Button
+                Button(
+                    onClick = { 
+                        // Set default theme and show prompt
+                        val originalTheme = Appero.theme
+                        Appero.theme = DefaultTheme()
+                        
+                        Appero.showFeedbackPrompt(
+                            config = feedbackConfig.copy(
+                                title = "Default System Theme 🔄",
+                                subtitle = "Using system colors (auto light/dark)"
+                            ),
+                            onResult = { success, message ->
+                                val toastMessage = if (success) {
+                                    "✅ Feedback submitted with Default theme!"
+                                } else {
+                                    "❌ Failed to submit: $message"
+                                }
+                                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                experienceState = Appero.getExperienceState()
+                                // Restore original theme
+                                Appero.theme = originalTheme
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF007AFF) // iOS blue
+                    )
+                ) {
+                    Text("📱 Show with Default System Theme")
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Original Green Theme Button  
+                Button(
+                    onClick = { 
+                        // Set original green theme and show prompt
+                        val originalTheme = Appero.theme
+                        Appero.theme = CustomTheme(
+                            primaryColor = Color(0xFF4CAF50),
+                            accentColor = Color(0xFF4CAF50),
+                            buttonBackgroundColor = Color(0xFF4CAF50),
+                            veryNegativeColor = Color(0xFFFF6B6B),
+                            negativeColor = Color(0xFFFF9F43),
+                            neutralColor = Color(0xFFFECA57),
+                            positiveColor = Color(0xFF48CAE4),
+                            veryPositiveColor = Color(0xFF4CAF50)
+                        )
+                        
+                        Appero.showFeedbackPrompt(
+                            config = feedbackConfig.copy(
+                                title = "Original Green Theme 🟢",
+                                subtitle = "Using the classic green colors we had before"
+                            ),
+                            onResult = { success, message ->
+                                val toastMessage = if (success) {
+                                    "✅ Feedback submitted with Green theme!"
+                                } else {
+                                    "❌ Failed to submit: $message"
+                                }
+                                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                experienceState = Appero.getExperienceState()
+                                // Restore original theme
+                                Appero.theme = originalTheme
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50) // Green
+                    )
+                ) {
+                    Text("🟢 Show with Original Green Theme")
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• Each button temporarily applies its theme\n• Themes are restored after feedback submission\n• Test keyboard handling with both themes",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        
+        // General Controls
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -293,7 +495,7 @@ fun ApperoSampleApp() {
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Feedback Prompt",
+                    text = "General Controls",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -324,7 +526,7 @@ fun ApperoSampleApp() {
                             containerColor = Color(0xFF2196F3)
                         )
                     ) {
-                        Text("Show Feedback")
+                        Text("Show Current Theme", fontSize = 11.sp)
                     }
                     
                     Button(
@@ -338,7 +540,7 @@ fun ApperoSampleApp() {
                             containerColor = Color(0xFF9E9E9E)
                         )
                     ) {
-                        Text("Reset")
+                        Text("Reset", fontSize = 11.sp)
                     }
                 }
             }
