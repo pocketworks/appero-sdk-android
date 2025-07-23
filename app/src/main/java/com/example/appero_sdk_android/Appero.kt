@@ -48,6 +48,17 @@ object Appero {
     // Theming system (matches iOS Appero.instance.theme)
     var theme: ApperoTheme = DefaultTheme()
     
+    // Analytics integration (matches iOS Appero.instance.analyticsListener)
+    private var analyticsListener: ApperoAnalyticsListener? = null
+    
+    /**
+     * Set the analytics listener for Appero events
+     * @param listener Your implementation of ApperoAnalyticsListener (or null to remove)
+     */
+    fun setAnalyticsListener(listener: ApperoAnalyticsListener?) {
+        analyticsListener = listener
+    }
+    
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
     private var _feedbackPromptConfig: MutableState<FeedbackPromptConfig?> = mutableStateOf(null)
@@ -190,6 +201,7 @@ object Appero {
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
             theme = theme,
+            analyticsListener = analyticsListener,
             onSubmit = { rating, feedback ->
                 handleFeedbackSubmission(rating, feedback, onResult)
                 _showFeedbackPrompt.value = false
@@ -291,6 +303,10 @@ object Appero {
                     is FeedbackSubmissionResult.Success -> {
                         // ✅ Only mark as submitted after successful API response
                         markFeedbackSubmitted()
+                        
+                        // 📊 Analytics: Log successful feedback submission
+                        analyticsListener?.onApperoFeedbackSubmitted(rating, feedback)
+                        
                         onResult?.invoke(true, result.message)
                         onFeedbackSubmissionResult?.invoke(true, result.message)
                     }

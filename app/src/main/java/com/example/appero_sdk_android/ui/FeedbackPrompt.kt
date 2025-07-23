@@ -1,5 +1,6 @@
 package com.example.appero_sdk_android.ui
 
+import com.example.appero_sdk_android.ApperoAnalyticsListener
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -61,6 +62,7 @@ fun FeedbackPrompt(
     visible: Boolean,
     config: FeedbackPromptConfig,
     theme: ApperoTheme = DefaultTheme(),
+    analyticsListener: ApperoAnalyticsListener? = null,
     onSubmit: (rating: Int, feedback: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
@@ -153,7 +155,11 @@ fun FeedbackPrompt(
                     EmojiRatingScale(
                         selectedRating = selectedRating,
                         theme = theme,
-                        onRatingSelected = { selectedRating = it }
+                        onRatingSelected = { rating ->
+                            selectedRating = rating
+                            // 📊 Analytics: Log rating selection
+                            analyticsListener?.onRatingSelected(rating)
+                        }
                     )
                     
                     Spacer(modifier = Modifier.height(24.dp))

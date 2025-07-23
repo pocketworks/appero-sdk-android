@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.appero.appero_sample_android.ui.theme.ApperoSampleAndroidTheme
 import com.example.appero_sdk_android.Appero
 import com.example.appero_sdk_android.Experience
-import com.example.appero_sdk_android.HelloWorld
-import com.example.appero_sdk_android.ui.ApperoTheme
 import com.example.appero_sdk_android.ui.CustomTheme
 import com.example.appero_sdk_android.ui.DarkTheme
 import com.example.appero_sdk_android.ui.DefaultTheme
@@ -41,6 +39,9 @@ class MainActivity : ComponentActivity() {
             apiKey = "9d7d6790-7d9b-42ab-8f08-b5d07e8d9dc0", // Updated API key to match curl
             clientId = "beeec9b8-3908-4605-9b45-faded129d41e" // Sample client ID
         )
+        
+        // Set up analytics listener for tracking Appero events
+        Appero.setAnalyticsListener(ExampleAnalyticsListener())
         
         setContent {
             ApperoSampleAndroidTheme {
@@ -107,7 +108,7 @@ fun ApperoSampleApp() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = HelloWorld.greet(),
+                    text = "Appero SDK Demo",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium
                 )
