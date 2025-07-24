@@ -78,28 +78,31 @@ object Appero {
      * @param apiKey Your Appero API key (UUID format)
      * @param clientId Your Appero client ID (UUID format)
      */
-    fun start(context: Context, apiKey: String, clientId: String) {
+    fun start(context: Context, apiKey: String, clientId: String?) {
         this.context = context.applicationContext
         this.sharedPreferences = this.context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        
-        // Validate input parameters
         require(apiKey.isNotBlank()) { "API key cannot be blank" }
-        require(clientId.isNotBlank()) { "Client ID cannot be blank" }
-        
-        // Store credentials securely
+
+        // Auto-generate clientId if blank or null
+        val prefs = sharedPreferences
+        var resolvedClientId = clientId
+        if (resolvedClientId.isNullOrBlank()) {
+            // Try to load from prefs first
+            resolvedClientId = prefs?.getString(KEY_CLIENT_ID, null)
+            if (resolvedClientId.isNullOrBlank()) {
+                resolvedClientId = java.util.UUID.randomUUID().toString()
+            }
+        }
         this.apiKey = apiKey
-        this.clientId = clientId
-        
+        this.clientId = resolvedClientId
         // Persist initialization state and credentials
-        sharedPreferences?.edit()?.apply {
+        prefs?.edit()?.apply {
             putString(KEY_API_KEY, apiKey)
-            putString(KEY_CLIENT_ID, clientId)
+            putString(KEY_CLIENT_ID, resolvedClientId)
             putBoolean(KEY_IS_INITIALIZED, true)
             apply()
         }
-        
         this.isInitialized = true
-        
         // Initialize core SDK components
         initializeCoreComponents()
     }
