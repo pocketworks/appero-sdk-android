@@ -19,6 +19,10 @@ import com.example.appero_sdk_android.ui.FeedbackPromptConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.example.appero_sdk_android.ui.FeedbackFlowConfig
+import android.app.Activity
+import com.google.android.play.core.review.ReviewManagerFactory
+import com.google.android.play.core.tasks.Task
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -181,22 +185,24 @@ object Appero {
     }
     
     /**
-     * Composable function to display the feedback prompt
+     * Show the feedback prompt UI (Compose)
      * Add this to your Compose UI hierarchy
-     * 
-     * @param config Configuration object containing all text content for the prompt
+     * @param config Configuration object for the feedback prompt
+     * @param flowConfig Configuration for the two-step post-feedback flow (Rate Us + Thank You)
+     * @param reviewPromptThreshold Minimum rating to show the Rate Us step (default 4)
+     * @param onRequestReview Callback to trigger Play Store review prompt
      * @param onResult Optional callback to receive feedback submission results
      */
     @Composable
     fun FeedbackPromptUI(
         config: FeedbackPromptConfig,
+        flowConfig: FeedbackFlowConfig = FeedbackFlowConfig(),
+        reviewPromptThreshold: Int = 4,
+        onRequestReview: () -> Unit = {},
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
-        
-        // Use the provided config or the stored one from showFeedbackPrompt
         val currentConfig = _feedbackPromptConfig.value ?: config
-        
         FeedbackPrompt(
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
@@ -204,15 +210,39 @@ object Appero {
             analyticsListener = analyticsListener,
             onSubmit = { rating, feedback ->
                 handleFeedbackSubmission(rating, feedback, onResult)
-                _showFeedbackPrompt.value = false
-                _feedbackPromptConfig.value = null
+                // Keep the bottom sheet open; content will change via FeedbackPrompt's state
             },
             onDismiss = {
                 _showFeedbackPrompt.value = false
                 _feedbackPromptConfig.value = null
                 onFeedbackSubmissionResult = null
-            }
+            },
+            flowConfig = flowConfig,
+            reviewPromptThreshold = reviewPromptThreshold,
+            onRequestReview = onRequestReview
         )
+    }
+
+    /**
+     * Trigger the Play Store review prompt using Play Core API
+     * @param activity The current Activity
+     * @param onComplete Optional callback when the review flow finishes
+     */
+    fun requestPlayStoreReview(activity: Activity, onComplete: (() -> Unit)? = null) {
+        val manager = ReviewManagerFactory.create(activity)
+        val request = manager.requestReviewFlow()
+        request.addOnCompleteListener { task: Task<com.google.android.play.core.review.ReviewInfo> ->
+            if (task.isSuccessful) {
+                val reviewInfo = task.result
+                val flow = manager.launchReviewFlow(activity, reviewInfo)
+                flow.addOnCompleteListener {
+                    onComplete?.invoke()
+                }
+            } else {
+                // Fallback: just call onComplete
+                onComplete?.invoke()
+            }
+        }
     }
     
     /**

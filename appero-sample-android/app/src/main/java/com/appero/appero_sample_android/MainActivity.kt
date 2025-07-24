@@ -27,6 +27,9 @@ import com.example.appero_sdk_android.ui.DarkTheme
 import com.example.appero_sdk_android.ui.DefaultTheme
 import com.example.appero_sdk_android.ui.FeedbackPromptConfig
 import com.example.appero_sdk_android.ui.LightTheme
+import com.example.appero_sdk_android.ui.FeedbackFlowConfig
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +76,17 @@ fun ApperoSampleApp() {
         )
     }
     
+    // Demo config for the two-step flow
+    val feedbackFlowConfig = remember {
+        FeedbackFlowConfig(
+            rateUsTitle = "Enjoying Appero Sample?",
+            rateUsSubtitle = "If you love our app, please rate us on the Play Store!",
+            rateUsCtaText = "Rate Now",
+            thankYouMessage = "Thank you for your valuable feedback!"
+        )
+    }
+    val reviewPromptThreshold = 4
+
     // Update experience state when it changes
     LaunchedEffect(Unit) {
         experienceState = Appero.getExperienceState()
@@ -550,9 +564,17 @@ fun ApperoSampleApp() {
         Spacer(modifier = Modifier.weight(1f))
     }
     
-    // Appero Feedback Prompt UI with result callback
+    // Appero Feedback Prompt UI with new flow
     Appero.FeedbackPromptUI(
         config = feedbackConfig,
+        flowConfig = feedbackFlowConfig,
+        reviewPromptThreshold = reviewPromptThreshold,
+        onRequestReview = {
+            // Trigger Play Store review prompt
+            if (context is Activity) {
+                Appero.requestPlayStoreReview(context)
+            }
+        },
         onResult = { success, message ->
             val toastMessage = if (success) {
                 "✅ Feedback submitted successfully!"

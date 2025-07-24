@@ -41,3 +41,32 @@ data class FeedbackPromptConfig(
      */
     val maxCharacters: Int = 120
 ) 
+
+/**
+ * Configuration for the two-step post-feedback flow (Rate Us + Thank You)
+ */
+data class FeedbackFlowConfig(
+    /**
+     * Title for the "Rate Us" screen (step 2 if rating >= threshold)
+     * Example: "Enjoying our app?"
+     */
+    val rateUsTitle: String = "Enjoying our app?",
+
+    /**
+     * Subtitle for the "Rate Us" screen
+     * Example: "If you like our app, please consider rating us on the Play Store."
+     */
+    val rateUsSubtitle: String = "If you like our app, please consider rating us on the Play Store.",
+
+    /**
+     * CTA text for the "Rate Us" button
+     * Example: "Rate on Play Store"
+     */
+    val rateUsCtaText: String = "Rate on Play Store",
+
+    /**
+     * Thank you message shown after feedback or after skipping the review prompt
+     * Example: "Thank you for your feedback!"
+     */
+    val thankYouMessage: String = "Thank you for your feedback!"
+) 

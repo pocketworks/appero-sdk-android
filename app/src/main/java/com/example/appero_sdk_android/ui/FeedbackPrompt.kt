@@ -52,6 +52,13 @@ fun rememberImeState(): State<Boolean> {
     return remember { derivedStateOf { isImeVisible } }
 }
 
+// Add sealed class for feedback steps
+sealed class FeedbackStep {
+    object Rating : FeedbackStep()
+    object RateUs : FeedbackStep()
+    object ThankYou : FeedbackStep()
+}
+
 /**
  * Feedback prompt composable that displays a modal bottom sheet with emoji rating
  * and text feedback input, matching the Figma design.
@@ -65,16 +72,18 @@ fun FeedbackPrompt(
     analyticsListener: ApperoAnalyticsListener? = null,
     onSubmit: (rating: Int, feedback: String) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    flowConfig: FeedbackFlowConfig = FeedbackFlowConfig(),
+    reviewPromptThreshold: Int = 4,
+    onRequestReview: () -> Unit = {}
 ) {
     var selectedRating by remember { mutableIntStateOf(0) }
     var feedbackText by remember { mutableStateOf("") }
-    
+    var currentStep by remember { mutableStateOf<FeedbackStep>(FeedbackStep.Rating) }
+    val imeState = rememberImeState()
+    val scrollState = rememberScrollState()
+
     if (visible) {
-        // 🔑 Medium article approach: ViewTreeObserver + dynamic height
-        val imeState = rememberImeState()
-        
-        // Apply to main content wrapper (like the Medium article)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,172 +91,234 @@ fun FeedbackPrompt(
             verticalArrangement = Arrangement.Bottom
         ) {
             ModalBottomSheet(
-                windowInsets = WindowInsets.ime, // Handle keyboard insets (from article)
+                windowInsets = WindowInsets.ime,
                 onDismissRequest = onDismiss,
                 modifier = modifier.then(
-                    // 🔑 Key approach from Medium article: Dynamic height based on keyboard
                     if (imeState.value)
-                        Modifier.fillMaxHeight(1.0F) // Full height when keyboard is visible
+                        Modifier.fillMaxHeight(1.0F)
                     else
-                        Modifier.fillMaxHeight(0.73F) // Partial height when keyboard is hidden
+                        Modifier.fillMaxHeight(0.73F)
                 )
             ) {
-                val scrollState = rememberScrollState()
-                
-                // Auto-scroll when keyboard appears
+                // Auto-scroll when keyboard appears (for Rating step)
                 LaunchedEffect(key1 = imeState.value) {
-                    if (imeState.value) {
+                    if (imeState.value && currentStep == FeedbackStep.Rating) {
                         delay(100)
                         scrollState.animateScrollTo(scrollState.maxValue)
                     }
                 }
-            
-                // Content of the bottom sheet (from Medium article approach)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(scrollState)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Close button
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        IconButton(
-                            onClick = onDismiss,
-                            modifier = Modifier.size(24.dp)
+
+                when (currentStep) {
+                    is FeedbackStep.Rating -> {
+                        // --- Step 1: Feedback Rating UI (existing) ---
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Close",
-                                tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant
+                            // Close button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(
+                                    onClick = onDismiss,
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = config.title,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = config.subtitle,
+                                fontSize = 16.sp,
+                                color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            EmojiRatingScale(
+                                selectedRating = selectedRating,
+                                theme = theme,
+                                onRatingSelected = { rating ->
+                                    selectedRating = rating
+                                    analyticsListener?.onRatingSelected(rating)
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            if (selectedRating > 0) {
+                                Text(
+                                    text = config.followUpQuestion,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedTextField(
+                                    value = feedbackText,
+                                    onValueChange = {
+                                        if (it.length <= config.maxCharacters) {
+                                            feedbackText = it
+                                        }
+                                    },
+                                    placeholder = {
+                                        Text(
+                                            text = config.placeholder,
+                                            color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(120.dp),
+                                    keyboardOptions = KeyboardOptions(
+                                        capitalization = KeyboardCapitalization.Sentences
+                                    ),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = theme.textColor,
+                                        unfocusedTextColor = theme.textColor,
+                                        focusedBorderColor = theme.accentColor,
+                                        unfocusedBorderColor = theme.dividerColor
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    maxLines = 4
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Text(
+                                        text = "${feedbackText.length}/${config.maxCharacters}",
+                                        fontSize = 12.sp,
+                                        color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(
+                                    onClick = {
+                                        onSubmit(selectedRating, feedbackText)
+                                        // Transition to RateUs or ThankYou based on rating
+                                        if (selectedRating >= reviewPromptThreshold) {
+                                            currentStep = FeedbackStep.RateUs
+                                        } else {
+                                            currentStep = FeedbackStep.ThankYou
+                                        }
+                                    },
+                                    enabled = feedbackText.isNotBlank() && selectedRating > 0,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
+                                ) {
+                                    Text(
+                                        text = config.submitText,
+                                        color = theme.buttonTextColor
+                                    )
+                                }
+                            }
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Title
-                    Text(
-                        text = config.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                        color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Subtitle
-                    Text(
-                        text = config.subtitle,
-                        fontSize = 16.sp,
-                        color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Emoji Rating Scale
-                    EmojiRatingScale(
-                        selectedRating = selectedRating,
-                        theme = theme,
-                        onRatingSelected = { rating ->
-                            selectedRating = rating
-                            // 📊 Analytics: Log rating selection
-                            analyticsListener?.onRatingSelected(rating)
-                        }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // Follow-up question (only show if rating is selected)
-                    if (selectedRating > 0) {
-                        Text(
-                            text = config.followUpQuestion,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Feedback text input
-                        OutlinedTextField(
-                            value = feedbackText,
-                            onValueChange = { 
-                                if (it.length <= config.maxCharacters) {
-                                    feedbackText = it
-                                }
-                            },
-                            placeholder = { 
-                                Text(
-                                    text = config.placeholder,
-                                    color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            },
+                    is FeedbackStep.RateUs -> {
+                        // --- Step 2a: Rate Us Screen ---
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(120.dp),
-                            keyboardOptions = KeyboardOptions(
-                                capitalization = KeyboardCapitalization.Sentences
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = theme.textColor,
-                                unfocusedTextColor = theme.textColor,
-                                focusedBorderColor = theme.accentColor,
-                                unfocusedBorderColor = theme.dividerColor
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            maxLines = 4 // Limit lines to prevent too much expansion
-                        )
-                        
-                        // Character count
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            // Close button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        currentStep = FeedbackStep.ThankYou
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "${feedbackText.length}/${config.maxCharacters}",
-                                fontSize = 12.sp,
-                                color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 4.dp)
+                                text = flowConfig.rateUsTitle,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp)
                             )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Submit button
-                        Button(
-                            onClick = { 
-                                if (selectedRating > 0) {
-                                    onSubmit(selectedRating, feedbackText)
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = theme.buttonBackgroundColor
-                            ),
-                            shape = RoundedCornerShape(24.dp),
-                            enabled = selectedRating > 0
-                        ) {
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = config.submitText,
+                                text = flowConfig.rateUsSubtitle,
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = theme.buttonTextColor
+                                color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
                             )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Button(
+                                onClick = {
+                                    onRequestReview()
+                                    currentStep = FeedbackStep.ThankYou
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
+                            ) {
+                                Text(
+                                    text = flowConfig.rateUsCtaText,
+                                    color = theme.buttonTextColor
+                                )
+                            }
                         }
-                        
-                        // Extra bottom space when keyboard is shown
-                        Spacer(modifier = Modifier.height(48.dp))
+                    }
+                    is FeedbackStep.ThankYou -> {
+                        // --- Step 2b: Thank You Screen ---
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Text(
+                                text = flowConfig.thankYouMessage,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Button(
+                                onClick = onDismiss,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
+                            ) {
+                                Text(
+                                    text = "Close",
+                                    color = theme.buttonTextColor
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -299,4 +370,4 @@ internal fun EmojiRatingScale(
             }
         }
     }
-}
+} 

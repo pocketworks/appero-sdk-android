@@ -129,12 +129,15 @@
   - Theming guide with Material Design integration
   - **Flutter wrapper preparation**: Document APIs that will be exposed to Flutter
 
-### 11. Flutter Wrapper Preparation
-- [ ] **Design Flutter-friendly API surface**
-  - Ensure all public methods can be easily exposed via platform channels
-  - Use simple data types (String, Int, Boolean) for cross-platform compatibility
-  - Design callback interfaces that can be bridged to Flutter
-  - **Future task**: Create separate Flutter plugin that wraps this Android library
+### 12. App Store/Play Store Review Prompt Flow
+- [ ] Implement Play Store review prompt flow (iOS parity)
+  - After feedback submission, if rating >= configurable threshold (default 4), prompt for Play Store review
+  - If rating < threshold, show a thank you message as the second step
+  - Use Google Play In-App Review API for review prompt
+  - The rating threshold for review prompt should be configurable by the developer (not hardcoded)
+  - Ensure this flow is the second step after the feedback prompt, matching iOS UX
+  - Provide clear API for customizing this behavior
+  - Document the flow and configuration in README
 
 ## What Appero Does (Context)
 Appero is an intelligent in-app feedback widget that drives organic growth by:
@@ -517,12 +520,7 @@ Appero.shouldShowAppero() // Returns cached decision offline
   - Configure automated release process
 
 ### Flutter Integration Preparation
-- [ ] **Design Flutter-friendly API surface**
-  - Ensure all public methods can be easily exposed via platform channels
-  - Use simple data types (String, Int, Boolean) for cross-platform compatibility
-  - Design callback interfaces that can be bridged to Flutter
-  - Create proper error handling that can be communicated to Flutter
-  - Document API surface for Flutter plugin development
+- [x] (Removed) Flutter integration is handled in a separate codebase. All related tasks and documentation have been removed from this backlog.
 
 ### iOS Parity Review
 - [ ] **Final iOS SDK comparison**
@@ -542,4 +540,5 @@ Appero.shouldShowAppero() // Returns cached decision offline
 - **Documentation**: ❌ Missing (critical for adoption)
 - **Code Quality**: ⚠️ Needs attention (cleanup and organization required)
 - **Production Ready**: ❌ Not yet (needs Maven Central, CI/CD, security review)
+- **Flutter Integration**: (Removed, handled in separate codebase)
 
