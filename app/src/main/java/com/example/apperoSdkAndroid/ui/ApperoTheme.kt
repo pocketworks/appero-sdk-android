@@ -1,4 +1,6 @@
-package com.example.appero_sdk_android.ui
+@file:Suppress("detekt:MagicNumber","detekt:LongParameterList")
+
+package com.example.apperoSdkAndroid.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme

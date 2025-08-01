@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android.utils
+package com.example.apperoSdkAndroid.utils
 
 import java.text.SimpleDateFormat
 import java.util.Date

@@ -1,10 +1,11 @@
-package com.example.appero_sdk_android.domain
+package com.example.apperoSdkAndroid.domain
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import com.example.appero_sdk_android.QueuedFeedback
-import com.example.appero_sdk_android.data.FeedbackApiService
-import com.example.appero_sdk_android.utils.DateTimeUtils.getCurrentTimestamp
+import com.example.apperoSdkAndroid.QueuedFeedback
+import com.example.apperoSdkAndroid.data.FeedbackApiService
+import com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp
+import com.example.apperoSdkAndroid.utils.HttpStatusCode
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.TimeoutCancellationException
@@ -31,6 +32,7 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
         private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
         private const val MAX_RETRY_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 1000L
+        private const val TIMEOUT = 30L
     }
 
     private val apiService: FeedbackApiService
@@ -44,9 +46,9 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
 
         val httpClient = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
+            .readTimeout(TIMEOUT, TimeUnit.SECONDS)
+            .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build()
 
@@ -88,7 +90,8 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
 
                 val response = try {
                     // Use withTimeout to prevent hanging indefinitely
-                    withTimeout(30_000) { // 30 second timeout
+                    @Suppress("detekt:MagicNumber")
+                    withTimeout(TIMEOUT * 1000) {
                         apiService.submitFeedback(
                             apiKey = apiKeyBody,
                             clientId = clientIdBody,
@@ -111,7 +114,9 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
                     if (body.status == "success") {
                         FeedbackSubmissionResult.Success(body.message ?: "Feedback submitted successfully")
                     } else {
-                        FeedbackSubmissionResult.Error("Server returned error: ${body.error ?: body.status ?: "Unknown error"}")
+                        FeedbackSubmissionResult.Error(
+                            "Server returned error: ${body.error ?: body.status}"
+                        )
                     }
                 } else {
                     val errorMessage = "HTTP ${response.code()}: ${response.message()}"
@@ -119,7 +124,9 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
                         FeedbackSubmissionResult.Error(errorMessage)
                     } else {
                         // Retry for server errors (5xx) and some client errors
-                        if (response.code() >= 500 || response.code() == 429) {
+                        if (response.code() >= HttpStatusCode.INTERNAL_SERVER_ERROR.value
+                            || response.code() == HttpStatusCode.TOO_MANY_REQUESTS.value
+                        ) {
                             delay(RETRY_DELAY_MS * (attempt + 1))
                             return@repeat // Continue to next retry
                         } else {

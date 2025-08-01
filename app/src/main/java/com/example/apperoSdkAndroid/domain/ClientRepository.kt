@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android.domain
+package com.example.apperoSdkAndroid.domain
 
 import android.content.SharedPreferences
 import androidx.core.content.edit

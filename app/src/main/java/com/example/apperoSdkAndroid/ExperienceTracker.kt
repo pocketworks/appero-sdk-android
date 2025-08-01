@@ -1,6 +1,6 @@
-package com.example.appero_sdk_android
+package com.example.apperoSdkAndroid
 
-import com.example.appero_sdk_android.domain.UserRepository
+import com.example.apperoSdkAndroid.domain.UserRepository
 
 /**
  * Experience tracking state for debugging and monitoring

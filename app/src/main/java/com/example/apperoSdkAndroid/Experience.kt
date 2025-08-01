@@ -1,9 +1,10 @@
-package com.example.appero_sdk_android
+package com.example.apperoSdkAndroid
 
 /**
  * Experience levels using Likert scale for user experience tracking
  * Each level has an associated point value that contributes to the overall experience score
  */
+@Suppress("detekt:MagicNumber")
 enum class Experience(val points: Int) {
     /**
      * Very positive experience - adds 5 points

@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android
+package com.example.apperoSdkAndroid
 
 import android.app.Activity
 import android.content.Context
@@ -9,15 +9,16 @@ import android.net.NetworkCapabilities
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import com.example.appero_sdk_android.domain.FeedbackRepository
-import com.example.appero_sdk_android.domain.FeedbackSubmissionResult
-import com.example.appero_sdk_android.domain.ClientRepository
-import com.example.appero_sdk_android.domain.UserRepository
-import com.example.appero_sdk_android.ui.ApperoTheme
-import com.example.appero_sdk_android.ui.DefaultTheme
-import com.example.appero_sdk_android.ui.FeedbackFlowConfig
-import com.example.appero_sdk_android.ui.FeedbackPrompt
-import com.example.appero_sdk_android.ui.FeedbackPromptConfig
+import com.example.apperoSdkAndroid.domain.FeedbackRepository
+import com.example.apperoSdkAndroid.domain.FeedbackSubmissionResult
+import com.example.apperoSdkAndroid.domain.ClientRepository
+import com.example.apperoSdkAndroid.domain.UserRepository
+import com.example.apperoSdkAndroid.domain.UserRepository.Companion.DEFAULT_RATING_THRESHOLD
+import com.example.apperoSdkAndroid.ui.ApperoTheme
+import com.example.apperoSdkAndroid.ui.DefaultTheme
+import com.example.apperoSdkAndroid.ui.FeedbackFlowConfig
+import com.example.apperoSdkAndroid.ui.FeedbackPrompt
+import com.example.apperoSdkAndroid.ui.FeedbackPromptConfig
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.tasks.Task
 import kotlinx.coroutines.CoroutineScope
@@ -262,7 +263,7 @@ object Appero {
     var ratingThreshold: Int
         get() {
             requireInitialized()
-            return experienceTracker?.ratingThreshold ?: 5
+            return experienceTracker?.ratingThreshold ?: DEFAULT_RATING_THRESHOLD
         }
         set(value) {
             requireInitialized()

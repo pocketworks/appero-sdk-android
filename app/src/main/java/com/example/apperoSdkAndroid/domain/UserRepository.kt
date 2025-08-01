@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android.domain
+package com.example.apperoSdkAndroid.domain
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -18,6 +18,8 @@ internal class UserRepository(private val sharedPreferences: SharedPreferences) 
         private const val USER_KEY_EXPERIENCE_POINTS = "experience_points"
         private const val USER_KEY_RATING_THRESHOLD = "rating_threshold"
         private const val USER_KEY_HAS_SUBMITTED_FEEDBACK = "has_submitted_feedback"
+
+        const val DEFAULT_RATING_THRESHOLD = 5
     }
 
     private var currentUserId: String? = null
@@ -90,7 +92,7 @@ internal class UserRepository(private val sharedPreferences: SharedPreferences) 
      */
     fun getRatingThreshold(): Int {
         val userId = getCurrentUserId()
-        return sharedPreferences.getInt(getUserKey(userId, USER_KEY_RATING_THRESHOLD), 5)
+        return sharedPreferences.getInt(getUserKey(userId, USER_KEY_RATING_THRESHOLD), DEFAULT_RATING_THRESHOLD)
     }
 
     /**

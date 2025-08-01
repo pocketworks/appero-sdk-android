@@ -1,8 +1,8 @@
-package com.example.appero_sdk_android
+package com.example.apperoSdkAndroid
 
-import com.example.appero_sdk_android.domain.FeedbackRepository
-import com.example.appero_sdk_android.domain.FeedbackSubmissionResult
-import com.example.appero_sdk_android.utils.DateTimeUtils.getCurrentTimestamp
+import com.example.apperoSdkAndroid.domain.FeedbackRepository
+import com.example.apperoSdkAndroid.domain.FeedbackSubmissionResult
+import com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
