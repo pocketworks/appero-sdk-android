@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android") version "1.9.0"
+    id("io.gitlab.arturbosch.detekt") version("1.23.8")
     `maven-publish`
 }
 
@@ -33,6 +34,11 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
+}
+
+detekt {
+    toolVersion = "1.23.8"
+    config.setFrom(file("../config/detekt/detekt.yml"))
 }
 
 afterEvaluate {
