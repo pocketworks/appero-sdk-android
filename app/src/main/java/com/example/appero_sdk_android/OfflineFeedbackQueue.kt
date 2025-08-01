@@ -1,21 +1,13 @@
 package com.example.appero_sdk_android
 
-import android.content.Context
-import android.content.SharedPreferences
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
-import com.example.appero_sdk_android.api.FeedbackRepository
-import com.example.appero_sdk_android.api.FeedbackSubmissionResult
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.example.appero_sdk_android.domain.FeedbackRepository
+import com.example.appero_sdk_android.domain.FeedbackSubmissionResult
+import com.example.appero_sdk_android.utils.DateTimeUtils.getCurrentTimestamp
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Timer
+import java.util.UUID
 import kotlin.concurrent.timer
-import androidx.core.content.edit
 
 /**
  * Data model for queued feedback
@@ -33,34 +25,28 @@ internal data class QueuedFeedback(
 /**
  * Manages offline feedback queuing and retry logic
  * Stores failed feedback submissions locally and retries when connectivity returns
- * Includes periodic retry timer similar to iOS SDK implementation
+ * Includes periodic retry timer
  */
 internal class OfflineFeedbackQueue(
-    private val context: Context,
-    private val sharedPreferences: SharedPreferences
+    private val feedbackRepository: FeedbackRepository,
+    private val scope: CoroutineScope
 ) {
     companion object {
-        private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
         private const val MAX_RETRY_ATTEMPTS = 5
         private const val MAX_QUEUE_SIZE = 100
-        private const val RETRY_TIMER_INTERVAL_MS = 180_000L // 3 minutes (same as iOS)
+        private const val RETRY_TIMER_INTERVAL_MS = 180_000L // 3 minutes
     }
 
-    private val gson = Gson()
-    private val feedbackRepository = FeedbackRepository()
     private var retryTimer: Timer? = null
     private var isNetworkAvailable = false
 
     init {
-        // Initialize network state
-        isNetworkAvailable = isNetworkAvailable()
-        // Start periodic retry timer (similar to iOS implementation)
+        // Start periodic retry timer
         startRetryTimer()
     }
 
     /**
      * Start periodic retry timer that attempts to process queue every 3 minutes
-     * Similar to iOS SDK's retryTimerInterval implementation
      */
     private fun startRetryTimer() {
         stopRetryTimer() // Ensure we don't have multiple timers
@@ -71,7 +57,7 @@ internal class OfflineFeedbackQueue(
             initialDelay = RETRY_TIMER_INTERVAL_MS,
             period = RETRY_TIMER_INTERVAL_MS
         ) {
-            CoroutineScope(Dispatchers.IO).launch {
+            scope.launch {
                 processQueue()
             }
         }
@@ -86,16 +72,16 @@ internal class OfflineFeedbackQueue(
     }
 
     /**
-     * Called when network state changes (similar to iOS networkMonitor.pathUpdateHandler)
+     * Called when network state changes
      * @param isAvailable true if network is available
      */
     fun onNetworkStateChanged(isAvailable: Boolean) {
         val wasUnavailable = !isNetworkAvailable
         isNetworkAvailable = isAvailable
 
-        // If we regain connectivity and have queued items, process immediately (like iOS)
+        // If we regain connectivity and have queued items, process immediately
         if (isAvailable && wasUnavailable && getQueueSize() > 0) {
-            CoroutineScope(Dispatchers.IO).launch {
+            scope.launch {
                 processQueue()
             }
         }
@@ -117,7 +103,7 @@ internal class OfflineFeedbackQueue(
             timestamp = getCurrentTimestamp()
         )
 
-        val currentQueue = getQueuedFeedback().toMutableList()
+        val currentQueue = feedbackRepository.getQueuedFeedback().toMutableList()
 
         // Prevent queue from growing too large
         if (currentQueue.size >= MAX_QUEUE_SIZE) {
@@ -126,7 +112,7 @@ internal class OfflineFeedbackQueue(
         }
 
         currentQueue.add(queuedFeedback)
-        saveQueuedFeedback(currentQueue)
+        feedbackRepository.saveQueuedFeedback(currentQueue)
     }
 
     /**
@@ -134,22 +120,18 @@ internal class OfflineFeedbackQueue(
      * Called when network connectivity is available or by periodic retry timer
      */
     fun processQueue() {
-        // Update network state before processing
-        isNetworkAvailable = isNetworkAvailable()
-
         if (!isNetworkAvailable) {
             return // Skip processing if no network
         }
 
-        val queuedItems = getQueuedFeedback()
+        val queuedItems = feedbackRepository.getQueuedFeedback()
         if (queuedItems.isEmpty()) {
             return // No items to process
         }
 
-        // Similar to iOS: Log processing start
         println("[Appero] Processing ${queuedItems.size} queued feedback items")
 
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch {
             val successfulSubmissions = mutableListOf<String>()
             val updatedQueue = mutableListOf<QueuedFeedback>()
 
@@ -167,6 +149,7 @@ internal class OfflineFeedbackQueue(
                             // Successful submission - remove from queue
                             successfulSubmissions.add(item.id)
                         }
+
                         is FeedbackSubmissionResult.Error -> {
                             // Failed submission - retry or remove based on retry count
                             if (item.retryCount < MAX_RETRY_ATTEMPTS) {
@@ -185,7 +168,7 @@ internal class OfflineFeedbackQueue(
             }
 
             // Update the queue with remaining items
-            saveQueuedFeedback(updatedQueue)
+            feedbackRepository.saveQueuedFeedback(updatedQueue)
         }
     }
 
@@ -193,14 +176,14 @@ internal class OfflineFeedbackQueue(
      * Get the current number of queued feedback items
      */
     fun getQueueSize(): Int {
-        return getQueuedFeedback().size
+        return feedbackRepository.getQueuedFeedback().size
     }
 
     /**
      * Clear all queued feedback (for testing/reset purposes)
      */
     fun clearQueue() {
-        saveQueuedFeedback(emptyList())
+        feedbackRepository.saveQueuedFeedback(emptyList())
     }
 
     /**
@@ -210,57 +193,4 @@ internal class OfflineFeedbackQueue(
     fun cleanup() {
         stopRetryTimer()
     }
-
-    /**
-     * Check if network is available
-     * Uses modern network monitoring approach to avoid deprecation warnings
-     */
-    private fun isNetworkAvailable(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            ?: return false
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            @Suppress("DEPRECATION")
-            networkInfo?.isConnected == true
-        }
-    }
-
-    /**
-     * Get queued feedback from SharedPreferences
-     */
-    private fun getQueuedFeedback(): List<QueuedFeedback> {
-        val json = sharedPreferences.getString(KEY_QUEUED_FEEDBACK, null) ?: return emptyList()
-
-        return try {
-            val type = object : TypeToken<List<QueuedFeedback>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Save queued feedback to SharedPreferences
-     */
-    private fun saveQueuedFeedback(queuedFeedback: List<QueuedFeedback>) {
-        val json = gson.toJson(queuedFeedback)
-        sharedPreferences.edit {
-            putString(KEY_QUEUED_FEEDBACK, json)
-        }
-    }
-
-    /**
-     * Generate current timestamp in ISO 8601 format
-     */
-    private fun getCurrentTimestamp(): String {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-        return dateFormat.format(Date())
-    }
-} 
+}

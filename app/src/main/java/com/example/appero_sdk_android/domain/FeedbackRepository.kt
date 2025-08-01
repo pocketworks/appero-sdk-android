@@ -1,5 +1,13 @@
-package com.example.appero_sdk_android.api
+package com.example.appero_sdk_android.domain
 
+import android.content.SharedPreferences
+import androidx.core.content.edit
+import com.example.appero_sdk_android.QueuedFeedback
+import com.example.appero_sdk_android.data.FeedbackApiService
+import com.example.appero_sdk_android.utils.DateTimeUtils.getCurrentTimestamp
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -8,49 +16,53 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.SimpleDateFormat
-import java.util.*
+import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
 
 /**
  * Repository for handling feedback submission to the Appero backend
  */
-internal class FeedbackRepository {
-    
+internal class FeedbackRepository(private val sharedPreferences: SharedPreferences) {
+
     companion object {
         private const val BASE_URL = "https://app.appero.co.uk/"
+        private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
         private const val MAX_RETRY_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 1000L
     }
-    
+
     private val apiService: FeedbackApiService
-    
+    private val gson = Gson()
+
     init {
         // Create HTTP client with logging for debugging
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
-        
+
         val httpClient = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build()
-        
+
         // Create Retrofit instance
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        
+
         apiService = retrofit.create(FeedbackApiService::class.java)
     }
-    
+
     /**
      * Submit feedback to the backend with retry logic
-     * 
+     *
      * @param apiKey The API key for authentication
      * @param clientId The client ID for identification
      * @param rating The rating (1-5)
@@ -63,10 +75,6 @@ internal class FeedbackRepository {
         rating: Int,
         feedback: String
     ): FeedbackSubmissionResult {
-        
-        val sentAt = getCurrentTimestamp()
-        
-
 
         repeat(MAX_RETRY_ATTEMPTS) { attempt ->
             try {
@@ -76,8 +84,8 @@ internal class FeedbackRepository {
                 val clientIdBody = clientId.toRequestBody(mediaType)
                 val ratingBody = rating.toString().toRequestBody(mediaType)
                 val feedbackBody = feedback.toRequestBody(mediaType)
-                val sentAtBody = sentAt.toRequestBody(mediaType)
-                
+                val sentAtBody = getCurrentTimestamp().toRequestBody(mediaType)
+
                 val response = try {
                     // Use withTimeout to prevent hanging indefinitely
                     withTimeout(30_000) { // 30 second timeout
@@ -89,17 +97,17 @@ internal class FeedbackRepository {
                             sentAt = sentAtBody
                         )
                     }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                } catch (e: TimeoutCancellationException) {
                     throw e
                 }
-                
+
                 return if (response.isSuccessful) {
                     val body = response.body()
-                    
+
                     if (body == null) {
                         return FeedbackSubmissionResult.Error("Server returned empty response")
                     }
-                    
+
                     if (body.status == "success") {
                         FeedbackSubmissionResult.Success(body.message ?: "Feedback submitted successfully")
                     } else {
@@ -120,17 +128,17 @@ internal class FeedbackRepository {
                         }
                     }
                 }
-                
+
             } catch (e: Exception) {
                 // Determine error message based on exception type
                 val errorMessage = when (e) {
-                    is kotlinx.coroutines.TimeoutCancellationException -> "Request timed out after 30 seconds"
-                    is java.net.SocketTimeoutException -> "Connection timed out: ${e.message}"
-                    is java.net.ConnectException -> "Could not connect to server: ${e.message}"
-                    is java.io.IOException -> "Network IO error: ${e.message}"
+                    is TimeoutCancellationException -> "Request timed out after 30 seconds"
+                    is SocketTimeoutException -> "Connection timed out: ${e.message}"
+                    is ConnectException -> "Could not connect to server: ${e.message}"
+                    is IOException -> "Network IO error: ${e.message}"
                     else -> "Network error: ${e.message}"
                 }
-                
+
                 // Return error if final attempt, otherwise retry
                 if (attempt == MAX_RETRY_ATTEMPTS - 1) {
                     return FeedbackSubmissionResult.Error(errorMessage)
@@ -139,18 +147,32 @@ internal class FeedbackRepository {
                 }
             }
         }
-        
+
         return FeedbackSubmissionResult.Error("Failed to submit feedback after $MAX_RETRY_ATTEMPTS attempts")
     }
-    
+
     /**
-     * Generate current timestamp in ISO 8601 format
-     * @return Formatted timestamp string
+     * Get queued feedback
      */
-    private fun getCurrentTimestamp(): String {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
-        return dateFormat.format(Date())
+    fun getQueuedFeedback(): List<QueuedFeedback> {
+        val json = sharedPreferences.getString(KEY_QUEUED_FEEDBACK, null) ?: return emptyList()
+
+        return try {
+            val type = object : TypeToken<List<QueuedFeedback>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Save queued feedback
+     */
+    fun saveQueuedFeedback(queuedFeedback: List<QueuedFeedback>) {
+        val json = gson.toJson(queuedFeedback)
+        sharedPreferences.edit {
+            putString(KEY_QUEUED_FEEDBACK, json)
+        }
     }
 }
 

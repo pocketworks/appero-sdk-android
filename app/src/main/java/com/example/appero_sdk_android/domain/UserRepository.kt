@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android
+package com.example.appero_sdk_android.domain
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -8,7 +8,7 @@ import java.util.UUID
  * Manages user sessions and user ID persistence for the Appero SDK
  * Each user has their own experience tracking and feedback submission status
  */
-internal class UserSessionManager(private val sharedPreferences: SharedPreferences) {
+internal class UserRepository(private val sharedPreferences: SharedPreferences) {
 
     companion object {
         private const val KEY_USER_ID = "appero_user_id"
@@ -171,4 +171,4 @@ internal class UserSessionManager(private val sharedPreferences: SharedPreferenc
     private fun getUserKey(userId: String, key: String): String {
         return "${KEY_USER_PREFIX}${userId}_${key}"
     }
-} 
+}

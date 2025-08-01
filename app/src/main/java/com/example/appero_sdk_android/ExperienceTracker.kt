@@ -1,6 +1,6 @@
 package com.example.appero_sdk_android
 
-import android.content.SharedPreferences
+import com.example.appero_sdk_android.domain.UserRepository
 
 /**
  * Experience tracking state for debugging and monitoring
@@ -18,18 +18,17 @@ data class ExperienceState(
  * Uses UserSessionManager for per-user data management
  */
 internal class ExperienceTracker(
-    sharedPreferences: SharedPreferences
+    private val userRepository: UserRepository
 ) {
-    private val userSessionManager = UserSessionManager(sharedPreferences)
-    
+
     /**
      * Log an experience event using predefined Experience enum
      * @param experience The experience level to log
      */
     fun log(experience: Experience) {
-        val currentPoints = userSessionManager.getExperiencePoints()
+        val currentPoints = userRepository.getExperiencePoints()
         val newPoints = currentPoints + experience.points
-        userSessionManager.setExperiencePoints(newPoints)
+        userRepository.setExperiencePoints(newPoints)
     }
     
     /**
@@ -37,9 +36,9 @@ internal class ExperienceTracker(
      * @param points The number of points to add (can be negative)
      */
     fun log(points: Int) {
-        val currentPoints = userSessionManager.getExperiencePoints()
+        val currentPoints = userRepository.getExperiencePoints()
         val newPoints = currentPoints + points
-        userSessionManager.setExperiencePoints(newPoints)
+        userRepository.setExperiencePoints(newPoints)
     }
     
     /**
@@ -47,9 +46,9 @@ internal class ExperienceTracker(
      * @return true if experience score crosses threshold AND user hasn't submitted feedback
      */
     fun shouldShowAppero(): Boolean {
-        val experiencePoints = userSessionManager.getExperiencePoints()
-        val threshold = userSessionManager.getRatingThreshold()
-        val hasSubmittedFeedback = userSessionManager.hasSubmittedFeedback()
+        val experiencePoints = userRepository.getExperiencePoints()
+        val threshold = userRepository.getRatingThreshold()
+        val hasSubmittedFeedback = userRepository.hasSubmittedFeedback()
         
         return experiencePoints >= threshold && !hasSubmittedFeedback
     }
@@ -58,21 +57,21 @@ internal class ExperienceTracker(
      * Get/set the rating threshold for when to prompt for feedback
      */
     var ratingThreshold: Int
-        get() = userSessionManager.getRatingThreshold()
-        set(value) = userSessionManager.setRatingThreshold(value)
+        get() = userRepository.getRatingThreshold()
+        set(value) = userRepository.setRatingThreshold(value)
     
     /**
      * Mark that the user has submitted feedback
      */
     fun markFeedbackSubmitted() {
-        userSessionManager.markFeedbackSubmitted()
+        userRepository.markFeedbackSubmitted()
     }
     
     /**
      * Reset experience points and feedback status
      */
     fun resetExperienceAndPrompt() {
-        userSessionManager.resetExperienceAndPrompt()
+        userRepository.resetExperienceAndPrompt()
     }
     
     /**
@@ -80,11 +79,11 @@ internal class ExperienceTracker(
      */
     fun getExperienceState(): ExperienceState {
         return ExperienceState(
-            userId = userSessionManager.getCurrentUserId(),
-            experiencePoints = userSessionManager.getExperiencePoints(),
-            ratingThreshold = userSessionManager.getRatingThreshold(),
+            userId = userRepository.getCurrentUserId(),
+            experiencePoints = userRepository.getExperiencePoints(),
+            ratingThreshold = userRepository.getRatingThreshold(),
             shouldShowPrompt = shouldShowAppero(),
-            hasSubmittedFeedback = userSessionManager.hasSubmittedFeedback()
+            hasSubmittedFeedback = userRepository.hasSubmittedFeedback()
         )
     }
     
@@ -92,20 +91,20 @@ internal class ExperienceTracker(
      * Get the current user ID
      */
     fun getCurrentUserId(): String {
-        return userSessionManager.getCurrentUserId()
+        return userRepository.getCurrentUserId()
     }
     
     /**
      * Set a specific user ID (for account-based systems)
      */
     fun setUser(userId: String) {
-        userSessionManager.setUser(userId)
+        userRepository.setUser(userId)
     }
     
     /**
      * Reset the current user (for logout scenarios)
      */
     fun resetUser() {
-        userSessionManager.resetUser()
+        userRepository.resetUser()
     }
 } 
