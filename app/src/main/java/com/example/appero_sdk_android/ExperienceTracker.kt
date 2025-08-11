@@ -1,6 +1,12 @@
 package com.example.appero_sdk_android
 
 import android.content.SharedPreferences
+import android.content.Context
+import com.example.appero_sdk_android.api.ExperienceSubmissionResult
+import com.example.appero_sdk_android.api.FeedbackRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Experience tracking state for debugging and monitoring
@@ -18,9 +24,12 @@ data class ExperienceState(
  * Uses UserSessionManager for per-user data management
  */
 internal class ExperienceTracker(
-    sharedPreferences: SharedPreferences
+    sharedPreferences: SharedPreferences,
+    private val context: Context // Pass context from Appero
 ) {
     private val userSessionManager = UserSessionManager(sharedPreferences)
+    private val feedbackRepository = FeedbackRepository()
+    private val offlineQueue = OfflineFeedbackQueue(context, sharedPreferences)
     
     /**
      * Log an experience event using predefined Experience enum
@@ -30,6 +39,7 @@ internal class ExperienceTracker(
         val currentPoints = userSessionManager.getExperiencePoints()
         val newPoints = currentPoints + experience.points
         userSessionManager.setExperiencePoints(newPoints)
+        sendExperienceEvent(experience.points)
     }
     
     /**
@@ -40,6 +50,35 @@ internal class ExperienceTracker(
         val currentPoints = userSessionManager.getExperiencePoints()
         val newPoints = currentPoints + points
         userSessionManager.setExperiencePoints(newPoints)
+        sendExperienceEvent(points)
+    }
+
+    private fun sendExperienceEvent(value: Int) {
+        val apiKey = Appero.getApiKey() ?: return
+        val clientId = getCurrentUserId()
+        val timestamp = getCurrentTimestamp()
+        if (offlineQueue.isNetworkAvailable()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = feedbackRepository.submitExperience(
+                    apiKey = apiKey,
+                    clientId = clientId,
+                    value = value,
+                    context = "",
+                    sentAt = timestamp
+                )
+                if (result is ExperienceSubmissionResult.Error) {
+                    offlineQueue.queueExperience(apiKey, clientId, value, "")
+                }
+            }
+        } else {
+            offlineQueue.queueExperience(apiKey, clientId, value, "")
+        }
+    }
+
+    private fun getCurrentTimestamp(): String {
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US)
+        dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        return dateFormat.format(java.util.Date())
     }
     
     /**

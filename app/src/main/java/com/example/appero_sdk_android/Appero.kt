@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 import com.example.appero_sdk_android.ui.FeedbackFlowConfig
 import android.app.Activity
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.google.android.play.core.tasks.Task
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.gms.tasks.Task
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -234,7 +235,7 @@ object Appero {
     fun requestPlayStoreReview(activity: Activity, onComplete: (() -> Unit)? = null) {
         val manager = ReviewManagerFactory.create(activity)
         val request = manager.requestReviewFlow()
-        request.addOnCompleteListener { task: Task<com.google.android.play.core.review.ReviewInfo> ->
+        request.addOnCompleteListener { task: Task<ReviewInfo> ->
             if (task.isSuccessful) {
                 val reviewInfo = task.result
                 val flow = manager.launchReviewFlow(activity, reviewInfo)
@@ -411,7 +412,9 @@ object Appero {
     private fun initializeCoreComponents() {
         // Initialize experience tracking with user session management
         sharedPreferences?.let { prefs ->
-            experienceTracker = ExperienceTracker(prefs)
+            context?.let { ctx ->
+                experienceTracker = ExperienceTracker(prefs, ctx)
+            }
             
             // Initialize offline feedback queue with retry timer
             context?.let { ctx ->

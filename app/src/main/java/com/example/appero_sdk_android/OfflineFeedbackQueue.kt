@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.util.Log
 import com.example.appero_sdk_android.api.FeedbackRepository
 import com.example.appero_sdk_android.api.FeedbackSubmissionResult
 import com.google.gson.Gson
@@ -30,6 +31,19 @@ internal data class QueuedFeedback(
 )
 
 /**
+ * Data model for queued experience
+ */
+internal data class QueuedExperience(
+    val id: String = UUID.randomUUID().toString(),
+    val apiKey: String,
+    val clientId: String,
+    val value: Int,
+    val context: String,
+    val timestamp: String,
+    val retryCount: Int = 0
+)
+
+/**
  * Manages offline feedback queuing and retry logic
  * Stores failed feedback submissions locally and retries when connectivity returns
  * Includes periodic retry timer similar to iOS SDK implementation
@@ -40,6 +54,7 @@ internal class OfflineFeedbackQueue(
 ) {
     companion object {
         private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
+        private const val KEY_QUEUED_EXPERIENCE = "queued_experience_list"
         private const val MAX_RETRY_ATTEMPTS = 5
         private const val MAX_QUEUE_SIZE = 100
         private const val RETRY_TIMER_INTERVAL_MS = 180_000L // 3 minutes (same as iOS)
@@ -129,6 +144,34 @@ internal class OfflineFeedbackQueue(
     }
     
     /**
+     * Add experience points to the offline queue
+     * @param apiKey The API key for the experience
+     * @param clientId The client ID for the experience
+     * @param value The experience points value
+     * @param context Additional context for the experience
+     */
+    fun queueExperience(apiKey: String, clientId: String, value: Int, context: String) {
+        val queuedExperience = QueuedExperience(
+            apiKey = apiKey,
+            clientId = clientId,
+            value = value,
+            context = context,
+            timestamp = getCurrentTimestamp()
+        )
+        
+        val currentQueue = getQueuedExperience().toMutableList()
+        
+        // Prevent queue from growing too large
+        if (currentQueue.size >= MAX_QUEUE_SIZE) {
+            // Remove oldest items
+            currentQueue.removeAt(0)
+        }
+        
+        currentQueue.add(queuedExperience)
+        saveQueuedExperience(currentQueue)
+    }
+    
+    /**
      * Process all queued feedback submissions
      * Called when network connectivity is available or by periodic retry timer
      */
@@ -146,7 +189,7 @@ internal class OfflineFeedbackQueue(
         }
         
         // Similar to iOS: Log processing start
-        println("[Appero] Processing ${queuedItems.size} queued feedback items")
+        Log.i("Appero", "Processing ${queuedItems.size} queued feedback items")
         
         CoroutineScope(Dispatchers.IO).launch {
             val successfulSubmissions = mutableListOf<String>()
@@ -182,9 +225,9 @@ internal class OfflineFeedbackQueue(
                     }
                 }
             }
-            
-            // Update the queue with remaining items
-            saveQueuedFeedback(updatedQueue)
+            // Remove successfully submitted items from the queue
+            val remaining = queuedItems.filter { it.id !in successfulSubmissions } + updatedQueue
+            saveQueuedFeedback(remaining)
         }
     }
     
@@ -214,7 +257,7 @@ internal class OfflineFeedbackQueue(
      * Check if network is available
      * Uses modern network monitoring approach to avoid deprecation warnings
      */
-    private fun isNetworkAvailable(): Boolean {
+    fun isNetworkAvailable(): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             ?: return false
         
@@ -251,6 +294,30 @@ internal class OfflineFeedbackQueue(
         val json = gson.toJson(queuedFeedback)
         sharedPreferences.edit()
             .putString(KEY_QUEUED_FEEDBACK, json)
+            .apply()
+    }
+
+    /**
+     * Get queued experience from SharedPreferences
+     */
+    private fun getQueuedExperience(): List<QueuedExperience> {
+        val json = sharedPreferences.getString(KEY_QUEUED_EXPERIENCE, null) ?: return emptyList()
+
+        return try {
+            val type = object : TypeToken<List<QueuedExperience>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Save queued experience to SharedPreferences
+     */
+    private fun saveQueuedExperience(queuedExperience: List<QueuedExperience>) {
+        val json = gson.toJson(queuedExperience)
+        sharedPreferences.edit()
+            .putString(KEY_QUEUED_EXPERIENCE, json)
             .apply()
     }
     
