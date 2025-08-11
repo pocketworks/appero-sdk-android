@@ -159,7 +159,101 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
     }
 
     /**
-     * Get queued feedback
+     * Submit experience points to the backend with retry logic
+     * 
+     * @param apiKey The API key for authentication
+     * @param clientId The client ID for identification
+     * @param value The experience points value
+     * @param context Additional context for the experience
+     * @param sentAt The timestamp when the experience was sent
+     * @return ExperienceSubmissionResult indicating success or failure
+     */
+    suspend fun submitExperience(
+        apiKey: String,
+        clientId: String,
+        value: Int,
+        context: String,
+        sentAt: String
+    ): ExperienceSubmissionResult {
+        
+        repeat(MAX_RETRY_ATTEMPTS) { attempt ->
+            try {
+                // Create RequestBody objects for multipart form data
+                val mediaType = "text/plain".toMediaTypeOrNull()
+                val apiKeyBody = apiKey.toRequestBody(mediaType)
+                val clientIdBody = clientId.toRequestBody(mediaType)
+                val valueBody = value.toString().toRequestBody(mediaType)
+                val contextBody = context.toRequestBody(mediaType)
+                val sentAtBody = sentAt.toRequestBody(mediaType)
+                
+                val response = try {
+                    // Use withTimeout to prevent hanging indefinitely
+                    withTimeout(30_000) { // 30 second timeout
+                        apiService.submitExperience(
+                            apiKey = apiKeyBody,
+                            clientId = clientIdBody,
+                            value = valueBody,
+                            context = contextBody,
+                            sentAt = sentAtBody
+                        )
+                    }
+                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                    throw e
+                }
+                
+                return if (response.isSuccessful) {
+                    val body = response.body()
+                    
+                    if (body == null) {
+                        return ExperienceSubmissionResult.Error("Server returned empty response")
+                    }
+                    
+                    if (body.status == "success") {
+                        ExperienceSubmissionResult.Success(body.message ?: "Experience submitted successfully")
+                    } else {
+                        ExperienceSubmissionResult.Error("Server returned error: ${body.error ?: body.status ?: "Unknown error"}")
+                    }
+                } else {
+                    val errorMessage = "HTTP ${response.code()}: ${response.message()}"
+                    if (attempt == MAX_RETRY_ATTEMPTS - 1) {
+                        ExperienceSubmissionResult.Error(errorMessage)
+                    } else {
+                        // Retry for server errors (5xx) and some client errors
+                        if (response.code() >= 500 || response.code() == 429) {
+                            delay(RETRY_DELAY_MS * (attempt + 1))
+                            return@repeat // Continue to next retry
+                        } else {
+                            // Don't retry for client errors like 400, 401, 403, 404
+                            return ExperienceSubmissionResult.Error(errorMessage)
+                        }
+                    }
+                }
+                
+            } catch (e: Exception) {
+                // Determine error message based on exception type
+                val errorMessage = when (e) {
+                    is kotlinx.coroutines.TimeoutCancellationException -> "Request timed out after 30 seconds"
+                    is java.net.SocketTimeoutException -> "Connection timed out: ${e.message}"
+                    is java.net.ConnectException -> "Could not connect to server: ${e.message}"
+                    is java.io.IOException -> "Network IO error: ${e.message}"
+                    else -> "Network error: ${e.message}"
+                }
+                
+                // Return error if final attempt, otherwise retry
+                if (attempt == MAX_RETRY_ATTEMPTS - 1) {
+                    return ExperienceSubmissionResult.Error(errorMessage)
+                } else {
+                    delay(RETRY_DELAY_MS * (attempt + 1))
+                }
+            }
+        }
+        
+        return ExperienceSubmissionResult.Error("Failed to submit experience after $MAX_RETRY_ATTEMPTS attempts")
+    }
+    
+    /**
+     * Generate current timestamp in ISO 8601 format
+     * @return Formatted timestamp string
      */
     fun getQueuedFeedback(): List<QueuedFeedback> {
         val json = sharedPreferences.getString(KEY_QUEUED_FEEDBACK, null) ?: return emptyList()
@@ -189,4 +283,12 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
 internal sealed class FeedbackSubmissionResult {
     data class Success(val message: String) : FeedbackSubmissionResult()
     data class Error(val message: String) : FeedbackSubmissionResult()
+}
+
+/**
+ * Result of experience submission
+ */
+internal sealed class ExperienceSubmissionResult {
+    data class Success(val message: String) : ExperienceSubmissionResult()
+    data class Error(val message: String) : ExperienceSubmissionResult()
 } 

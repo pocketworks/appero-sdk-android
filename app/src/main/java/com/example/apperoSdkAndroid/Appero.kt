@@ -26,6 +26,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.gms.tasks.Task
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -243,7 +245,7 @@ object Appero {
     fun requestPlayStoreReview(activity: Activity, onComplete: (() -> Unit)? = null) {
         val manager = ReviewManagerFactory.create(activity)
         val request = manager.requestReviewFlow()
-        request.addOnCompleteListener { task: Task<com.google.android.play.core.review.ReviewInfo> ->
+        request.addOnCompleteListener { task: Task<ReviewInfo> ->
             if (task.isSuccessful) {
                 val reviewInfo = task.result
                 val flow = manager.launchReviewFlow(activity, reviewInfo)
@@ -409,7 +411,31 @@ object Appero {
     }
 
     /**
-     * Setup network monitoring
+     * Initialize core SDK components
+     */
+    private fun initializeCoreComponents() {
+        // Initialize experience tracking with user session management
+        sharedPreferences?.let { prefs ->
+            context?.let { ctx ->
+                experienceTracker = ExperienceTracker(prefs, ctx)
+            }
+            
+            // Initialize offline feedback queue with retry timer
+            context?.let { ctx ->
+                offlineFeedbackQueue = OfflineFeedbackQueue(ctx, prefs)
+                // Set up network monitoring (similar to iOS NWPathMonitor)
+                setupNetworkMonitoring(ctx)
+                // Process any queued feedback from previous sessions
+                offlineFeedbackQueue?.processQueue()
+            }
+        }
+        
+        // Initialize networking components
+        feedbackRepository = FeedbackRepository()
+    }
+    
+    /**
+     * Setup network monitoring similar to iOS SDK's NWPathMonitor
      * Monitors network connectivity and triggers immediate queue processing when connectivity returns
      */
     private fun setupNetworkMonitoring(context: Context) {
