@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.UUID
 import kotlin.concurrent.timer
+import android.util.Log
 
 /**
  * Data model for queued feedback
@@ -18,19 +19,6 @@ internal data class QueuedFeedback(
     val clientId: String,
     val rating: Int,
     val feedback: String,
-    val timestamp: String,
-    val retryCount: Int = 0
-)
-
-/**
- * Data model for queued experience
- */
-internal data class QueuedExperience(
-    val id: String = UUID.randomUUID().toString(),
-    val apiKey: String,
-    val clientId: String,
-    val value: Int,
-    val context: String,
     val timestamp: String,
     val retryCount: Int = 0
 )
@@ -129,34 +117,6 @@ internal class OfflineFeedbackQueue(
     }
 
     /**
-     * Add experience points to the offline queue
-     * @param apiKey The API key for the experience
-     * @param clientId The client ID for the experience
-     * @param value The experience points value
-     * @param context Additional context for the experience
-     */
-    fun queueExperience(apiKey: String, clientId: String, value: Int, context: String) {
-        val queuedExperience = QueuedExperience(
-            apiKey = apiKey,
-            clientId = clientId,
-            value = value,
-            context = context,
-            timestamp = getCurrentTimestamp()
-        )
-        
-        val currentQueue = getQueuedExperience().toMutableList()
-        
-        // Prevent queue from growing too large
-        if (currentQueue.size >= MAX_QUEUE_SIZE) {
-            // Remove oldest items
-            currentQueue.removeAt(0)
-        }
-        
-        currentQueue.add(queuedExperience)
-        saveQueuedExperience(currentQueue)
-    }
-    
-    /**
      * Process all queued feedback submissions
      * Called when network connectivity is available or by periodic retry timer
      */
@@ -170,7 +130,7 @@ internal class OfflineFeedbackQueue(
             return // No items to process
         }
 
-        Log.i("[Appero] Processing ${queuedItems.size} queued feedback items")
+        Log.i("Appero", "Processing ${queuedItems.size} queued feedback items")
 
         scope.launch {
             val successfulSubmissions = mutableListOf<String>()

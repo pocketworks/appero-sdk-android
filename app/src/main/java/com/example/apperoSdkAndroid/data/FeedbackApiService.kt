@@ -42,7 +42,7 @@ internal interface FeedbackApiService {
      * @return Response indicating success or failure
      */
     @Multipart
-    @POST("api/experience")
+    @POST("api/experiences")
     suspend fun submitExperience(
         @Part("api_key") apiKey: RequestBody,
         @Part("client_id") clientId: RequestBody,

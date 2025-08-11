@@ -11,6 +11,8 @@ import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
+import kotlinx.coroutines.MainScope
+import com.example.apperoSdkAndroid.domain.FeedbackRepository
 
 @RunWith(MockitoJUnitRunner::class)
 class OfflineFeedbackQueueTest {
@@ -25,6 +27,8 @@ class OfflineFeedbackQueueTest {
     private lateinit var mockEditor: SharedPreferences.Editor
     
     private lateinit var offlineQueue: OfflineFeedbackQueue
+    private lateinit var feedbackRepository: FeedbackRepository
+    private val testScope = MainScope()
     
     @Before
     fun setup() {
@@ -35,8 +39,8 @@ class OfflineFeedbackQueueTest {
         
         // Mock no existing queued feedback
         `when`(mockSharedPreferences.getString("queued_feedback_list", null)).thenReturn(null)
-        
-        offlineQueue = OfflineFeedbackQueue(mockContext, mockSharedPreferences)
+        feedbackRepository = FeedbackRepository(mockSharedPreferences)
+        offlineQueue = OfflineFeedbackQueue(feedbackRepository, testScope)
     }
     
     @Test

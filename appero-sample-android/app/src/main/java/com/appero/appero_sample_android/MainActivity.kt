@@ -20,16 +20,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.appero.appero_sample_android.ui.theme.ApperoSampleAndroidTheme
-import com.example.appero_sdk_android.Appero
-import com.example.appero_sdk_android.Experience
-import com.example.appero_sdk_android.ui.CustomTheme
-import com.example.appero_sdk_android.ui.DarkTheme
-import com.example.appero_sdk_android.ui.DefaultTheme
-import com.example.appero_sdk_android.ui.FeedbackPromptConfig
-import com.example.appero_sdk_android.ui.LightTheme
-import com.example.appero_sdk_android.ui.FeedbackFlowConfig
 import android.app.Activity
-import androidx.compose.ui.platform.LocalContext
+import com.example.apperoSdkAndroid.Appero
+import com.example.apperoSdkAndroid.Experience
+import com.example.apperoSdkAndroid.ui.CustomTheme
+import com.example.apperoSdkAndroid.ui.DarkTheme
+import com.example.apperoSdkAndroid.ui.DefaultTheme
+import com.example.apperoSdkAndroid.ui.FeedbackFlowConfig
+import com.example.apperoSdkAndroid.ui.FeedbackPromptConfig
+import com.example.apperoSdkAndroid.ui.LightTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

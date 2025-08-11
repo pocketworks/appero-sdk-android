@@ -20,14 +20,13 @@ import com.example.apperoSdkAndroid.ui.FeedbackFlowConfig
 import com.example.apperoSdkAndroid.ui.FeedbackPrompt
 import com.example.apperoSdkAndroid.ui.FeedbackPromptConfig
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.google.android.play.core.tasks.Task
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.gms.tasks.Task
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import com.google.android.play.core.review.ReviewInfo
-import com.google.android.gms.tasks.Task
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -408,30 +407,6 @@ object Appero {
      */
     internal fun markFeedbackSubmitted() {
         experienceTracker?.markFeedbackSubmitted()
-    }
-
-    /**
-     * Initialize core SDK components
-     */
-    private fun initializeCoreComponents() {
-        // Initialize experience tracking with user session management
-        sharedPreferences?.let { prefs ->
-            context?.let { ctx ->
-                experienceTracker = ExperienceTracker(prefs, ctx)
-            }
-            
-            // Initialize offline feedback queue with retry timer
-            context?.let { ctx ->
-                offlineFeedbackQueue = OfflineFeedbackQueue(ctx, prefs)
-                // Set up network monitoring (similar to iOS NWPathMonitor)
-                setupNetworkMonitoring(ctx)
-                // Process any queued feedback from previous sessions
-                offlineFeedbackQueue?.processQueue()
-            }
-        }
-        
-        // Initialize networking components
-        feedbackRepository = FeedbackRepository()
     }
     
     /**
