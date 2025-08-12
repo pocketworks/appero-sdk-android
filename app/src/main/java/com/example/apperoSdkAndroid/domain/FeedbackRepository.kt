@@ -3,7 +3,7 @@ package com.example.apperoSdkAndroid.domain
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.example.apperoSdkAndroid.QueuedFeedback
-import com.example.apperoSdkAndroid.data.FeedbackApiService
+import com.example.apperoSdkAndroid.data.ApperoApiService
 import com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp
 import com.example.apperoSdkAndroid.utils.HttpStatusCode
 import com.google.gson.Gson
@@ -12,15 +12,10 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
-import java.util.concurrent.TimeUnit
 
 /**
  * Repository for handling feedback submission to the Appero backend
@@ -28,39 +23,14 @@ import java.util.concurrent.TimeUnit
 internal class FeedbackRepository(private val sharedPreferences: SharedPreferences) {
 
     companion object {
-        private const val BASE_URL = "https://app.appero.co.uk/"
         private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
         private const val MAX_RETRY_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 1000L
         private const val TIMEOUT = 30L
     }
 
-    private val apiService: FeedbackApiService
+    private val apiService = ApperoApiService.feedbackApi
     private val gson = Gson()
-
-    init {
-        // Create HTTP client with logging for debugging
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        val httpClient = OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .connectTimeout(TIMEOUT, TimeUnit.SECONDS)
-            .readTimeout(TIMEOUT, TimeUnit.SECONDS)
-            .writeTimeout(TIMEOUT, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(true)
-            .build()
-
-        // Create Retrofit instance
-        val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(httpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        apiService = retrofit.create(FeedbackApiService::class.java)
-    }
 
     /**
      * Submit feedback to the backend with retry logic
