@@ -9,6 +9,7 @@ import android.net.NetworkCapabilities
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.example.apperoSdkAndroid.data.ApperoApiService
 import com.example.apperoSdkAndroid.domain.FeedbackRepository
 import com.example.apperoSdkAndroid.domain.FeedbackSubmissionResult
 import com.example.apperoSdkAndroid.domain.ClientRepository
@@ -85,12 +86,24 @@ object Appero {
     fun start(context: Context, apiKey: String, clientId: String?) {
         val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-        experienceTracker = ExperienceTracker(UserRepository(sharedPreferences))
-        feedbackRepository = FeedbackRepository(sharedPreferences).also {
+        initializeClient(apiKey, clientId, sharedPreferences)
+        
+        // Create API service with authentication credentials from the initialized client
+        val apiService = ApperoApiService.create(
+            apiKey = getApiKey(),
+            clientId = getClientId()
+        )
+        
+        feedbackRepository = FeedbackRepository(sharedPreferences, apiService).also {
             offlineFeedbackQueue = OfflineFeedbackQueue(it, scope)
         }
+        
+        experienceTracker = ExperienceTracker(
+            UserRepository(sharedPreferences),
+            feedbackRepository!!,
+            scope
+        )
 
-        initializeClient(apiKey, clientId, sharedPreferences)
         setupNetworkMonitoring(context)
 
         isInitialized = true
@@ -360,11 +373,7 @@ object Appero {
                         onFeedbackSubmissionResult?.invoke(false, result.message)
 
                         // ✅ Queue for offline retry
-                        getApiKey()?.let { key ->
-                            getClientId()?.let { id ->
-                                offlineFeedbackQueue?.queueFeedback(key, id, rating, feedback)
-                            }
-                        }
+                        offlineFeedbackQueue?.queueFeedback(rating, feedback)
                     }
                 }
                 onFeedbackSubmissionResult = null
@@ -377,12 +386,8 @@ object Appero {
      */
     private suspend fun submitFeedbackToBackend(rating: Int, feedback: String): FeedbackSubmissionResult {
         val repository = feedbackRepository ?: return FeedbackSubmissionResult.Error("Repository not initialized")
-        val apiKey = getApiKey() ?: return FeedbackSubmissionResult.Error("API key not available")
-        val clientId = getClientId() ?: return FeedbackSubmissionResult.Error("Client ID not available")
 
         return repository.submitFeedback(
-            apiKey = apiKey,
-            clientId = clientId,
             rating = rating,
             feedback = feedback
         )

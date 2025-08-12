@@ -1,6 +1,10 @@
 package com.example.apperoSdkAndroid
 
+import com.example.apperoSdkAndroid.domain.FeedbackRepository
 import com.example.apperoSdkAndroid.domain.UserRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Experience tracking state for debugging and monitoring
@@ -18,7 +22,9 @@ data class ExperienceState(
  * Uses UserSessionManager for per-user data management
  */
 internal class ExperienceTracker(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val feedbackRepository: FeedbackRepository,
+    private val scope: CoroutineScope
 ) {
 
     /**
@@ -29,6 +35,9 @@ internal class ExperienceTracker(
         val currentPoints = userRepository.getExperiencePoints()
         val newPoints = currentPoints + experience.points
         userRepository.setExperiencePoints(newPoints)
+        
+        // Submit experience to backend
+        submitExperienceToBackend(experience.points, experience.name)
     }
     
     /**
@@ -39,6 +48,36 @@ internal class ExperienceTracker(
         val currentPoints = userRepository.getExperiencePoints()
         val newPoints = currentPoints + points
         userRepository.setExperiencePoints(newPoints)
+        
+        // Submit experience to backend
+        submitExperienceToBackend(points, "custom")
+    }
+    
+    /**
+     * Submit experience to backend asynchronously
+     */
+    private fun submitExperienceToBackend(value: Int, context: String) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val result = feedbackRepository.submitExperience(
+                    value = value,
+                    context = context,
+                    sentAt = com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp()
+                )
+                
+                when (result) {
+                    is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Success -> {
+                        // Experience submitted successfully
+                    }
+                    is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Error -> {
+                        // Log error but don't fail the local tracking
+                        android.util.Log.w("Appero", "Failed to submit experience: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Appero", "Error submitting experience", e)
+            }
+        }
     }
     
     /**

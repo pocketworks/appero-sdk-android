@@ -20,7 +20,10 @@ import java.net.SocketTimeoutException
 /**
  * Repository for handling feedback submission to the Appero backend
  */
-internal class FeedbackRepository(private val sharedPreferences: SharedPreferences) {
+internal class FeedbackRepository(
+    private val sharedPreferences: SharedPreferences,
+    private val apiService: ApperoApiService
+) {
 
     companion object {
         private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
@@ -29,21 +32,17 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
         private const val TIMEOUT = 30L
     }
 
-    private val apiService = ApperoApiService.feedbackApi
     private val gson = Gson()
 
     /**
      * Submit feedback to the backend with retry logic
+     * API key and client ID are automatically added by the interceptor
      *
-     * @param apiKey The API key for authentication
-     * @param clientId The client ID for identification
      * @param rating The rating (1-5)
      * @param feedback The feedback text
      * @return FeedbackSubmissionResult indicating success or failure
      */
     suspend fun submitFeedback(
-        apiKey: String,
-        clientId: String,
         rating: Int,
         feedback: String
     ): FeedbackSubmissionResult {
@@ -52,8 +51,6 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
             try {
                 // Create RequestBody objects for multipart form data (raw values, no quotes)
                 val mediaType = "text/plain".toMediaTypeOrNull()
-                val apiKeyBody = apiKey.toRequestBody(mediaType)
-                val clientIdBody = clientId.toRequestBody(mediaType)
                 val ratingBody = rating.toString().toRequestBody(mediaType)
                 val feedbackBody = feedback.toRequestBody(mediaType)
                 val sentAtBody = getCurrentTimestamp().toRequestBody(mediaType)
@@ -62,9 +59,7 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
                     // Use withTimeout to prevent hanging indefinitely
                     @Suppress("detekt:MagicNumber")
                     withTimeout(TIMEOUT * 1000) {
-                        apiService.submitFeedback(
-                            apiKey = apiKeyBody,
-                            clientId = clientIdBody,
+                        apiService.feedbackApi.submitFeedback(
                             rating = ratingBody,
                             feedback = feedbackBody,
                             sentAt = sentAtBody
@@ -130,17 +125,14 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
 
     /**
      * Submit experience points to the backend with retry logic
+     * API key and client ID are automatically added by the interceptor
      * 
-     * @param apiKey The API key for authentication
-     * @param clientId The client ID for identification
      * @param value The experience points value
      * @param context Additional context for the experience
      * @param sentAt The timestamp when the experience was sent
      * @return ExperienceSubmissionResult indicating success or failure
      */
     suspend fun submitExperience(
-        apiKey: String,
-        clientId: String,
         value: Int,
         context: String,
         sentAt: String
@@ -150,8 +142,6 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
             try {
                 // Create RequestBody objects for multipart form data
                 val mediaType = "text/plain".toMediaTypeOrNull()
-                val apiKeyBody = apiKey.toRequestBody(mediaType)
-                val clientIdBody = clientId.toRequestBody(mediaType)
                 val valueBody = value.toString().toRequestBody(mediaType)
                 val contextBody = context.toRequestBody(mediaType)
                 val sentAtBody = sentAt.toRequestBody(mediaType)
@@ -159,9 +149,7 @@ internal class FeedbackRepository(private val sharedPreferences: SharedPreferenc
                 val response = try {
                     // Use withTimeout to prevent hanging indefinitely
                     withTimeout(30_000) { // 30 second timeout
-                        apiService.submitExperience(
-                            apiKey = apiKeyBody,
-                            clientId = clientIdBody,
+                        apiService.feedbackApi.submitExperience(
                             value = valueBody,
                             context = contextBody,
                             sentAt = sentAtBody

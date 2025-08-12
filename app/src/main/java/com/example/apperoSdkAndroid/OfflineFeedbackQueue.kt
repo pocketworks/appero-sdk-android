@@ -15,8 +15,6 @@ import android.util.Log
  */
 internal data class QueuedFeedback(
     val id: String = UUID.randomUUID().toString(),
-    val apiKey: String,
-    val clientId: String,
     val rating: Int,
     val feedback: String,
     val timestamp: String,
@@ -90,15 +88,11 @@ internal class OfflineFeedbackQueue(
 
     /**
      * Add feedback to the offline queue
-     * @param apiKey The API key for the feedback
-     * @param clientId The client ID for the feedback
      * @param rating The rating (1-5)
      * @param feedback The feedback text
      */
-    fun queueFeedback(apiKey: String, clientId: String, rating: Int, feedback: String) {
+    fun queueFeedback(rating: Int, feedback: String) {
         val queuedFeedback = QueuedFeedback(
-            apiKey = apiKey,
-            clientId = clientId,
             rating = rating,
             feedback = feedback,
             timestamp = getCurrentTimestamp()
@@ -139,8 +133,6 @@ internal class OfflineFeedbackQueue(
             for (item in queuedItems) {
                 try {
                     val result = feedbackRepository.submitFeedback(
-                        apiKey = item.apiKey,
-                        clientId = item.clientId,
                         rating = item.rating,
                         feedback = item.feedback
                     )

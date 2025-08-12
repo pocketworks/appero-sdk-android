@@ -13,19 +13,16 @@ internal interface FeedbackApiService {
     
     /**
      * Submit feedback to the Appero backend
+     * API key and client ID are automatically added by the interceptor
      * 
-     * @param apiKey The API key for authentication
-     * @param clientId The client ID for identification
      * @param rating The rating (1-5)
      * @param feedback The feedback text
      * @param sentAt The timestamp in ISO 8601 format
      * @return Response indicating success or failure
      */
     @Multipart
-    @POST("api/feedback")
+    @POST("api/v1/feedback")
     suspend fun submitFeedback(
-        @Part("api_key") apiKey: RequestBody,
-        @Part("client_id") clientId: RequestBody,
         @Part("rating") rating: RequestBody,
         @Part("feedback") feedback: RequestBody,
         @Part("sent_at") sentAt: RequestBody
@@ -33,19 +30,16 @@ internal interface FeedbackApiService {
     
     /**
      * Submit experience points to the Appero backend
+     * API key and client ID are automatically added by the interceptor
      * 
-     * @param apiKey The API key for authentication
-     * @param clientId The client ID for identification
      * @param value The experience points value
      * @param context Additional context for the experience
      * @param sentAt The timestamp in ISO 8601 format
      * @return Response indicating success or failure
      */
     @Multipart
-    @POST("api/experiences")
+    @POST("api/v1/experiences")
     suspend fun submitExperience(
-        @Part("api_key") apiKey: RequestBody,
-        @Part("client_id") clientId: RequestBody,
         @Part("value") value: RequestBody,
         @Part("context") context: RequestBody,
         @Part("sent_at") sentAt: RequestBody

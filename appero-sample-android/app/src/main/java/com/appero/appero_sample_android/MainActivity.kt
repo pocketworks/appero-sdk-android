@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
         // Initialize the Appero SDK
         Appero.start(
             context = this,
-            apiKey = "9d7d6790-7d9b-42ab-8f08-b5d07e8d9dc0", // Updated API key to match curl
+            apiKey = "Cu8i7jOIm1cN2IhDO3iqV2cLSzcdI9/zUaws7+d19Rs", // Updated API key to match curl
             clientId = "beeec9b8-3908-4605-9b45-faded129d41e" // Sample client ID
         )
         
