@@ -72,8 +72,14 @@ internal class ExperienceTracker(
                     submitText = "Send feedback"
                 )
                 
-                // Show feedback prompt using Appero's UI system
-                com.example.apperoSdkAndroid.Appero.showFeedbackPrompt(config)
+                // Determine initial step based on flow type
+                val initialStep = when (flowType) {
+                    "frustration" -> com.example.apperoSdkAndroid.ui.FeedbackStep.Frustration
+                    else -> com.example.apperoSdkAndroid.ui.FeedbackStep.Rating
+                }
+                
+                // Show feedback prompt using Appero's UI system with the correct initial step
+                com.example.apperoSdkAndroid.Appero.showFeedbackPrompt(config, initialStep)
                 
             } catch (e: Exception) {
                 android.util.Log.e("Appero", "Error triggering feedback prompt", e)

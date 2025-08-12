@@ -85,6 +85,7 @@ fun rememberImeState(): State<Boolean> {
 // Add sealed class for feedback steps
 sealed class FeedbackStep {
     object Rating : FeedbackStep()
+    object Frustration : FeedbackStep()  // New step for frustration flow
     object RateUs : FeedbackStep()
     object ThankYou : FeedbackStep()
 }
@@ -105,13 +106,21 @@ fun FeedbackPrompt(
     modifier: Modifier = Modifier,
     flowConfig: FeedbackFlowConfig = FeedbackFlowConfig(),
     reviewPromptThreshold: Int = 4,
-    onRequestReview: () -> Unit = {}
+    onRequestReview: () -> Unit = {},
+    initialStep: FeedbackStep? = null
 ) {
     var selectedRating by remember { mutableIntStateOf(0) }
     var feedbackText by remember { mutableStateOf("") }
-    var currentStep by remember { mutableStateOf<FeedbackStep>(FeedbackStep.Rating) }
+    var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
     val imeState = rememberImeState()
     val scrollState = rememberScrollState()
+
+    // Update current step when initialStep changes
+    LaunchedEffect(initialStep) {
+        if (initialStep != null) {
+            currentStep = initialStep
+        }
+    }
 
     if (visible) {
         Column(
@@ -276,6 +285,132 @@ fun FeedbackPrompt(
                                         color = theme.buttonTextColor
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    is FeedbackStep.Frustration -> {
+                        // --- Step 1b: Frustration Flow UI (feedback only, no rating) ---
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Close button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(
+                                    onClick = onDismiss,
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = if (theme.secondaryTextColor != Color.Unspecified)
+                                            theme.secondaryTextColor
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = config.title,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center,
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = config.subtitle,
+                                fontSize = 16.sp,
+                                color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            OutlinedTextField(
+                                value = feedbackText,
+                                onValueChange = {
+                                    if (it.length <= config.maxCharacters) {
+                                        feedbackText = it
+                                    }
+                                },
+                                placeholder = {
+                                    Text(
+                                        text = config.placeholder,
+                                        color = if (theme.secondaryTextColor != Color.Unspecified)
+                                            theme.secondaryTextColor
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp),
+                                keyboardOptions = KeyboardOptions(
+                                    capitalization = KeyboardCapitalization.Sentences
+                                ),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = theme.textColor,
+                                    unfocusedTextColor = theme.textColor,
+                                    focusedBorderColor = theme.accentColor,
+                                    unfocusedBorderColor = theme.dividerColor
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                maxLines = 4
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Text(
+                                    text = "${feedbackText.length}/${config.maxCharacters}",
+                                    fontSize = 12.sp,
+                                    color = if (theme.secondaryTextColor != Color.Unspecified)
+                                        theme.secondaryTextColor
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            // Primary CTA - Send Feedback
+                            Button(
+                                onClick = {
+                                    onSubmit(0, feedbackText) // No rating for frustration flow
+                                    currentStep = FeedbackStep.ThankYou
+                                },
+                                enabled = feedbackText.isNotBlank(),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
+                            ) {
+                                Text(
+                                    text = config.submitText,
+                                    color = theme.buttonTextColor
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            // Secondary CTA - Not Now
+                            Button(
+                                onClick = onDismiss,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                            ) {
+                                Text(
+                                    text = "Not now",
+                                    color = if (theme.textColor != Color.Unspecified) theme.textColor
+                                    else MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }

@@ -73,6 +73,7 @@ object Appero {
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
     private var _feedbackPromptConfig: MutableState<FeedbackPromptConfig?> = mutableStateOf(null)
+    private var _initialFeedbackStep: MutableState<com.example.apperoSdkAndroid.ui.FeedbackStep?> = mutableStateOf(null)
 
     // Callback for feedback submission results
     private var onFeedbackSubmissionResult: ((Boolean, String) -> Unit)? = null
@@ -210,6 +211,27 @@ object Appero {
     ) {
         requireInitialized()
         _feedbackPromptConfig.value = config
+        _initialFeedbackStep.value = null
+        _showFeedbackPrompt.value = true
+        onFeedbackSubmissionResult = onResult
+    }
+
+    /**
+     * Show the feedback prompt UI with a specific initial step
+     * This will display the modal bottom sheet starting from the specified step
+     *
+     * @param config Configuration object containing all text content for the prompt
+     * @param initialStep The initial step to show (e.g., FeedbackStep.Frustration for frustration flow)
+     * @param onResult Optional callback to receive feedback submission results
+     */
+    fun showFeedbackPrompt(
+        config: FeedbackPromptConfig,
+        initialStep: com.example.apperoSdkAndroid.ui.FeedbackStep,
+        onResult: ((success: Boolean, message: String) -> Unit)? = null
+    ) {
+        requireInitialized()
+        _feedbackPromptConfig.value = config
+        _initialFeedbackStep.value = initialStep
         _showFeedbackPrompt.value = true
         onFeedbackSubmissionResult = onResult
     }
@@ -233,6 +255,7 @@ object Appero {
     ) {
         requireInitialized()
         val currentConfig = _feedbackPromptConfig.value ?: config
+        val initialStep = _initialFeedbackStep.value
         FeedbackPrompt(
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
@@ -245,11 +268,13 @@ object Appero {
             onDismiss = {
                 _showFeedbackPrompt.value = false
                 _feedbackPromptConfig.value = null
+                _initialFeedbackStep.value = null
                 onFeedbackSubmissionResult = null
             },
             flowConfig = flowConfig,
             reviewPromptThreshold = reviewPromptThreshold,
-            onRequestReview = onRequestReview
+            onRequestReview = onRequestReview,
+            initialStep = initialStep
         )
     }
 
