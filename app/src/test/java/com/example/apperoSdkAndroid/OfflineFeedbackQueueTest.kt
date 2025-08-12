@@ -1,13 +1,19 @@
-package com.example.appero_sdk_android
+package com.example.apperoSdkAndroid
 
 import android.content.Context
 import android.content.SharedPreferences
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
 import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
+import kotlinx.coroutines.MainScope
+import com.example.apperoSdkAndroid.data.ApperoApiService
+import com.example.apperoSdkAndroid.domain.FeedbackRepository
 
 @RunWith(MockitoJUnitRunner::class)
 class OfflineFeedbackQueueTest {
@@ -22,6 +28,8 @@ class OfflineFeedbackQueueTest {
     private lateinit var mockEditor: SharedPreferences.Editor
     
     private lateinit var offlineQueue: OfflineFeedbackQueue
+    private lateinit var feedbackRepository: FeedbackRepository
+    private val testScope = MainScope()
     
     @Before
     fun setup() {
@@ -33,19 +41,20 @@ class OfflineFeedbackQueueTest {
         // Mock no existing queued feedback
         `when`(mockSharedPreferences.getString("queued_feedback_list", null)).thenReturn(null)
         
-        offlineQueue = OfflineFeedbackQueue(mockContext, mockSharedPreferences)
+        // Create a mock API service for testing
+        val mockApiService = ApperoApiService.create("test-api-key", "test-client-id")
+        feedbackRepository = FeedbackRepository(mockSharedPreferences, mockApiService)
+        offlineQueue = OfflineFeedbackQueue(feedbackRepository, testScope)
     }
     
     @Test
     fun `queueFeedback should store feedback locally`() {
         // Given
-        val apiKey = "test-api-key"
-        val clientId = "test-client-id"
         val rating = 5
         val feedback = "Great app!"
         
         // When
-        offlineQueue.queueFeedback(apiKey, clientId, rating, feedback)
+        offlineQueue.queueFeedback(rating, feedback)
         
         // Then
         verify(mockEditor).putString(eq("queued_feedback_list"), anyString())
@@ -78,7 +87,7 @@ class OfflineFeedbackQueueTest {
         `when`(mockSharedPreferences.getString("queued_feedback_list", null)).thenReturn(largeQueueJson)
         
         // When
-        offlineQueue.queueFeedback("api", "client", 5, "test")
+        offlineQueue.queueFeedback(5, "test")
         
         // Then - verify it was saved (specific logic would depend on queue size management)
         verify(mockEditor).putString(eq("queued_feedback_list"), anyString())

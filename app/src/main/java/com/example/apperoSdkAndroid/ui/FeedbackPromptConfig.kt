@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android.ui
+package com.example.apperoSdkAndroid.ui
 
 /**
  * Configuration for the feedback prompt UI

@@ -1,4 +1,4 @@
-package com.example.appero_sdk_android
+package com.example.apperoSdkAndroid
 
 /**
  * Interface for integrating third-party analytics with Appero SDK

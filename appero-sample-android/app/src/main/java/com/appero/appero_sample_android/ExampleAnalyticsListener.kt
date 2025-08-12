@@ -1,7 +1,7 @@
 package com.appero.appero_sample_android
 
 import android.util.Log
-import com.example.appero_sdk_android.ApperoAnalyticsListener
+import com.example.apperoSdkAndroid.ApperoAnalyticsListener
 
 /**
  * Example implementation of ApperoAnalyticsListener

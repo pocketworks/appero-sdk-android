@@ -1,6 +1,9 @@
+import io.gitlab.arturbosch.detekt.Detekt
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android") version "1.9.0"
+    id("io.gitlab.arturbosch.detekt") version("1.23.8")
     `maven-publish`
 }
 
@@ -20,19 +23,37 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
     }
+
+    tasks.withType<Detekt>().configureEach {
+        reports {
+            xml.required.set(false)
+            html.required.set(false)
+            sarif.required.set(false)
+            md.required.set(true)
+        }
+    }
+}
+
+detekt {
+    toolVersion = "1.23.8"
+    config.setFrom(file("../config/detekt/detekt.yml"))
 }
 
 afterEvaluate {
