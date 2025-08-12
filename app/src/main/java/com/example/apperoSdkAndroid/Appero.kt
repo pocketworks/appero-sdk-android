@@ -11,6 +11,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.example.apperoSdkAndroid.data.ApperoApiService
 import com.example.apperoSdkAndroid.domain.FeedbackRepository
+import com.example.apperoSdkAndroid.domain.ExperienceRepository
 import com.example.apperoSdkAndroid.domain.FeedbackSubmissionResult
 import com.example.apperoSdkAndroid.domain.ClientRepository
 import com.example.apperoSdkAndroid.domain.UserRepository
@@ -44,6 +45,7 @@ object Appero {
 
     private var experienceTracker: ExperienceTracker? = null
     private var feedbackRepository: FeedbackRepository? = null
+    private var experienceRepository: ExperienceRepository? = null
     private var offlineFeedbackQueue: OfflineFeedbackQueue? = null
 
     private var apiKey: String? = null
@@ -98,9 +100,11 @@ object Appero {
             offlineFeedbackQueue = OfflineFeedbackQueue(it, scope)
         }
         
+        experienceRepository = ExperienceRepository(sharedPreferences, apiService)
+        
         experienceTracker = ExperienceTracker(
             UserRepository(sharedPreferences),
-            feedbackRepository!!,
+            experienceRepository!!,
             scope
         )
 

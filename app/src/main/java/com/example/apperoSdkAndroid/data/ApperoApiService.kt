@@ -72,6 +72,13 @@ internal class ApperoApiService private constructor(
         retrofit.create(FeedbackApiService::class.java)
     }
     
+    /**
+     * Get the experience API service
+     */
+    val experienceApi: ExperienceApiService by lazy {
+        retrofit.create(ExperienceApiService::class.java)
+    }
+    
     // Future API services can be added here:
     // val userApi: UserApiService by lazy { retrofit.create(UserApiService::class.java) }
     // val analyticsApi: AnalyticsApiService by lazy { retrofit.create(AnalyticsApiService::class.java) }

@@ -1,38 +1,33 @@
 package com.example.apperoSdkAndroid
 
 /**
- * Experience levels using Likert scale for user experience tracking
- * Each level has an associated point value that contributes to the overall experience score
+ * Experience levels using 5-point Likert scale for user experience tracking
+ * Each level represents user satisfaction and is sent directly to the API
  */
 @Suppress("detekt:MagicNumber")
-enum class Experience(val points: Int) {
+enum class Experience(val rating: Int) {
     /**
-     * Very positive experience - adds 5 points
-     * Use for: Successful completion of important actions, positive outcomes
+     * Very Negative (1) - e.g., "500 error", critical bugs, system failures
      */
-    VERY_POSITIVE(5),
+    VERY_NEGATIVE(1),
     
     /**
-     * Positive experience - adds 4 points
-     * Use for: Minor successes, smooth interactions
-     */
-    POSITIVE(1),
-    
-    /**
-     * Neutral experience - adds 3 points
-     * Use for: Standard interactions with no particular outcome
-     */
-    NEUTRAL(3),
-    
-    /**
-     * Negative experience - adds 2 point
-     * Use for: Minor issues, friction in user flow
+     * Negative (2) - e.g., slow performance, confusing UI
      */
     NEGATIVE(2),
     
     /**
-     * Very negative experience - adds 1 point
-     * Use for: Major issues, failed important actions, errors
+     * Neutral (3) - e.g., average experience, neither good nor bad
      */
-    VERY_NEGATIVE(1)
+    NEUTRAL(3),
+    
+    /**
+     * Positive (4) - e.g., smooth flow, good performance
+     */
+    POSITIVE(4),
+    
+    /**
+     * Very Positive (5) - e.g., "user started subscription", excellent experience
+     */
+    VERY_POSITIVE(5)
 } 

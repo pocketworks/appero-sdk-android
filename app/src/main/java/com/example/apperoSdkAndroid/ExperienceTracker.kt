@@ -1,6 +1,6 @@
 package com.example.apperoSdkAndroid
 
-import com.example.apperoSdkAndroid.domain.FeedbackRepository
+import com.example.apperoSdkAndroid.domain.ExperienceRepository
 import com.example.apperoSdkAndroid.domain.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +23,7 @@ data class ExperienceState(
  */
 internal class ExperienceTracker(
     private val userRepository: UserRepository,
-    private val feedbackRepository: FeedbackRepository,
+    private val experienceRepository: ExperienceRepository,
     private val scope: CoroutineScope
 ) {
 
@@ -33,11 +33,11 @@ internal class ExperienceTracker(
      */
     fun log(experience: Experience) {
         val currentPoints = userRepository.getExperiencePoints()
-        val newPoints = currentPoints + experience.points
+        val newPoints = currentPoints + experience.rating
         userRepository.setExperiencePoints(newPoints)
         
         // Submit experience to backend
-        submitExperienceToBackend(experience.points, experience.name)
+        submitExperienceToBackend(experience.rating, experience.name)
     }
     
     /**
@@ -59,20 +59,28 @@ internal class ExperienceTracker(
     private fun submitExperienceToBackend(value: Int, context: String) {
         scope.launch(Dispatchers.IO) {
             try {
-                val result = feedbackRepository.submitExperience(
-                    value = value,
-                    context = context,
-                    sentAt = com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp()
-                )
+                // Get client ID from Appero singleton
+                val clientId = com.example.apperoSdkAndroid.Appero.getClientId()
                 
-                when (result) {
-                    is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Success -> {
-                        // Experience submitted successfully
+                if (clientId != null) {
+                    val result = experienceRepository.submitExperience(
+                        clientId = clientId,
+                        value = value,
+                        context = context,
+                        sentAt = com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp()
+                    )
+                    
+                    when (result) {
+                        is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Success -> {
+                            // Experience submitted successfully
+                        }
+                        is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Error -> {
+                            // Log error but don't fail the local tracking
+                            android.util.Log.w("Appero", "Failed to submit experience: ${result.message}")
+                        }
                     }
-                    is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Error -> {
-                        // Log error but don't fail the local tracking
-                        android.util.Log.w("Appero", "Failed to submit experience: ${result.message}")
-                    }
+                } else {
+                    android.util.Log.w("Appero", "Cannot submit experience: client ID not available")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("Appero", "Error submitting experience", e)

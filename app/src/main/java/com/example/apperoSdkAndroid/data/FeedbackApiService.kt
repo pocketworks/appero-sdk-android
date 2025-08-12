@@ -28,22 +28,7 @@ internal interface FeedbackApiService {
         @Part("sent_at") sentAt: RequestBody
     ): Response<FeedbackResponse>
     
-    /**
-     * Submit experience points to the Appero backend
-     * API key and client ID are automatically added by the interceptor
-     * 
-     * @param value The experience points value
-     * @param context Additional context for the experience
-     * @param sentAt The timestamp in ISO 8601 format
-     * @return Response indicating success or failure
-     */
-    @Multipart
-    @POST("api/v1/experiences")
-    suspend fun submitExperience(
-        @Part("value") value: RequestBody,
-        @Part("context") context: RequestBody,
-        @Part("sent_at") sentAt: RequestBody
-    ): Response<FeedbackResponse>
+
 }
 
 /**
