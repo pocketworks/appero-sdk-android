@@ -360,9 +360,9 @@ object Appero {
                         onFeedbackSubmissionResult?.invoke(false, result.message)
 
                         // ✅ Queue for offline retry
-                        apiKey?.let { key ->
-                            clientId?.let { id ->
-                                offlineFeedbackQueue?.  queueFeedback(key, id, rating, feedback)
+                        getApiKey()?.let { key ->
+                            getClientId()?.let { id ->
+                                offlineFeedbackQueue?.queueFeedback(key, id, rating, feedback)
                             }
                         }
                     }
@@ -392,14 +392,14 @@ object Appero {
      * Get the current API key (for internal use)
      */
     internal fun getApiKey(): String? {
-        return apiKey
+        return clientRepository?.getApiKey()
     }
 
     /**
      * Get the current client ID (for internal use)
      */
     internal fun getClientId(): String? {
-        return clientId
+        return clientRepository?.getClientId()
     }
 
     /**
