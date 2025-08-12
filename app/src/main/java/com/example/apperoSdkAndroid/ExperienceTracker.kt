@@ -54,6 +54,34 @@ internal class ExperienceTracker(
     }
     
     /**
+     * Trigger feedback prompt with server-provided configuration
+     */
+    private fun triggerFeedbackPrompt(
+        feedbackUI: com.example.apperoSdkAndroid.data.FeedbackUI?,
+        flowType: String?
+    ) {
+        // Switch to main thread to show UI
+        scope.launch(Dispatchers.Main) {
+            try {
+                // Create feedback prompt configuration from server response
+                val config = com.example.apperoSdkAndroid.ui.FeedbackPromptConfig(
+                    title = feedbackUI?.title ?: "How was your experience?",
+                    subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
+                    followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
+                    placeholder = "Share your thoughts here",
+                    submitText = "Send feedback"
+                )
+                
+                // Show feedback prompt using Appero's UI system
+                com.example.apperoSdkAndroid.Appero.showFeedbackPrompt(config)
+                
+            } catch (e: Exception) {
+                android.util.Log.e("Appero", "Error triggering feedback prompt", e)
+            }
+        }
+    }
+    
+    /**
      * Submit experience to backend asynchronously
      */
     private fun submitExperienceToBackend(value: Int, context: String) {
@@ -73,6 +101,12 @@ internal class ExperienceTracker(
                     when (result) {
                         is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Success -> {
                             // Experience submitted successfully
+                            
+                            // Check if we should show feedback prompt
+                            if (result.shouldShowFeedback) {
+                                // Trigger feedback prompt with server-provided UI configuration
+                                triggerFeedbackPrompt(result.feedbackUI, result.flowType)
+                            }
                         }
                         is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Error -> {
                             // Log error but don't fail the local tracking

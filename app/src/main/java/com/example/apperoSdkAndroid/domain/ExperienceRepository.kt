@@ -2,6 +2,7 @@ package com.example.apperoSdkAndroid.domain
 
 import android.content.SharedPreferences
 import com.example.apperoSdkAndroid.data.ApperoApiService
+import com.example.apperoSdkAndroid.data.ExperienceResponse
 import com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp
 import com.example.apperoSdkAndroid.utils.HttpStatusCode
 import kotlinx.coroutines.TimeoutCancellationException
@@ -75,7 +76,12 @@ internal class ExperienceRepository(
                     }
                     
                     if (body.status == "success") {
-                        ExperienceSubmissionResult.Success(body.message ?: "Experience submitted successfully")
+                        ExperienceSubmissionResult.Success(
+                            message = body.message ?: "Experience submitted successfully",
+                            shouldShowFeedback = body.should_show_feedback,
+                            feedbackUI = body.feedback_ui,
+                            flowType = body.flow_type
+                        )
                     } else {
                         ExperienceSubmissionResult.Error("Server returned error: ${body.error ?: body.status ?: "Unknown error"}")
                     }
@@ -124,6 +130,11 @@ internal class ExperienceRepository(
  * Result of experience submission
  */
 internal sealed class ExperienceSubmissionResult {
-    data class Success(val message: String) : ExperienceSubmissionResult()
+    data class Success(
+        val message: String,
+        val shouldShowFeedback: Boolean = false,
+        val feedbackUI: com.example.apperoSdkAndroid.data.FeedbackUI? = null,
+        val flowType: String? = null
+    ) : ExperienceSubmissionResult()
     data class Error(val message: String) : ExperienceSubmissionResult()
 } 

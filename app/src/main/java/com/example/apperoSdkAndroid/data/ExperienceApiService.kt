@@ -28,5 +28,5 @@ internal interface ExperienceApiService {
         @Part("value") value: RequestBody,
         @Part("context") context: RequestBody,
         @Part("sent_at") sentAt: RequestBody
-    ): Response<FeedbackResponse>
+    ): Response<ExperienceResponse>
 } 
