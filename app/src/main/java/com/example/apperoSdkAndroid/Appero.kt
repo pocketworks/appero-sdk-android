@@ -93,15 +93,14 @@ object Appero {
         
         // Create API service with authentication credentials from the initialized client
         val apiService = ApperoApiService.create(
-            apiKey = getApiKey(),
-            clientId = getClientId()
+            apiKey = getApiKey()
         )
         
         feedbackRepository = FeedbackRepository(sharedPreferences, apiService).also {
             offlineFeedbackQueue = OfflineFeedbackQueue(it, scope)
         }
         
-        experienceRepository = ExperienceRepository(sharedPreferences, apiService)
+        experienceRepository = ExperienceRepository(apiService)
         
         experienceTracker = ExperienceTracker(
             UserRepository(sharedPreferences),
@@ -378,30 +377,20 @@ object Appero {
         feedback: String,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
-        // Submit feedback to backend asynchronously
-        CoroutineScope(Dispatchers.IO).launch {
+        // Submit feedback to backend asynchronously using SDK scope
+        scope.launch(Dispatchers.IO) {
             val result = submitFeedbackToBackend(rating, feedback)
-
-            // Call the callback on the main thread
-            CoroutineScope(Dispatchers.Main).launch {
+            kotlinx.coroutines.withContext(Dispatchers.Main) {
                 when (result) {
                     is FeedbackSubmissionResult.Success -> {
-                        // ✅ Only mark as submitted after successful API response
                         markFeedbackSubmitted()
-
-                        // 📊 Analytics: Log successful feedback submission
                         analyticsListener?.onApperoFeedbackSubmitted(rating, feedback)
-
                         onResult?.invoke(true, result.message)
                         onFeedbackSubmissionResult?.invoke(true, result.message)
                     }
-
                     is FeedbackSubmissionResult.Error -> {
-                        // ❌ Don't mark as submitted on failure - user can be prompted again
                         onResult?.invoke(false, result.message)
                         onFeedbackSubmissionResult?.invoke(false, result.message)
-
-                        // ✅ Queue for offline retry
                         offlineFeedbackQueue?.queueFeedback(rating, feedback)
                     }
                 }
