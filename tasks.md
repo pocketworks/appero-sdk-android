@@ -95,6 +95,15 @@
   - Debug logging options
   - **Android-specific**: Consider app lifecycle and background restrictions
 
+- [ ] **Implement debug mode and API call logging**
+  - Add `Appero.instance.debug = true` property to control logging
+  - Log all API calls (request/response) to console when debug is enabled
+  - Log experience tracking events and queue operations
+  - Log network state changes and offline queue processing
+  - Log UI state transitions and user interactions
+  - **Approach**: Instance variable on Appero singleton that controls console logging
+  - **Use case**: Development and troubleshooting SDK integration issues
+
 ### 9. UI Integration Patterns
 - [ ] **Jetpack Compose Integration**
   - Provide `ApperoRatingView(productName: String)` composable

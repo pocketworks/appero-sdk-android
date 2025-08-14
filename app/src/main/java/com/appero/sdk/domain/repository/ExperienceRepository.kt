@@ -1,7 +1,11 @@
 package com.appero.sdk.domain.repository
 
+import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.appero.sdk.data.remote.ApperoApiService
 import com.appero.sdk.util.HttpStatusCode
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
@@ -13,8 +17,12 @@ import java.net.SocketTimeoutException
 
 /**
  * Repository for handling experience submission to the Appero backend
+ *
+ * Note: This class does not queue on failure; queuing is performed by the caller (ExperienceTracker)
+ * to avoid duplicate enqueues.
  */
 internal class ExperienceRepository(
+	private val sharedPreferences: SharedPreferences,
 	private val apiService: ApperoApiService
 ) {
 
@@ -22,28 +30,24 @@ internal class ExperienceRepository(
 		private const val MAX_RETRY_ATTEMPTS = 3
 		private const val RETRY_DELAY_MS = 1000L
 		private const val TIMEOUT = 30L
+		private const val KEY_QUEUED_EXPERIENCES = "queued_experiences_list"
 	}
 
+	private val gson = Gson()
+
 	/**
-	 * Submit experience points to the backend with retry logic
-	 * API key is automatically added by the interceptor
-	 * 
-	 * @param clientId The client ID for identification
-	 * @param value The experience points value
-	 * @param context Additional context for the experience
-	 * @param sentAt The timestamp when the experience was sent
-	 * @return ExperienceSubmissionResult indicating success or failure
+	 * Submit experience points to the backend with retry logic (configurable)
 	 */
 	suspend fun submitExperience(
 		clientId: String,
 		value: Int,
 		context: String,
-		sentAt: String
+		sentAt: String,
+		allowRetry: Boolean = true
 	): ExperienceSubmissionResult {
-		
-		repeat(MAX_RETRY_ATTEMPTS) { attempt ->
+		val attempts = if (allowRetry) MAX_RETRY_ATTEMPTS else 1
+		repeat(attempts) { attempt ->
 			try {
-				// Create RequestBody objects for multipart form data
 				val mediaType = "text/plain".toMediaTypeOrNull()
 				val clientIdBody = clientId.toRequestBody(mediaType)
 				val valueBody = value.toString().toRequestBody(mediaType)
@@ -51,7 +55,6 @@ internal class ExperienceRepository(
 				val sentAtBody = sentAt.toRequestBody(mediaType)
 				
 				val response = try {
-					// Use withTimeout to prevent hanging indefinitely
 					withTimeout(TIMEOUT * 1000) {
 						apiService.experienceApi.submitExperience(
 							clientId = clientIdBody,
@@ -83,24 +86,21 @@ internal class ExperienceRepository(
 					}
 				} else {
 					val errorMessage = "HTTP ${response.code()}: ${response.message()}"
-					if (attempt == MAX_RETRY_ATTEMPTS - 1) {
+					if (attempt == attempts - 1) {
 						ExperienceSubmissionResult.Error(errorMessage)
 					} else {
-						// Retry for server errors (5xx) and some client errors
 						if (response.code() >= HttpStatusCode.INTERNAL_SERVER_ERROR.value
 							|| response.code() == HttpStatusCode.TOO_MANY_REQUESTS.value
 						) {
 							delay(RETRY_DELAY_MS * (attempt + 1))
-							return@repeat // Continue to next retry
+							return@repeat
 						} else {
-							// Don't retry for client errors like 400, 401, 403, 404
 							return ExperienceSubmissionResult.Error(errorMessage)
 						}
 					}
 				}
 				
 			} catch (e: Exception) {
-				// Determine error message based on exception type
 				val errorMessage = when (e) {
 					is TimeoutCancellationException -> "Request timed out after 30 seconds"
 					is SocketTimeoutException -> "Connection timed out: ${e.message}"
@@ -109,8 +109,7 @@ internal class ExperienceRepository(
 					else -> "Network error: ${e.message}"
 				}
 				
-				// Return error if final attempt, otherwise retry
-				if (attempt == MAX_RETRY_ATTEMPTS - 1) {
+				if (attempt == attempts - 1) {
 					return ExperienceSubmissionResult.Error(errorMessage)
 				} else {
 					delay(RETRY_DELAY_MS * (attempt + 1))
@@ -118,13 +117,33 @@ internal class ExperienceRepository(
 			}
 		}
 		
-		return ExperienceSubmissionResult.Error("Failed to submit experience after $MAX_RETRY_ATTEMPTS attempts")
+		return ExperienceSubmissionResult.Error("Failed to submit experience after $attempts attempts")
+	}
+
+	fun getQueuedExperiences(): List<QueuedExperience> {
+		val json = sharedPreferences.getString(KEY_QUEUED_EXPERIENCES, null) ?: return emptyList()
+		return try {
+			val type = object : TypeToken<List<QueuedExperience>>() {}.type
+			gson.fromJson<List<QueuedExperience>>(json, type) ?: emptyList()
+		} catch (e: Exception) {
+			emptyList()
+		}
+	}
+
+	fun saveQueuedExperiences(queuedExperiences: List<QueuedExperience>) {
+		val json = gson.toJson(queuedExperiences)
+		sharedPreferences.edit { putString(KEY_QUEUED_EXPERIENCES, json) }
 	}
 }
 
-/**
- * Result of experience submission
- */
+internal data class QueuedExperience(
+	val id: String,
+	val value: Int,
+	val context: String,
+	val sentAt: String,
+	val retryCount: Int
+)
+
 internal sealed class ExperienceSubmissionResult {
 	data class Success(
 		val message: String,

@@ -11,6 +11,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.appero.sdk.analytics.ApperoAnalyticsListener
 import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
+import com.appero.sdk.data.local.queue.OfflineExperienceQueue
 import com.appero.sdk.data.remote.ApperoApiService
 import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.domain.repository.ClientRepository
@@ -53,6 +54,7 @@ object Appero {
     private var feedbackRepository: FeedbackRepository? = null
     private var experienceRepository: ExperienceRepository? = null
     private var offlineFeedbackQueue: OfflineFeedbackQueue? = null
+    private var offlineExperienceQueue: OfflineExperienceQueue? = null
 
     private var apiKey: String? = null
     private var clientId: String? = null
@@ -95,6 +97,19 @@ object Appero {
     fun start(context: Context, apiKey: String, clientId: String?) {
         val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+        // Teardown any previous setup to avoid duplicate callbacks/queues
+        try {
+            networkCallback?.let { callback ->
+                (connectivityManager ?: context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
+                    ?.unregisterNetworkCallback(callback)
+            }
+        } catch (_: Exception) { }
+        networkCallback = null
+        offlineFeedbackQueue?.cleanup()
+        offlineExperienceQueue?.cleanup()
+        offlineFeedbackQueue = null
+        offlineExperienceQueue = null
+
         initializeClient(apiKey, clientId, sharedPreferences)
         
         // Create API service with authentication credentials from the initialized client
@@ -106,7 +121,9 @@ object Appero {
             offlineFeedbackQueue = OfflineFeedbackQueue(it, scope)
         }
         
-        experienceRepository = ExperienceRepository(apiService)
+        experienceRepository = ExperienceRepository(sharedPreferences, apiService)
+        
+        offlineExperienceQueue = experienceRepository?.let { OfflineExperienceQueue(it, scope) }
         
         experienceTracker = ExperienceTracker(
             UserRepository(sharedPreferences),
@@ -172,6 +189,28 @@ object Appero {
     fun shouldShowAppero(): Boolean {
         requireInitialized()
         return experienceTracker?.shouldShowAppero() ?: false
+    }
+
+    /**
+     * Expose experience queue utilities (for debugging/testing)
+     */
+    fun getQueuedExperiencesCount(): Int {
+        requireInitialized()
+        return offlineExperienceQueue?.getQueueSize() ?: 0
+    }
+
+    fun processQueuedExperiences() {
+        requireInitialized()
+        offlineExperienceQueue?.processQueue()
+    }
+
+    fun clearQueuedExperiences() {
+        requireInitialized()
+        offlineExperienceQueue?.clearQueue()
+    }
+
+    internal fun queueExperience(value: Int, context: String) {
+        offlineExperienceQueue?.queueExperience(value, context)
     }
 
     /**
@@ -450,18 +489,21 @@ object Appero {
                 super.onAvailable(network)
                 // Network became available - notify offline queue
                 offlineFeedbackQueue?.onNetworkStateChanged(true)
+                offlineExperienceQueue?.onNetworkStateChanged(true)
             }
 
             override fun onLost(network: Network) {
                 super.onLost(network)
                 // Network lost - notify offline queue
                 offlineFeedbackQueue?.onNetworkStateChanged(false)
+                offlineExperienceQueue?.onNetworkStateChanged(false)
             }
 
             override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
                 super.onCapabilitiesChanged(network, networkCapabilities)
                 val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 offlineFeedbackQueue?.onNetworkStateChanged(hasInternet)
+                offlineExperienceQueue?.onNetworkStateChanged(hasInternet)
             }
         }
 
@@ -475,10 +517,14 @@ object Appero {
      * Clean up network monitoring and timers
      */
     fun stop() {
-        networkCallback?.let { callback ->
-            connectivityManager?.unregisterNetworkCallback(callback)
-        }
+        try {
+            networkCallback?.let { callback ->
+                connectivityManager?.unregisterNetworkCallback(callback)
+            }
+        } catch (_: Exception) { }
+        networkCallback = null
         offlineFeedbackQueue?.cleanup()
+        offlineExperienceQueue?.cleanup()
         scope.cancel()
     }
 

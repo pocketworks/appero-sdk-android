@@ -39,27 +39,55 @@ Appero.start(
 
 ---
 
-## Logging User Experience
+## Logging User Experience (Experience Tracker)
 
-Track user experience using the Likert scale or custom points:
+Track user experience using either predefined levels or custom points:
 
 ```kotlin
-// Likert scale (recommended)
+// Likert scale (recommended, semantic)
 Appero.log(Experience.VERY_POSITIVE)
 Appero.log(Experience.POSITIVE)
 Appero.log(Experience.NEUTRAL)
 Appero.log(Experience.NEGATIVE)
 Appero.log(Experience.VERY_NEGATIVE)
 
-// Custom points
+// Custom points (flexible)
 Appero.log(2)   // Add 2 points
 Appero.log(-1)  // Subtract 1 point
 ```
 
-Set the threshold for prompting feedback:
+- The two overloads (`log(Experience)` and `log(Int)`) let you choose between semantic events and custom scoring.
+- Each log updates the local experience score and also submits the event to the backend.
+- The backend may instruct the SDK to show the feedback flow immediately (server-triggered prompt), including:
+  - `flowType` (e.g. "frustration") which can start from a specific step
+  - `feedbackUI` (dynamic title/subtitle/prompt)
+
+### Thresholds & Prompting
 
 ```kotlin
 Appero.ratingThreshold = 5 // Default is 5
+
+if (Appero.shouldShowAppero()) {
+    // You can choose to call Appero.showFeedbackPrompt(config) here
+}
+```
+
+- `shouldShowAppero()` is a local check: true if score >= threshold AND user hasn’t submitted feedback yet.
+- Prompts can be shown either by your app logic using the local check, or automatically when the server response requests it (after a log).
+
+### Starting from a Specific Step
+
+```kotlin
+// You can start the flow at a specific step (e.g., frustration)
+Appero.showFeedbackPrompt(config, initialStep = FeedbackStep.Frustration)
+```
+
+### Inspecting Experience State (for debugging)
+
+```kotlin
+val state = Appero.getExperienceState()
+// state.userId, state.experiencePoints, state.ratingThreshold,
+// state.shouldShowPrompt, state.hasSubmittedFeedback
 ```
 
 ---
@@ -156,15 +184,31 @@ Appero.setAnalyticsListener(MyAnalyticsListener())
 
 ## Offline Support
 
-- Experience and feedback events are queued if offline and sent automatically when connectivity returns.
-- No data loss during offline periods.
+- Feedback submissions are queued if offline and sent automatically when connectivity returns.
+- You can inspect and manage the queue:
+
+```kotlin
+val count = Appero.getQueuedFeedbackCount()
+Appero.processQueuedFeedback()  // Triggers processing immediately
+Appero.clearQueuedFeedback()    // Clears the queue (testing only)
+```
+
+- Network changes are detected automatically, and the queue is processed when the network is available.
 
 ---
 
 ## Play Store Review Prompt
 
 - After feedback submission, if the rating is above a configurable threshold, the SDK can trigger the Play Store review dialog using the Play Core API.
-- This is fully customizable via `FeedbackPromptUI`.
+- This is customizable via `FeedbackPromptUI` parameters `reviewPromptThreshold` and `onRequestReview`.
+
+```kotlin
+Appero.FeedbackPromptUI(
+    config = ..., 
+    reviewPromptThreshold = 4,
+    onRequestReview = { Appero.requestPlayStoreReview(activity) }
+)
+```
 
 ---
 
@@ -176,11 +220,16 @@ Appero.setAnalyticsListener(MyAnalyticsListener())
 - `Appero.ratingThreshold`
 - `Appero.shouldShowAppero()`
 - `Appero.showFeedbackPrompt(config)`
+- `Appero.showFeedbackPrompt(config, initialStep: FeedbackStep)`
 - `Appero.FeedbackPromptUI(...)`
 - `Appero.setAnalyticsListener(listener)`
 - `Appero.setUser(userId)`
 - `Appero.resetUser()`
 - `Appero.getCurrentUserId()`
+- `Appero.getExperienceState()`
+- `Appero.getQueuedFeedbackCount()`
+- `Appero.processQueuedFeedback()`
+- `Appero.clearQueuedFeedback()`
 - `Appero.theme`
 - `Appero.requestPlayStoreReview(activity)`
 

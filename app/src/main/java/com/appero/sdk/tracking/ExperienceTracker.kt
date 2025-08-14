@@ -43,7 +43,6 @@ internal class ExperienceTracker(
         val newPoints = currentPoints + experience.rating
         userRepository.setExperiencePoints(newPoints)
         
-        // Submit experience to backend
         submitExperienceToBackend(experience.rating, experience.name)
     }
     
@@ -56,7 +55,6 @@ internal class ExperienceTracker(
         val newPoints = currentPoints + points
         userRepository.setExperiencePoints(newPoints)
         
-        // Submit experience to backend
         submitExperienceToBackend(points, "custom")
     }
     
@@ -67,10 +65,8 @@ internal class ExperienceTracker(
         feedbackUI: FeedbackUI?,
         flowType: String?
     ) {
-        // Switch to main thread to show UI
         scope.launch(Dispatchers.Main) {
             try {
-                // Create feedback prompt configuration from server response
                 val config = FeedbackPromptConfig(
                     title = feedbackUI?.title ?: "How was your experience?",
                     subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
@@ -78,16 +74,11 @@ internal class ExperienceTracker(
                     placeholder = "Share your thoughts here",
                     submitText = "Send feedback"
                 )
-                
-                // Determine initial step based on flow type
                 val initialStep = when (flowType) {
                     "frustration" -> FeedbackStep.Frustration
                     else -> FeedbackStep.Rating
                 }
-                
-                // Show feedback prompt using Appero's UI system with the correct initial step
                 Appero.showFeedbackPrompt(config, initialStep)
-                
             } catch (e: Exception) {
                 android.util.Log.e("Appero", "Error triggering feedback prompt", e)
             }
@@ -95,50 +86,39 @@ internal class ExperienceTracker(
     }
     
     /**
-     * Submit experience to backend asynchronously
+     * Submit experience to backend asynchronously; on failure, queue for later
      */
     private fun submitExperienceToBackend(value: Int, context: String) {
         scope.launch(Dispatchers.IO) {
             try {
-                // Get client ID from Appero singleton
                 val clientId = Appero.getClientId()
-                
                 if (clientId != null) {
                     val result = experienceRepository.submitExperience(
                         clientId = clientId,
                         value = value,
                         context = context,
-                        sentAt = DateTimeUtils.getCurrentTimestamp()
+                        sentAt = DateTimeUtils.getCurrentTimestamp(),
+                        allowRetry = false
                     )
-                    
                     when (result) {
                         is ExperienceSubmissionResult.Success -> {
-                            // Experience submitted successfully
-                            
-                            // Check if we should show feedback prompt
                             if (result.shouldShowFeedback) {
-                                // Trigger feedback prompt with server-provided UI configuration
                                 triggerFeedbackPrompt(result.feedbackUI, result.flowType)
                             }
                         }
                         is ExperienceSubmissionResult.Error -> {
-                            // Log error but don't fail the local tracking
-                            android.util.Log.w("Appero", "Failed to submit experience: ${result.message}")
+                            Appero.queueExperience(value, context)
                         }
                     }
                 } else {
-                    android.util.Log.w("Appero", "Cannot submit experience: client ID not available")
+                    Appero.queueExperience(value, context)
                 }
             } catch (e: Exception) {
-                android.util.Log.e("Appero", "Error submitting experience", e)
+                Appero.queueExperience(value, context)
             }
         }
     }
     
-    /**
-     * Check if the feedback prompt should be shown
-     * @return true if experience score crosses threshold AND user hasn't submitted feedback
-     */
     fun shouldShowAppero(): Boolean {
         val experiencePoints = userRepository.getExperiencePoints()
         val threshold = userRepository.getRatingThreshold()
@@ -147,30 +127,14 @@ internal class ExperienceTracker(
         return experiencePoints >= threshold && !hasSubmittedFeedback
     }
     
-    /**
-     * Get/set the rating threshold for when to prompt for feedback
-     */
     var ratingThreshold: Int
         get() = userRepository.getRatingThreshold()
         set(value) = userRepository.setRatingThreshold(value)
     
-    /**
-     * Mark that the user has submitted feedback
-     */
-    fun markFeedbackSubmitted() {
-        userRepository.markFeedbackSubmitted()
-    }
+    fun markFeedbackSubmitted() { userRepository.markFeedbackSubmitted() }
     
-    /**
-     * Reset experience points and feedback status
-     */
-    fun resetExperienceAndPrompt() {
-        userRepository.resetExperienceAndPrompt()
-    }
+    fun resetExperienceAndPrompt() { userRepository.resetExperienceAndPrompt() }
     
-    /**
-     * Get current experience tracking state for debugging
-     */
     fun getExperienceState(): ExperienceState {
         return ExperienceState(
             userId = userRepository.getCurrentUserId(),
@@ -181,24 +145,9 @@ internal class ExperienceTracker(
         )
     }
     
-    /**
-     * Get the current user ID
-     */
-    fun getCurrentUserId(): String {
-        return userRepository.getCurrentUserId()
-    }
+    fun getCurrentUserId(): String { return userRepository.getCurrentUserId() }
     
-    /**
-     * Set a specific user ID (for account-based systems)
-     */
-    fun setUser(userId: String) {
-        userRepository.setUser(userId)
-    }
+    fun setUser(userId: String) { userRepository.setUser(userId) }
     
-    /**
-     * Reset the current user (for logout scenarios)
-     */
-    fun resetUser() {
-        userRepository.resetUser()
-    }
+    fun resetUser() { userRepository.resetUser() }
 } 

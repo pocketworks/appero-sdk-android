@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timer
 import android.util.Log
 
@@ -38,6 +39,7 @@ internal class OfflineFeedbackQueue(
 
     private var retryTimer: Timer? = null
     private var isNetworkAvailable = false
+    private val isProcessing = AtomicBoolean(false)
 
     init {
         // Start periodic retry timer
@@ -75,14 +77,11 @@ internal class OfflineFeedbackQueue(
      * @param isAvailable true if network is available
      */
     fun onNetworkStateChanged(isAvailable: Boolean) {
-        val wasUnavailable = !isNetworkAvailable
         isNetworkAvailable = isAvailable
 
-        // If we regain connectivity and have queued items, process immediately
-        if (isAvailable && wasUnavailable && getQueueSize() > 0) {
-            scope.launch {
-                processQueue()
-            }
+        // If we have connectivity and queued items, process immediately
+        if (isAvailable && getQueueSize() > 0) {
+            scope.launch { processQueue() }
         }
     }
 
@@ -118,50 +117,56 @@ internal class OfflineFeedbackQueue(
         if (!isNetworkAvailable) {
             return // Skip processing if no network
         }
+        if (!isProcessing.compareAndSet(false, true)) return
 
         val queuedItems = feedbackRepository.getQueuedFeedback()
         if (queuedItems.isEmpty()) {
+            isProcessing.set(false)
             return // No items to process
         }
 
         Log.i("Appero", "Processing ${queuedItems.size} queued feedback items")
 
         scope.launch {
-            val successfulSubmissions = mutableListOf<String>()
-            val updatedQueue = mutableListOf<QueuedFeedback>()
+            try {
+                val successfulSubmissions = mutableListOf<String>()
+                val updatedQueue = mutableListOf<QueuedFeedback>()
 
-            for (item in queuedItems) {
-                try {
-                    val result = feedbackRepository.submitFeedback(
-                        rating = item.rating,
-                        feedback = item.feedback
-                    )
+                for (item in queuedItems) {
+                    try {
+                        val result = feedbackRepository.submitFeedback(
+                            rating = item.rating,
+                            feedback = item.feedback
+                        )
 
-                    when (result) {
-                        is FeedbackSubmissionResult.Success -> {
-                            // Successful submission - remove from queue
-                            successfulSubmissions.add(item.id)
-                        }
-
-                        is FeedbackSubmissionResult.Error -> {
-                            // Failed submission - retry or remove based on retry count
-                            if (item.retryCount < MAX_RETRY_ATTEMPTS) {
-                                // Add back to queue with incremented retry count
-                                updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                        when (result) {
+                            is FeedbackSubmissionResult.Success -> {
+                                // Successful submission - remove from queue
+                                successfulSubmissions.add(item.id)
                             }
-                            // If max retries reached, item is dropped (not added to updatedQueue)
+
+                            is FeedbackSubmissionResult.Error -> {
+                                // Failed submission - retry or remove based on retry count
+                                if (item.retryCount < MAX_RETRY_ATTEMPTS) {
+                                    // Add back to queue with incremented retry count
+                                    updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                                }
+                                // If max retries reached, item is dropped (not added to updatedQueue)
+                            }
                         }
-                    }
-                } catch (e: Exception) {
-                    // Network error - retry if under limit
-                    if (item.retryCount < MAX_RETRY_ATTEMPTS) {
-                        updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                    } catch (e: Exception) {
+                        // Network error - retry if under limit
+                        if (item.retryCount < MAX_RETRY_ATTEMPTS) {
+                            updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                        }
                     }
                 }
-            }
 
-            // Update the queue with remaining items
-            feedbackRepository.saveQueuedFeedback(updatedQueue)
+                // Update the queue with remaining items
+                feedbackRepository.saveQueuedFeedback(updatedQueue)
+            } finally {
+                isProcessing.set(false)
+            }
         }
     }
 
