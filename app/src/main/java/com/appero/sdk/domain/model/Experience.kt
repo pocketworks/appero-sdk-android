@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid
+package com.appero.sdk.domain.model
 
 /**
  * Experience levels using 5-point Likert scale for user experience tracking

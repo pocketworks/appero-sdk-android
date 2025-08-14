@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.data
+package com.appero.sdk.data.remote.api
 
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -28,5 +28,5 @@ internal interface ExperienceApiService {
         @Part("value") value: RequestBody,
         @Part("context") context: RequestBody,
         @Part("sent_at") sentAt: RequestBody
-    ): Response<ExperienceResponse>
+    ): Response<com.appero.sdk.data.remote.dto.ExperienceResponse>
 } 

@@ -1,8 +1,9 @@
-package com.example.apperoSdkAndroid
+package com.appero.sdk
 
 import android.content.SharedPreferences
-import com.example.apperoSdkAndroid.data.ApperoApiService
-import com.example.apperoSdkAndroid.domain.FeedbackRepository
+import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.domain.repository.FeedbackRepository
+import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -13,7 +14,7 @@ class OfflineFeedbackQueueTest {
 
 	private lateinit var feedbackRepository: FeedbackRepository
 	private lateinit var offlineFeedbackQueue: OfflineFeedbackQueue
- 
+ 
 	@Before
 	fun setUp() {
 		// In-memory SharedPreferences to avoid Android framework/editor mocking
@@ -26,13 +27,13 @@ class OfflineFeedbackQueueTest {
 		offlineFeedbackQueue.onNetworkStateChanged(false)
 	}
 
-	@Test
-	fun queueFeedback_shouldIncreaseQueueSize() {
-		val initial = offlineFeedbackQueue.getQueueSize()
-		offlineFeedbackQueue.queueFeedback(5, "Great app!")
-		val after = offlineFeedbackQueue.getQueueSize()
-		assertEquals(initial + 1, after)
-	}
+    @Test
+    fun queueFeedback_shouldIncreaseQueueSize() {
+        val initial = offlineFeedbackQueue.getQueueSize()
+        offlineFeedbackQueue.queueFeedback(5, "Great app!")
+        val after = offlineFeedbackQueue.getQueueSize()
+        assertEquals(initial + 1, after)
+    }
 
 	@Test
 	fun clearQueue_shouldEmptyAllItems() {

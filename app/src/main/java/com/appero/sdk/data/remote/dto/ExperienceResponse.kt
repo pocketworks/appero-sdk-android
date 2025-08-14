@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.data
+package com.appero.sdk.data.remote.dto
 
 /**
  * Response model for experience submission

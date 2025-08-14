@@ -1,8 +1,8 @@
-package com.example.apperoSdkAndroid
+package com.appero.sdk.data.local.queue
 
-import com.example.apperoSdkAndroid.domain.FeedbackRepository
-import com.example.apperoSdkAndroid.domain.FeedbackSubmissionResult
-import com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp
+import com.appero.sdk.domain.repository.FeedbackRepository
+import com.appero.sdk.domain.repository.FeedbackSubmissionResult
+import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -13,7 +13,7 @@ import android.util.Log
 /**
  * Data model for queued feedback
  */
-internal data class QueuedFeedback(
+data class QueuedFeedback(
     val id: String = UUID.randomUUID().toString(),
     val rating: Int,
     val feedback: String,
@@ -186,4 +186,4 @@ internal class OfflineFeedbackQueue(
     fun cleanup() {
         stopRetryTimer()
     }
-}
+} 

@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.data
+package com.appero.sdk.data.remote
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -67,15 +67,15 @@ internal class ApperoApiService private constructor(
 	/**
 	 * Get the feedback API service
 	 */
-	val feedbackApi: FeedbackApiService by lazy {
-		retrofit.create(FeedbackApiService::class.java)
+	val feedbackApi: com.appero.sdk.data.remote.api.FeedbackApiService by lazy {
+		retrofit.create(com.appero.sdk.data.remote.api.FeedbackApiService::class.java)
 	}
 	
 	/**
 	 * Get the experience API service
 	 */
-	val experienceApi: ExperienceApiService by lazy {
-		retrofit.create(ExperienceApiService::class.java)
+	val experienceApi: com.appero.sdk.data.remote.api.ExperienceApiService by lazy {
+		retrofit.create(com.appero.sdk.data.remote.api.ExperienceApiService::class.java)
 	}
 	
 	// Future API services can be added here:

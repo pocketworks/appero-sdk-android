@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.domain
+package com.appero.sdk.domain.repository
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -173,4 +173,4 @@ internal class UserRepository(private val sharedPreferences: SharedPreferences) 
     private fun getUserKey(userId: String, key: String): String {
         return "${KEY_USER_PREFIX}${userId}_${key}"
     }
-}
+} 

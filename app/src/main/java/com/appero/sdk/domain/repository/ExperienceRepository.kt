@@ -1,8 +1,7 @@
-package com.example.apperoSdkAndroid.domain
+package com.appero.sdk.domain.repository
 
-import com.example.apperoSdkAndroid.data.ApperoApiService
-import com.example.apperoSdkAndroid.data.ExperienceResponse
-import com.example.apperoSdkAndroid.utils.HttpStatusCode
+import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.util.HttpStatusCode
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
@@ -130,7 +129,7 @@ internal sealed class ExperienceSubmissionResult {
 	data class Success(
 		val message: String,
 		val shouldShowFeedback: Boolean = false,
-		val feedbackUI: com.example.apperoSdkAndroid.data.FeedbackUI? = null,
+		val feedbackUI: com.appero.sdk.data.remote.dto.FeedbackUI? = null,
 		val flowType: String? = null
 	) : ExperienceSubmissionResult()
 	data class Error(val message: String) : ExperienceSubmissionResult()

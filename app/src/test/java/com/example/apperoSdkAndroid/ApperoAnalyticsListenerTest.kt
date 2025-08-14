@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid
+package com.appero.sdk
 
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,7 +12,7 @@ import org.mockito.junit.MockitoJUnitRunner
 @RunWith(MockitoJUnitRunner::class)
 class ApperoAnalyticsListenerTest {
     @Mock
-    private lateinit var mockAnalyticsListener: ApperoAnalyticsListener
+    private lateinit var mockAnalyticsListener: com.appero.sdk.analytics.ApperoAnalyticsListener
     
     @Test
     fun testAnalyticsListenerCanBeSet() {
@@ -36,7 +36,7 @@ class ApperoAnalyticsListenerTest {
         assert(testListener.feedbackCalls.contains(Pair(4, "Great app!")))
     }
     
-    private class TestAnalyticsListener : ApperoAnalyticsListener {
+    private class TestAnalyticsListener : com.appero.sdk.analytics.ApperoAnalyticsListener {
         var feedbackCalls = mutableListOf<Pair<Int, String>>()
         var ratingCalls = mutableListOf<Int>()
         

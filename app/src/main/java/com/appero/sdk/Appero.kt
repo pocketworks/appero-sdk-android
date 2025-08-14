@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid
+package com.appero.sdk
 
 import android.app.Activity
 import android.content.Context
@@ -9,18 +9,24 @@ import android.net.NetworkCapabilities
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import com.example.apperoSdkAndroid.data.ApperoApiService
-import com.example.apperoSdkAndroid.domain.FeedbackRepository
-import com.example.apperoSdkAndroid.domain.ExperienceRepository
-import com.example.apperoSdkAndroid.domain.FeedbackSubmissionResult
-import com.example.apperoSdkAndroid.domain.ClientRepository
-import com.example.apperoSdkAndroid.domain.UserRepository
-import com.example.apperoSdkAndroid.domain.UserRepository.Companion.DEFAULT_RATING_THRESHOLD
-import com.example.apperoSdkAndroid.ui.ApperoTheme
-import com.example.apperoSdkAndroid.ui.DefaultTheme
-import com.example.apperoSdkAndroid.ui.FeedbackFlowConfig
-import com.example.apperoSdkAndroid.ui.FeedbackPrompt
-import com.example.apperoSdkAndroid.ui.FeedbackPromptConfig
+import com.appero.sdk.analytics.ApperoAnalyticsListener
+import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
+import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.domain.model.Experience
+import com.appero.sdk.domain.repository.ClientRepository
+import com.appero.sdk.domain.repository.ExperienceRepository
+import com.appero.sdk.domain.repository.FeedbackRepository
+import com.appero.sdk.domain.repository.FeedbackSubmissionResult
+import com.appero.sdk.domain.repository.UserRepository
+import com.appero.sdk.domain.repository.UserRepository.Companion.DEFAULT_RATING_THRESHOLD
+import com.appero.sdk.tracking.ExperienceState
+import com.appero.sdk.tracking.ExperienceTracker
+import com.appero.sdk.ui.components.FeedbackPrompt
+import com.appero.sdk.ui.components.FeedbackStep
+import com.appero.sdk.ui.config.FeedbackFlowConfig
+import com.appero.sdk.ui.config.FeedbackPromptConfig
+import com.appero.sdk.ui.theme.ApperoTheme
+import com.appero.sdk.ui.theme.DefaultTheme
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.gms.tasks.Task
@@ -73,7 +79,7 @@ object Appero {
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
     private var _feedbackPromptConfig: MutableState<FeedbackPromptConfig?> = mutableStateOf(null)
-    private var _initialFeedbackStep: MutableState<com.example.apperoSdkAndroid.ui.FeedbackStep?> = mutableStateOf(null)
+    private var _initialFeedbackStep: MutableState<FeedbackStep?> = mutableStateOf(null)
 
     // Callback for feedback submission results
     private var onFeedbackSubmissionResult: ((Boolean, String) -> Unit)? = null
@@ -225,7 +231,7 @@ object Appero {
      */
     fun showFeedbackPrompt(
         config: FeedbackPromptConfig,
-        initialStep: com.example.apperoSdkAndroid.ui.FeedbackStep,
+        initialStep: FeedbackStep,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
@@ -493,4 +499,4 @@ object Appero {
             isInitialized = true
         }
     }
-}
+} 

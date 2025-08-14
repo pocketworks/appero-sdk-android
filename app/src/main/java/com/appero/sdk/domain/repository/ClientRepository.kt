@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.domain
+package com.appero.sdk.domain.repository
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -45,4 +45,4 @@ internal class ClientRepository(
                 .remove(KEY_IS_INITIALIZED)
         }
     }
-}
+} 

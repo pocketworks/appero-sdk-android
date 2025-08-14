@@ -1,7 +1,14 @@
-package com.example.apperoSdkAndroid
+package com.appero.sdk.tracking
 
-import com.example.apperoSdkAndroid.domain.ExperienceRepository
-import com.example.apperoSdkAndroid.domain.UserRepository
+import com.appero.sdk.domain.model.Experience
+import com.appero.sdk.domain.repository.ExperienceRepository
+import com.appero.sdk.domain.repository.UserRepository
+import com.appero.sdk.domain.repository.ExperienceSubmissionResult
+import com.appero.sdk.data.remote.dto.FeedbackUI
+import com.appero.sdk.ui.config.FeedbackPromptConfig
+import com.appero.sdk.ui.components.FeedbackStep
+import com.appero.sdk.Appero
+import com.appero.sdk.util.DateTimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,14 +64,14 @@ internal class ExperienceTracker(
      * Trigger feedback prompt with server-provided configuration
      */
     private fun triggerFeedbackPrompt(
-        feedbackUI: com.example.apperoSdkAndroid.data.FeedbackUI?,
+        feedbackUI: FeedbackUI?,
         flowType: String?
     ) {
         // Switch to main thread to show UI
         scope.launch(Dispatchers.Main) {
             try {
                 // Create feedback prompt configuration from server response
-                val config = com.example.apperoSdkAndroid.ui.FeedbackPromptConfig(
+                val config = FeedbackPromptConfig(
                     title = feedbackUI?.title ?: "How was your experience?",
                     subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
                     followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
@@ -74,12 +81,12 @@ internal class ExperienceTracker(
                 
                 // Determine initial step based on flow type
                 val initialStep = when (flowType) {
-                    "frustration" -> com.example.apperoSdkAndroid.ui.FeedbackStep.Frustration
-                    else -> com.example.apperoSdkAndroid.ui.FeedbackStep.Rating
+                    "frustration" -> FeedbackStep.Frustration
+                    else -> FeedbackStep.Rating
                 }
                 
                 // Show feedback prompt using Appero's UI system with the correct initial step
-                com.example.apperoSdkAndroid.Appero.showFeedbackPrompt(config, initialStep)
+                Appero.showFeedbackPrompt(config, initialStep)
                 
             } catch (e: Exception) {
                 android.util.Log.e("Appero", "Error triggering feedback prompt", e)
@@ -94,18 +101,18 @@ internal class ExperienceTracker(
         scope.launch(Dispatchers.IO) {
             try {
                 // Get client ID from Appero singleton
-                val clientId = com.example.apperoSdkAndroid.Appero.getClientId()
+                val clientId = Appero.getClientId()
                 
                 if (clientId != null) {
                     val result = experienceRepository.submitExperience(
                         clientId = clientId,
                         value = value,
                         context = context,
-                        sentAt = com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp()
+                        sentAt = DateTimeUtils.getCurrentTimestamp()
                     )
                     
                     when (result) {
-                        is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Success -> {
+                        is ExperienceSubmissionResult.Success -> {
                             // Experience submitted successfully
                             
                             // Check if we should show feedback prompt
@@ -114,7 +121,7 @@ internal class ExperienceTracker(
                                 triggerFeedbackPrompt(result.feedbackUI, result.flowType)
                             }
                         }
-                        is com.example.apperoSdkAndroid.domain.ExperienceSubmissionResult.Error -> {
+                        is ExperienceSubmissionResult.Error -> {
                             // Log error but don't fail the local tracking
                             android.util.Log.w("Appero", "Failed to submit experience: ${result.message}")
                         }

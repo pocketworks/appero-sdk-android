@@ -1,11 +1,11 @@
-package com.example.apperoSdkAndroid.domain
+package com.appero.sdk.domain.repository
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import com.example.apperoSdkAndroid.QueuedFeedback
-import com.example.apperoSdkAndroid.data.ApperoApiService
-import com.example.apperoSdkAndroid.utils.DateTimeUtils.getCurrentTimestamp
-import com.example.apperoSdkAndroid.utils.HttpStatusCode
+import com.appero.sdk.data.local.queue.QueuedFeedback
+import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
+import com.appero.sdk.util.HttpStatusCode
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.TimeoutCancellationException
@@ -26,7 +26,7 @@ internal class FeedbackRepository(
 ) {
 
     companion object {
-        private const val KEY_QUEUED_FEEDBACK = "queued_feedback_list"
+        private const val KEY_QUEED_FEEDBACK = "queued_feedback_list"
         private const val MAX_RETRY_ATTEMPTS = 3
         private const val RETRY_DELAY_MS = 1000L
         private const val TIMEOUT = 30L
@@ -130,7 +130,7 @@ internal class FeedbackRepository(
      * @return Formatted timestamp string
      */
     fun getQueuedFeedback(): List<QueuedFeedback> {
-        val json = sharedPreferences.getString(KEY_QUEUED_FEEDBACK, null) ?: return emptyList()
+        val json = sharedPreferences.getString(KEY_QUEED_FEEDBACK, null) ?: return emptyList()
 
         return try {
             val type = object : TypeToken<List<QueuedFeedback>>() {}.type
@@ -146,7 +146,7 @@ internal class FeedbackRepository(
     fun saveQueuedFeedback(queuedFeedback: List<QueuedFeedback>) {
         val json = gson.toJson(queuedFeedback)
         sharedPreferences.edit {
-            putString(KEY_QUEUED_FEEDBACK, json)
+            putString(KEY_QUEED_FEEDBACK, json)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.data
+package com.appero.sdk.data.remote.api
 
 import okhttp3.RequestBody
 import retrofit2.Response

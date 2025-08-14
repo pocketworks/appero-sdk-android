@@ -1,4 +1,4 @@
-package com.example.apperoSdkAndroid.utils
+package com.appero.sdk.util
 
 @Suppress("detekt:MagicNumber")
 enum class HttpStatusCode(val value: Int, val description: String) {
@@ -27,7 +27,7 @@ enum class HttpStatusCode(val value: Int, val description: String) {
     FOUND(302, "Found"),
     SEE_OTHER(303, "See Other"),
     NOT_MODIFIED(304, "Not Modified"),
-    USE_PROXY(305, "Use Proxy"), // Note: Deprecated by HTTP/2.0
+    USE_PROXY(305, "Use Proxy"),
     TEMPORARY_REDIRECT(307, "Temporary Redirect"),
     PERMANENT_REDIRECT(308, "Permanent Redirect"),
 
@@ -45,8 +45,8 @@ enum class HttpStatusCode(val value: Int, val description: String) {
     GONE(410, "Gone"),
     LENGTH_REQUIRED(411, "Length Required"),
     PRECONDITION_FAILED(412, "Precondition Failed"),
-    PAYLOAD_TOO_LARGE(413, "Payload Too Large"), // Changed from REQUEST_TOO_LONG to match common RFC naming
-    URI_TOO_LONG(414, "URI Too Long"),          // Changed from REQUEST_URI_TOO_LONG
+    PAYLOAD_TOO_LARGE(413, "Payload Too Large"),
+    URI_TOO_LONG(414, "URI Too Long"),
     UNSUPPORTED_MEDIA_TYPE(415, "Unsupported Media Type"),
     REQUESTED_RANGE_NOT_SATISFIABLE(416, "Range Not Satisfiable"),
     EXPECTATION_FAILED(417, "Expectation Failed"),
@@ -74,36 +74,11 @@ enum class HttpStatusCode(val value: Int, val description: String) {
     NOT_EXTENDED(510, "Not Extended"),
     NETWORK_AUTHENTICATION_REQUIRED(511, "Network Authentication Required");
 
-    // The 'value' and 'description' are now primary constructor properties,
-    // so explicit getters are not strictly needed but can be kept for compatibility
-    // if desired. Kotlin generates them by default.
-
-    override fun toString(): String {
-        return "$value $description"
-    }
+    override fun toString(): String = "$value $description"
 
     companion object {
         private val map = HttpStatusCode.entries.associateBy(HttpStatusCode::value)
-
-        /**
-         * Get HttpStatusCode by its integer value.
-         *
-         * @param value The integer value of the status code.
-         * @return The corresponding HttpStatusCode.
-         * @throws IllegalArgumentException if the value does not correspond to a known HttpStatusCode.
-         */
-        fun getByValue(value: Int): HttpStatusCode {
-            return map[value] ?: throw IllegalArgumentException("Invalid status code: $value")
-        }
-
-        /**
-         * Get HttpStatusCode by its integer value, returning null if not found.
-         *
-         * @param value The integer value of the status code.
-         * @return The corresponding HttpStatusCode or null if not found.
-         */
-        fun getByValueOrNull(value: Int): HttpStatusCode? {
-            return map[value]
-        }
+        fun getByValue(value: Int): HttpStatusCode = map[value] ?: throw IllegalArgumentException("Invalid status code: $value")
+        fun getByValueOrNull(value: Int): HttpStatusCode? = map[value]
     }
-}
+} 
