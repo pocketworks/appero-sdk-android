@@ -120,7 +120,7 @@ fun FeedbackPrompt(
                 dragHandle = null,
                 modifier = modifier.then(
                     if (selectedRating > 0) {
-                        if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.73F)
+                        if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.85F)
                     } else {
                         Modifier
                     }
@@ -133,8 +133,7 @@ fun FeedbackPrompt(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .verticalScroll(scrollState)
-                                .padding(horizontal = 24.dp, vertical = 24.dp)
-                                .padding(bottom = if (imeState.value) 16.dp else 0.dp),
+                                .padding(horizontal = 24.dp, vertical = 24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -146,9 +145,24 @@ fun FeedbackPrompt(
                             // Only show title and subtitle when keyboard is not visible
                             if (!imeState.value) {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
+                                Text(
+                                    text = config.title, 
+                                    fontSize = 18.sp, 
+                                    fontWeight = FontWeight.Bold, 
+                                    textAlign = TextAlign.Center, 
+                                    color = Color(0xFF003143), 
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                                Text(
+                                    text = config.subtitle, 
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color(0xFF003143), 
+                                    textAlign = TextAlign.Center,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                             
@@ -168,7 +182,17 @@ fun FeedbackPrompt(
                             // Only show feedback input and CTA after a rating is selected
                             if (selectedRating > 0) {
                                 // Show follow-up question (always visible when input is shown)
-                                Text(text = config.followUpQuestion, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
+                                Text(
+                                    text = config.followUpQuestion, 
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal, 
+                                    color = Color(0xFF003143), 
+                                    textAlign = TextAlign.Start, 
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 
                                 OutlinedTextField(
