@@ -118,7 +118,14 @@ fun FeedbackPrompt(
                 windowInsets = WindowInsets.ime,
                 onDismissRequest = onDismiss,
                 dragHandle = null,
-                modifier = modifier.then(if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.73F))
+                modifier = modifier.then(
+                    if (selectedRating > 0) {
+                        if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.73F)
+                    } else {
+                        Modifier
+                    }
+                ),
+                containerColor = Color.White
             ) {
                 when (currentStep) {
                     is FeedbackStep.Rating -> {
@@ -158,24 +165,31 @@ fun FeedbackPrompt(
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                             
+                            // Only show feedback input and CTA after a rating is selected
                             if (selectedRating > 0) {
-                                // Show follow-up question only when keyboard is not visible
-                                if (!imeState.value) {
-                                    Text(text = config.followUpQuestion, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                }
+                                // Show follow-up question (always visible when input is shown)
+                                Text(text = config.followUpQuestion, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
                                 
                                 OutlinedTextField(
                                     value = feedbackText,
                                     onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
                                     placeholder = { Text(text = config.placeholder, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
-                                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(88.dp)
+                                        .background(
+                                            color = Color(0xFFF5F5F5),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ),
                                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = theme.textColor,
                                         unfocusedTextColor = theme.textColor,
-                                        focusedBorderColor = theme.accentColor,
-                                        unfocusedBorderColor = theme.dividerColor
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent
                                     ),
                                     shape = RoundedCornerShape(8.dp),
                                     maxLines = 4
@@ -183,7 +197,7 @@ fun FeedbackPrompt(
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                     Text(text = "${feedbackText.length}/${config.maxCharacters}", fontSize = 12.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
                                 Button(
                                     onClick = {
                                         onSubmit(selectedRating, feedbackText)
@@ -224,13 +238,21 @@ fun FeedbackPrompt(
                                 value = feedbackText,
                                 onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
                                 placeholder = { Text(text = config.placeholder, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
-                                modifier = Modifier.fillMaxWidth().height(120.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(88.dp)
+                                    .background(
+                                        color = Color(0xFFF5F5F5),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ),
                                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedTextColor = theme.textColor,
                                     unfocusedTextColor = theme.textColor,
                                     focusedBorderColor = theme.accentColor,
-                                    unfocusedBorderColor = theme.dividerColor
+                                    unfocusedBorderColor = theme.dividerColor,
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent
                                 ),
                                 shape = RoundedCornerShape(8.dp),
                                 maxLines = 4
@@ -288,6 +310,8 @@ internal fun EmojiRatingScale(
 
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
         (1..5).forEach { rating ->
+            val isSelected = selectedRating == rating
+
             Box(
                 modifier = Modifier
                     .size(50.dp)
@@ -308,12 +332,25 @@ internal fun EmojiRatingScale(
                     context.packageName
                 )
                 
+                // SVG icon with original colors
                 Icon(
                     painter = painterResource(id = drawableId),
                     contentDescription = "Rating ${rating}",
                     modifier = Modifier.size(50.dp),
                     tint = Color.Unspecified
                 )
+                
+                // Semi-transparent overlay for unselected icons (only when a rating is selected)
+                if (selectedRating > 0 && !isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .background(
+                                color = Color.White.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(25.dp)
+                            )
+                    )
+                }
             }
         }
     }
