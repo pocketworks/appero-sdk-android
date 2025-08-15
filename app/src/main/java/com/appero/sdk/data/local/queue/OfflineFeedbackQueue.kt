@@ -1,0 +1,194 @@
+package com.appero.sdk.data.local.queue
+
+import com.appero.sdk.domain.repository.FeedbackRepository
+import com.appero.sdk.domain.repository.FeedbackSubmissionResult
+import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.util.Timer
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.timer
+import android.util.Log
+
+/**
+ * Data model for queued feedback
+ */
+data class QueuedFeedback(
+    val id: String = UUID.randomUUID().toString(),
+    val rating: Int,
+    val feedback: String,
+    val timestamp: String,
+    val retryCount: Int = 0
+)
+
+/**
+ * Manages offline feedback queuing and retry logic
+ * Stores failed feedback submissions locally and retries when connectivity returns
+ * Includes periodic retry timer
+ */
+internal class OfflineFeedbackQueue(
+    private val feedbackRepository: FeedbackRepository,
+    private val scope: CoroutineScope
+) {
+    companion object {
+        private const val MAX_RETRY_ATTEMPTS = 5
+        private const val MAX_QUEUE_SIZE = 100
+        private const val RETRY_TIMER_INTERVAL_MS = 180_000L // 3 minutes
+    }
+
+    private var retryTimer: Timer? = null
+    private var isNetworkAvailable = false
+    private val isProcessing = AtomicBoolean(false)
+
+    init {
+        // Start periodic retry timer
+        startRetryTimer()
+    }
+
+    /**
+     * Start periodic retry timer that attempts to process queue every 3 minutes
+     */
+    private fun startRetryTimer() {
+        stopRetryTimer() // Ensure we don't have multiple timers
+
+        retryTimer = timer(
+            name = "ApperoRetryTimer",
+            daemon = true,
+            initialDelay = RETRY_TIMER_INTERVAL_MS,
+            period = RETRY_TIMER_INTERVAL_MS
+        ) {
+            scope.launch {
+                processQueue()
+            }
+        }
+    }
+
+    /**
+     * Stop the periodic retry timer
+     */
+    private fun stopRetryTimer() {
+        retryTimer?.cancel()
+        retryTimer = null
+    }
+
+    /**
+     * Called when network state changes
+     * @param isAvailable true if network is available
+     */
+    fun onNetworkStateChanged(isAvailable: Boolean) {
+        isNetworkAvailable = isAvailable
+
+        // If we have connectivity and queued items, process immediately
+        if (isAvailable && getQueueSize() > 0) {
+            scope.launch { processQueue() }
+        }
+    }
+
+    /**
+     * Add feedback to the offline queue
+     * @param rating The rating (1-5)
+     * @param feedback The feedback text
+     */
+    fun queueFeedback(rating: Int, feedback: String) {
+        val queuedFeedback = QueuedFeedback(
+            rating = rating,
+            feedback = feedback,
+            timestamp = getCurrentTimestamp()
+        )
+
+        val currentQueue = feedbackRepository.getQueuedFeedback().toMutableList()
+
+        // Prevent queue from growing too large
+        if (currentQueue.size >= MAX_QUEUE_SIZE) {
+            // Remove oldest items
+            currentQueue.removeAt(0)
+        }
+
+        currentQueue.add(queuedFeedback)
+        feedbackRepository.saveQueuedFeedback(currentQueue)
+    }
+
+    /**
+     * Process all queued feedback submissions
+     * Called when network connectivity is available or by periodic retry timer
+     */
+    fun processQueue() {
+        if (!isNetworkAvailable) {
+            return // Skip processing if no network
+        }
+        if (!isProcessing.compareAndSet(false, true)) return
+
+        val queuedItems = feedbackRepository.getQueuedFeedback()
+        if (queuedItems.isEmpty()) {
+            isProcessing.set(false)
+            return // No items to process
+        }
+
+        Log.i("Appero", "Processing ${queuedItems.size} queued feedback items")
+
+        scope.launch {
+            try {
+                val successfulSubmissions = mutableListOf<String>()
+                val updatedQueue = mutableListOf<QueuedFeedback>()
+
+                for (item in queuedItems) {
+                    try {
+                        val result = feedbackRepository.submitFeedback(
+                            rating = item.rating,
+                            feedback = item.feedback
+                        )
+
+                        when (result) {
+                            is FeedbackSubmissionResult.Success -> {
+                                // Successful submission - remove from queue
+                                successfulSubmissions.add(item.id)
+                            }
+
+                            is FeedbackSubmissionResult.Error -> {
+                                // Failed submission - retry or remove based on retry count
+                                if (item.retryCount < MAX_RETRY_ATTEMPTS) {
+                                    // Add back to queue with incremented retry count
+                                    updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                                }
+                                // If max retries reached, item is dropped (not added to updatedQueue)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        // Network error - retry if under limit
+                        if (item.retryCount < MAX_RETRY_ATTEMPTS) {
+                            updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                        }
+                    }
+                }
+
+                // Update the queue with remaining items
+                feedbackRepository.saveQueuedFeedback(updatedQueue)
+            } finally {
+                isProcessing.set(false)
+            }
+        }
+    }
+
+    /**
+     * Get the current number of queued feedback items
+     */
+    fun getQueueSize(): Int {
+        return feedbackRepository.getQueuedFeedback().size
+    }
+
+    /**
+     * Clear all queued feedback (for testing/reset purposes)
+     */
+    fun clearQueue() {
+        feedbackRepository.saveQueuedFeedback(emptyList())
+    }
+
+    /**
+     * Clean up resources (stop timer, etc.)
+     * Should be called when SDK is being cleaned up
+     */
+    fun cleanup() {
+        stopRetryTimer()
+    }
+} 
