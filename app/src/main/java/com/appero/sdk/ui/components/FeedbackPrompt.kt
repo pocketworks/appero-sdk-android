@@ -45,7 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -58,7 +60,6 @@ import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.theme.ApperoTheme
 import com.appero.sdk.ui.theme.DefaultTheme
-import kotlinx.coroutines.delay
 
 @Composable
 fun rememberImeState(): State<Boolean> {
@@ -116,18 +117,17 @@ fun FeedbackPrompt(
             ModalBottomSheet(
                 windowInsets = WindowInsets.ime,
                 onDismissRequest = onDismiss,
+                dragHandle = null,
                 modifier = modifier.then(if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.73F))
             ) {
-                LaunchedEffect(key1 = imeState.value) {
-                    if (imeState.value && currentStep == FeedbackStep.Rating) {
-                        delay(100)
-                        scrollState.animateScrollTo(scrollState.maxValue)
-                    }
-                }
                 when (currentStep) {
                     is FeedbackStep.Rating -> {
                         Column(
-                            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = 24.dp, vertical = 24.dp)
+                                .padding(bottom = if (imeState.value) 16.dp else 0.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -135,23 +135,36 @@ fun FeedbackPrompt(
                                     Icon(Icons.Default.Close, contentDescription = "Close", tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(24.dp))
-                            EmojiRatingScale(
-                                selectedRating = selectedRating,
-                                theme = theme,
-                                onRatingSelected = { rating ->
-                                    selectedRating = rating
-                                    analyticsListener?.onRatingSelected(rating)
-                                }
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            // Only show title and subtitle when keyboard is not visible
+                            if (!imeState.value) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
+                            // Only show emoji rating when keyboard is not visible
+                            if (!imeState.value) {
+                                EmojiRatingScale(
+                                    selectedRating = selectedRating,
+                                    theme = theme,
+                                    onRatingSelected = { rating ->
+                                        selectedRating = rating
+                                        analyticsListener?.onRatingSelected(rating)
+                                    }
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
                             if (selectedRating > 0) {
-                                Text(text = config.followUpQuestion, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
-                                Spacer(modifier = Modifier.height(16.dp))
+                                // Show follow-up question only when keyboard is not visible
+                                if (!imeState.value) {
+                                    Text(text = config.followUpQuestion, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                }
+                                
                                 OutlinedTextField(
                                     value = feedbackText,
                                     onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
@@ -185,7 +198,11 @@ fun FeedbackPrompt(
                     }
                     is FeedbackStep.Frustration -> {
                         Column(
-                            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = 24.dp, vertical = 24.dp)
+                                .padding(bottom = if (imeState.value) 16.dp else 0.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -193,11 +210,16 @@ fun FeedbackPrompt(
                                     Icon(Icons.Default.Close, contentDescription = "Close", tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            // Only show title and subtitle when keyboard is not visible
+                            if (!imeState.value) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
                             OutlinedTextField(
                                 value = feedbackText,
                                 onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
@@ -218,8 +240,12 @@ fun FeedbackPrompt(
                             }
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(onClick = { onSubmit(0, feedbackText); currentStep = FeedbackStep.ThankYou }, enabled = feedbackText.isNotBlank(), modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = config.submitText, color = theme.buttonTextColor) }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text(text = "Not now", color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface) }
+                            
+                            // Only show "Not now" button when keyboard is not visible
+                            if (!imeState.value) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text(text = "Not now", color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface) }
+                            }
                         }
                     }
                     is FeedbackStep.RateUs -> {
@@ -258,17 +284,36 @@ internal fun EmojiRatingScale(
     onRatingSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val emojis = listOf("😢", "😕", "😐", "😊", "😍")
-    val colors = listOf(theme.veryNegativeColor, theme.negativeColor, theme.neutralColor, theme.positiveColor, theme.veryPositiveColor)
+    val context = LocalContext.current
 
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-        emojis.forEachIndexed { index, emoji ->
-            val rating = index + 1
-            val isSelected = selectedRating == rating
-            val backgroundColor = if (isSelected) colors[index] else Color.LightGray.copy(alpha = 0.3f)
-
-            Box(modifier = Modifier.size(56.dp).clip(RoundedCornerShape(28.dp)).background(backgroundColor).clickable { onRatingSelected(rating) }, contentAlignment = Alignment.Center) {
-                Text(text = emoji, fontSize = 24.sp)
+        (1..5).forEach { rating ->
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .clickable { onRatingSelected(rating) },
+                contentAlignment = Alignment.Center
+            ) {
+                val drawableId = context.resources.getIdentifier(
+                    when (rating) {
+                        1 -> "ic_rating_very_negative"
+                        2 -> "ic_rating_negative"
+                        3 -> "ic_rating_neutral"
+                        4 -> "ic_rating_positive"
+                        5 -> "ic_rating_very_positive"
+                        else -> "ic_rating_neutral"
+                    },
+                    "drawable",
+                    context.packageName
+                )
+                
+                Icon(
+                    painter = painterResource(id = drawableId),
+                    contentDescription = "Rating ${rating}",
+                    modifier = Modifier.size(50.dp),
+                    tint = Color.Unspecified
+                )
             }
         }
     }
