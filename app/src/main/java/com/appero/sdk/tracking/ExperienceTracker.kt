@@ -8,6 +8,7 @@ import com.appero.sdk.data.remote.dto.FeedbackUI
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.components.FeedbackStep
 import com.appero.sdk.Appero
+import com.appero.sdk.debug.ApperoLogger
 import com.appero.sdk.util.DateTimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,7 +81,7 @@ internal class ExperienceTracker(
                 }
                 Appero.showFeedbackPrompt(config, initialStep)
             } catch (e: Exception) {
-                android.util.Log.e("Appero", "Error triggering feedback prompt", e)
+                android.util.Log.e("ApperoSDK", "Error triggering feedback prompt", e)
             }
         }
     }
@@ -107,13 +108,16 @@ internal class ExperienceTracker(
                             }
                         }
                         is ExperienceSubmissionResult.Error -> {
+                            ApperoLogger.logApiError("/api/experience", "POST", result.message)
                             Appero.queueExperience(value, context)
                         }
                     }
                 } else {
+                    ApperoLogger.logNetworkError("Experience Submission", "No client ID available")
                     Appero.queueExperience(value, context)
                 }
             } catch (e: Exception) {
+                ApperoLogger.logNetworkError("Experience Submission", "Exception: ${e.message}")
                 Appero.queueExperience(value, context)
             }
         }
@@ -131,9 +135,13 @@ internal class ExperienceTracker(
         get() = userRepository.getRatingThreshold()
         set(value) = userRepository.setRatingThreshold(value)
     
-    fun markFeedbackSubmitted() { userRepository.markFeedbackSubmitted() }
+    fun markFeedbackSubmitted() { 
+        userRepository.markFeedbackSubmitted() 
+    }
     
-    fun resetExperienceAndPrompt() { userRepository.resetExperienceAndPrompt() }
+    fun resetExperienceAndPrompt() { 
+        userRepository.resetExperienceAndPrompt() 
+    }
     
     fun getExperienceState(): ExperienceState {
         return ExperienceState(
@@ -145,9 +153,15 @@ internal class ExperienceTracker(
         )
     }
     
-    fun getCurrentUserId(): String { return userRepository.getCurrentUserId() }
+    fun getCurrentUserId(): String { 
+        return userRepository.getCurrentUserId() 
+    }
     
-    fun setUser(userId: String) { userRepository.setUser(userId) }
+    fun setUser(userId: String) { 
+        userRepository.setUser(userId) 
+    }
     
-    fun resetUser() { userRepository.resetUser() }
+    fun resetUser() { 
+        userRepository.resetUser() 
+    }
 } 

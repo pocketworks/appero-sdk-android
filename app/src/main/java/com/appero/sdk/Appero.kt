@@ -13,6 +13,8 @@ import com.appero.sdk.analytics.ApperoAnalyticsListener
 import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
 import com.appero.sdk.data.local.queue.OfflineExperienceQueue
 import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.debug.ApperoDebugMode
+import com.appero.sdk.debug.ApperoLogger
 import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.domain.repository.ClientRepository
 import com.appero.sdk.domain.repository.ExperienceRepository
@@ -59,6 +61,7 @@ object Appero {
     private var apiKey: String? = null
     private var clientId: String? = null
     private var isInitialized: Boolean = false
+    private var appContext: Context? = null
 
     // Network monitoring
     private var connectivityManager: ConnectivityManager? = null
@@ -95,6 +98,26 @@ object Appero {
      * @param clientId Your Appero client ID (UUID format)
      */
     fun start(context: Context, apiKey: String, clientId: String?) {
+        start(context, apiKey, clientId, ApperoDebugMode.PRODUCTION)
+    }
+
+    /**
+     * Initialize the Appero SDK with API key, client ID, and debug mode
+     * Should be called in Application.onCreate() or MainActivity.onCreate()
+     *
+     * @param context Application or Activity context
+     * @param apiKey Your Appero API key (UUID format)
+     * @param clientId Your Appero client ID (UUID format)
+     * @param debugMode The debug mode for the SDK (defaults to PRODUCTION)
+     */
+    fun start(context: Context, apiKey: String, clientId: String?, debugMode: ApperoDebugMode) {
+        // Store context for string resources
+        appContext = context.applicationContext
+        
+        // Set debug mode first so we can log initialization
+        ApperoLogger.setDebugMode(debugMode)
+        ApperoLogger.logCriticalOperation("SDK Initialization", "Starting with debug mode: $debugMode")
+        
         val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         // Teardown any previous setup to avoid duplicate callbacks/queues
@@ -134,6 +157,7 @@ object Appero {
         setupNetworkMonitoring(context)
 
         isInitialized = true
+        ApperoLogger.logCriticalOperation("SDK Initialization", "Completed successfully")
     }
 
     private fun initializeClient(
@@ -338,6 +362,7 @@ object Appero {
                     onComplete?.invoke()
                 }
             } else {
+                ApperoLogger.logNetworkError("Play Store Review", "Failed to request review flow")
                 // Fallback: just call onComplete
                 onComplete?.invoke()
             }
@@ -422,6 +447,7 @@ object Appero {
         feedback: String,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
+        ApperoLogger.debug("Submitting feedback: rating=$rating, feedback length=${feedback.length}")
         // Submit feedback to backend asynchronously using SDK scope
         scope.launch(Dispatchers.IO) {
             val result = submitFeedbackToBackend(rating, feedback)
@@ -432,11 +458,13 @@ object Appero {
                         analyticsListener?.onApperoFeedbackSubmitted(rating, feedback)
                         onResult?.invoke(true, result.message)
                         onFeedbackSubmissionResult?.invoke(true, result.message)
+                        ApperoLogger.logApiSuccess("/api/feedback", "POST", 200)
                     }
                     is FeedbackSubmissionResult.Error -> {
                         onResult?.invoke(false, result.message)
                         onFeedbackSubmissionResult?.invoke(false, result.message)
                         offlineFeedbackQueue?.queueFeedback(rating, feedback)
+                        ApperoLogger.logApiError("/api/feedback", "POST", result.message)
                     }
                 }
                 onFeedbackSubmissionResult = null
@@ -468,6 +496,13 @@ object Appero {
      */
     internal fun getClientId(): String? {
         return clientRepository?.getClientId()
+    }
+
+    /**
+     * Get the application context (for internal use)
+     */
+    internal fun getContext(): Context? {
+        return appContext
     }
 
     /**
@@ -517,6 +552,7 @@ object Appero {
      * Clean up network monitoring and timers
      */
     fun stop() {
+        ApperoLogger.logCriticalOperation("SDK Shutdown", "Stopping Appero SDK")
         try {
             networkCallback?.let { callback ->
                 connectivityManager?.unregisterNetworkCallback(callback)

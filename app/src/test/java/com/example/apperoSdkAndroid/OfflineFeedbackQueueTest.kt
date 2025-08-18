@@ -14,7 +14,7 @@ class OfflineFeedbackQueueTest {
 
 	private lateinit var feedbackRepository: FeedbackRepository
 	private lateinit var offlineFeedbackQueue: OfflineFeedbackQueue
- 
+ 
 	@Before
 	fun setUp() {
 		// In-memory SharedPreferences to avoid Android framework/editor mocking

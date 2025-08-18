@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.appero.appero_sample_android.ui.theme.ApperoSampleAndroidTheme
 import android.app.Activity
 import com.appero.sdk.Appero
+import com.appero.sdk.debug.ApperoDebugMode
 import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
@@ -35,11 +36,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Initialize the Appero SDK
+        // Initialize the Appero SDK with DEBUG mode for development
         Appero.start(
             context = this,
             apiKey = "Cu8i7jOIm1cN2IhDO3iqV2cLSzcdI9/zUaws7+d19Rs", // Updated API key to match curl
-            clientId = "beeec9b8-3908-4605-9b45-faded129d41e" // Sample client ID
+            clientId = "beeec9b8-3908-4605-9b45-faded129d41e", // Sample client ID
+            debugMode = ApperoDebugMode.PRODUCTION // Enable debug logging for development
         )
         
         // Set up analytics listener for tracking Appero events
@@ -131,6 +133,46 @@ fun ApperoSampleApp() {
                 Text(
                     text = "SDK Initialized: ${Appero.isInitialized()}",
                     fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        
+        // Debug Mode Selector
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Debug Mode",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Current: DEBUG (check logcat for API errors)",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Available modes: PRODUCTION, DEBUG",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• PRODUCTION: No logging\n• DEBUG: API errors and critical operations",
+                    fontSize = 12.sp,
                     color = Color.Gray
                 )
             }
