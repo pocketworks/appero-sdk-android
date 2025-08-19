@@ -13,6 +13,7 @@ import com.example.appero_sdk_android.R
 import com.appero.sdk.analytics.ApperoAnalyticsListener
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import androidx.compose.ui.graphics.toArgb
 
 /**
  * Legacy BottomSheetDialogFragment for XML-based projects
@@ -62,11 +63,15 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         // Setup rating buttons
         setupRatingButtons(view)
 
+        // Setup follow-up question
+        val tvFollowUp = view.findViewById<TextView>(R.id.tvFollowUp)
+        tvFollowUp?.text = config.followUpQuestion
+
         // Setup feedback input
         val etFeedback = view.findViewById<EditText>(R.id.etFeedback)
         etFeedback?.hint = config.placeholder
 
-        // Setup submit button
+        // Setup submit button with theming
         val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
         btnSubmit?.text = config.submitText
         btnSubmit?.setOnClickListener {
@@ -77,11 +82,11 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                 dismiss()
             }
         }
+        
+        // Apply Appero theme to submit button
+        applyTheme(view)
 
-        // Setup cancel button
-        view.findViewById<Button>(R.id.btnCancel)?.setOnClickListener {
-            dismiss()
-        }
+
     }
 
     private fun setupRatingButtons(view: View) {
@@ -123,6 +128,25 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
         onDismissCallback?.invoke()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Refresh theme when dialog becomes visible (handles theme changes)
+        view?.let { applyTheme(it) }
+    }
+    
+    private fun applyTheme(view: View) {
+        val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
+        btnSubmit?.let { button ->
+            val theme = com.appero.sdk.Appero.theme
+            if (theme.accentColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                button.backgroundTintList = android.content.res.ColorStateList.valueOf(theme.accentColor.toArgb())
+            }
+            if (theme.buttonTextColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                button.setTextColor(theme.buttonTextColor.toArgb())
+            }
+        }
     }
 
     // Internal methods for SDK integration
