@@ -1,5 +1,6 @@
 package com.appero.appero_sample_android
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -112,6 +113,85 @@ fun ApperoSampleApp() {
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
+        
+        // Prominent CTA to XML Demo
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "🚀 Try the Hybrid Approach!",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "See how XML projects can adopt Compose gradually",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Button(
+                    onClick = { 
+                        context.startActivity(Intent(context, XmlDemoActivity::class.java))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                ) {
+                    Text(
+                        text = "🔄 View XML + ComposeView Demo",
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+        
+        // API Comparison Info
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🚀 Dual API Support",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "This sample demonstrates both UI approaches:",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• 🎛️ Compose UI: Modern bottom sheet (recommended)\n• 🏛️ XML Dialog: Traditional DialogFragment (legacy support)\n• 🔄 Same backend: Both use identical analytics & API integration",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                
+
+            }
+        }
         
         // Hello World from SDK
         Card(
@@ -542,6 +622,108 @@ fun ApperoSampleApp() {
             }
         }
         
+        // Legacy XML Dialog Demo
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E5F5))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🏛️ Legacy XML Dialog Demo",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "For XML-based projects and legacy app support",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { 
+                            if (context is androidx.fragment.app.FragmentActivity) {
+                                Appero.showFeedbackDialog(
+                                    activity = context,
+                                    config = feedbackConfig.copy(
+                                        title = "XML Dialog Feedback 📋",
+                                        subtitle = "Traditional DialogFragment approach"
+                                    ),
+                                    onResult = { success, message ->
+                                        val toastMessage = if (success) {
+                                            "✅ XML Dialog: Feedback submitted!"
+                                        } else {
+                                            "❌ XML Dialog: Failed to submit: $message"
+                                        }
+                                        Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                        experienceState = Appero.getExperienceState()
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF9C27B0)
+                        )
+                    ) {
+                        Text("XML Dialog", fontSize = 11.sp)
+                    }
+                    
+                    Button(
+                        onClick = { 
+                            if (context is androidx.fragment.app.FragmentActivity) {
+                                Appero.showFeedbackDialog(
+                                    activity = context,
+                                    config = FeedbackPromptConfig(
+                                        title = "Legacy Support Demo 🔧",
+                                        subtitle = "Perfect for existing XML projects",
+                                        followUpQuestion = "How does the XML dialog feel?",
+                                        placeholder = "Share your XML dialog experience...",
+                                        submitText = "Send via XML",
+                                        maxCharacters = 120
+                                    ),
+                                    onResult = { success, message ->
+                                        val toastMessage = if (success) {
+                                            "✅ Legacy Dialog: Feedback submitted!"
+                                        } else {
+                                            "❌ Legacy Dialog: Failed: $message"
+                                        }
+                                        Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                        experienceState = Appero.getExperienceState()
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF7B1FA2)
+                        )
+                    ) {
+                        Text("Legacy Dialog", fontSize = 10.sp)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• Uses traditional Android DialogFragment\n• Perfect for XML-based legacy projects\n• Same backend integration as Compose UI\n• Supports Play Store review flow",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        
         // General Controls
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -551,9 +733,17 @@ fun ApperoSampleApp() {
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "General Controls",
+                    text = "🎛️ Compose UI Controls",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Modern Jetpack Compose feedback UI",
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
                 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -565,12 +755,15 @@ fun ApperoSampleApp() {
                     Button(
                         onClick = { 
                             Appero.showFeedbackPrompt(
-                                config = feedbackConfig,
+                                config = feedbackConfig.copy(
+                                    title = "Compose UI Feedback 🚀",
+                                    subtitle = "Modern Jetpack Compose approach"
+                                ),
                                 onResult = { success, message ->
                                     val toastMessage = if (success) {
-                                        "✅ Feedback submitted: $message"
+                                        "✅ Compose UI: Feedback submitted!"
                                     } else {
-                                        "❌ Failed to submit: $message"
+                                        "❌ Compose UI: Failed to submit: $message"
                                     }
                                     Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                                     experienceState = Appero.getExperienceState()
@@ -582,7 +775,7 @@ fun ApperoSampleApp() {
                             containerColor = Color(0xFF2196F3)
                         )
                     ) {
-                        Text("Show Current Theme", fontSize = 11.sp)
+                        Text("Compose Bottom Sheet", fontSize = 10.sp)
                     }
                     
                     Button(
@@ -596,7 +789,7 @@ fun ApperoSampleApp() {
                             containerColor = Color(0xFF9E9E9E)
                         )
                     ) {
-                        Text("Reset", fontSize = 11.sp)
+                        Text("Reset State", fontSize = 11.sp)
                     }
                 }
             }

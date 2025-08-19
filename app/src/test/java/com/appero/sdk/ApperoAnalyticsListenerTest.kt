@@ -39,6 +39,9 @@ class ApperoAnalyticsListenerTest {
     private class TestAnalyticsListener : com.appero.sdk.analytics.ApperoAnalyticsListener {
         var feedbackCalls = mutableListOf<Pair<Int, String>>()
         var ratingCalls = mutableListOf<Int>()
+        var playStoreReviewRequests = 0
+        var playStoreReviewCompletions = mutableListOf<Boolean>()
+        var playStoreFallbacks = 0
         
         override fun onApperoFeedbackSubmitted(rating: Int, feedback: String) {
             feedbackCalls.add(Pair(rating, feedback))
@@ -48,9 +51,24 @@ class ApperoAnalyticsListenerTest {
             ratingCalls.add(rating)
         }
         
+        override fun onPlayStoreReviewRequested() {
+            playStoreReviewRequests++
+        }
+        
+        override fun onPlayStoreReviewCompleted(successful: Boolean) {
+            playStoreReviewCompletions.add(successful)
+        }
+        
+        override fun onPlayStoreFallbackTriggered() {
+            playStoreFallbacks++
+        }
+        
         fun reset() {
             feedbackCalls.clear()
             ratingCalls.clear()
+            playStoreReviewRequests = 0
+            playStoreReviewCompletions.clear()
+            playStoreFallbacks = 0
         }
     }
 } 

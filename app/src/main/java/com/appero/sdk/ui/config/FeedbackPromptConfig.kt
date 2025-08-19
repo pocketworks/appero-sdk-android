@@ -1,9 +1,13 @@
 package com.appero.sdk.ui.config
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
 /**
  * Configuration for the feedback prompt UI
  * All text content must be provided by the developer using the SDK
  */
+@Parcelize
 data class FeedbackPromptConfig(
     /**
      * Main title shown at the top of the prompt
@@ -40,7 +44,7 @@ data class FeedbackPromptConfig(
      * Default: 120
      */
     val maxCharacters: Int = 120
-) 
+) : Parcelable
 
 /**
  * Configuration for the two-step post-feedback flow (Rate Us + Thank You)

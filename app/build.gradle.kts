@@ -3,6 +3,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android") version "1.9.0"
+    id("kotlin-parcelize")
     id("io.gitlab.arturbosch.detekt") version("1.23.8")
     `maven-publish`
 }
