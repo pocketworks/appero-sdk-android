@@ -30,14 +30,15 @@ import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.theme.ApperoTheme
 import com.appero.sdk.ui.theme.DefaultTheme
-import com.google.android.play.core.review.ReviewManagerFactory
-import com.google.android.play.core.review.ReviewInfo
 import com.google.android.gms.tasks.Task
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.play.core.review.ReviewManagerFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -418,16 +419,7 @@ object Appero {
         offlineFeedbackQueue?.processQueue()
     }
 
-    /**
-     * Force offline mode for testing (similar to iOS SDK's forceOfflineMode)
-     * When enabled, all feedback will be queued regardless of network status
-     * @param forceOffline true to force offline behavior
-     */
-    fun setForceOfflineMode(forceOffline: Boolean) {
-        requireInitialized()
-        // Implementation would depend on offline queue supporting force offline mode
-        // For now, this is a placeholder for the API
-    }
+
 
     /**
      * Clear all queued feedback (for testing/reset purposes)
@@ -451,7 +443,7 @@ object Appero {
         // Submit feedback to backend asynchronously using SDK scope
         scope.launch(Dispatchers.IO) {
             val result = submitFeedbackToBackend(rating, feedback)
-            kotlinx.coroutines.withContext(Dispatchers.Main) {
+            withContext(Dispatchers.Main) {
                 when (result) {
                     is FeedbackSubmissionResult.Success -> {
                         markFeedbackSubmitted()
@@ -571,14 +563,5 @@ object Appero {
         require(isInitialized) { "Appero SDK must be initialized before use. Call Appero.start() first." }
     }
 
-    /**
-     * Restore SDK state from SharedPreferences if previously initialized
-     */
-    private fun restoreFromPreferences() {
-        if (clientRepository?.getIsApperoInitialized() != true) {
-            apiKey = clientRepository?.getApiKey()
-            clientId = clientRepository?.getClientId()
-            isInitialized = true
-        }
-    }
+
 } 

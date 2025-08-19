@@ -100,5 +100,7 @@ dependencies {
     
     // Compose testing
     debugImplementation("androidx.compose.ui:ui-tooling")
+    
+    // Google Play Services
     implementation("com.google.android.play:review:2.0.1")
 }
