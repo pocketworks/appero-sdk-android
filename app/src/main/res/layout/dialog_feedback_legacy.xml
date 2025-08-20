@@ -40,6 +40,7 @@
 
     <!-- Rating Buttons (SpaceEvenly like Compose) -->
     <LinearLayout
+        android:id="@+id/ratingContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -126,10 +127,7 @@
             app:boxStrokeColor="@android:color/transparent"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="0dp"
-            app:hintEnabled="false"
-            app:counterEnabled="true"
-            app:counterMaxLength="120"
-            app:counterTextColor="@color/gray_text">
+            app:hintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etFeedback"
@@ -146,6 +144,18 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Character Counter (like Compose) -->
+        <TextView
+            android:id="@+id/tvCharacterCounter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0/120"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:gravity="end"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
         <!-- Submit Button (full width like Compose) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSubmit"
@@ -154,6 +164,16 @@
             android:layout_marginTop="16dp"
             android:text="Send Feedback"
             style="@style/Widget.Material3.Button" />
+
+        <!-- Not Now Button (for frustration flow) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNotNow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Not now"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:visibility="gone" />
 
     </LinearLayout>
 

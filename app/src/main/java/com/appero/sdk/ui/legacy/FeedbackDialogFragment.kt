@@ -12,6 +12,7 @@ import android.widget.TextView
 import com.example.appero_sdk_android.R
 import com.appero.sdk.analytics.ApperoAnalyticsListener
 import com.appero.sdk.ui.config.FeedbackPromptConfig
+import com.appero.sdk.ui.components.FeedbackStep
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import androidx.compose.ui.graphics.toArgb
 
@@ -35,6 +36,9 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     // Rating state
     private var selectedRating: Int = 0
     private val ratingButtons = mutableListOf<ImageButton>()
+    
+    // Flow state
+    private var initialStep: FeedbackStep = FeedbackStep.Rating
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,23 +74,126 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         // Setup feedback input
         val etFeedback = view.findViewById<EditText>(R.id.etFeedback)
         etFeedback?.hint = config.placeholder
+        
+        // Setup character counter
+        val tvCharacterCounter = view.findViewById<TextView>(R.id.tvCharacterCounter)
+        tvCharacterCounter?.text = "0/${config.maxCharacters}"
+        
+        // Add text change listener to update character counter and enforce limit
+        etFeedback?.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val text = s?.toString() ?: ""
+                tvCharacterCounter?.text = "${text.length}/${config.maxCharacters}"
+                
+                // Enforce character limit
+                if (text.length > config.maxCharacters) {
+                    val limitedText = text.substring(0, config.maxCharacters)
+                    etFeedback?.setText(limitedText)
+                    etFeedback?.setSelection(limitedText.length)
+                }
+            }
+        })
 
         // Setup submit button with theming
         val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
         btnSubmit?.text = config.submitText
         btnSubmit?.setOnClickListener {
-            if (selectedRating > 0) {
-                val feedbackText = etFeedback?.text?.toString() ?: ""
-                analyticsListener?.onRatingSelected(selectedRating)
-                onSubmitCallback?.invoke(selectedRating, feedbackText)
-                dismiss()
+            val feedbackText = etFeedback?.text?.toString() ?: ""
+            if (initialStep == FeedbackStep.Frustration) {
+                // For frustration flow, always submit with rating 0
+                onSubmitCallback?.invoke(0, feedbackText)
+            } else {
+                // For rating flow, require a rating
+                if (selectedRating > 0) {
+                    analyticsListener?.onRatingSelected(selectedRating)
+                    onSubmitCallback?.invoke(selectedRating, feedbackText)
+                }
             }
+            dismiss()
         }
         
         // Apply Appero theme to submit button
         applyTheme(view)
-
-
+        
+        // Handle initial step (frustration vs rating flow)
+        handleInitialStep(view)
+    }
+    
+    private fun handleInitialStep(view: View) {
+        when (initialStep) {
+            FeedbackStep.Frustration -> {
+                // Hide rating buttons for frustration flow
+                val ratingContainer = view.findViewById<View>(R.id.ratingContainer)
+                ratingContainer?.visibility = View.GONE
+                
+                // Hide subtitle for frustration flow
+                val tvSubtitle = view.findViewById<TextView>(R.id.tvSubtitle)
+                tvSubtitle?.visibility = View.GONE
+                
+                // Show feedback section immediately
+                val feedbackSection = view.findViewById<View>(R.id.feedbackSection)
+                feedbackSection?.visibility = View.VISIBLE
+                
+                // Update follow-up question for frustration flow
+                val tvFollowUp = view.findViewById<TextView>(R.id.tvFollowUp)
+                tvFollowUp?.text = "Would you mind telling us what went wrong?"
+                
+                // Update feedback input placeholder for frustration flow
+                val etFeedback = view.findViewById<EditText>(R.id.etFeedback)
+                etFeedback?.hint = "Would you mind telling us what went wrong?"
+                
+                // Update submit button to work without rating
+                val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
+                btnSubmit?.isEnabled = true
+                
+                // Show "Not now" button for frustration flow
+                val btnNotNow = view.findViewById<Button>(R.id.btnNotNow)
+                btnNotNow?.visibility = View.VISIBLE
+                btnNotNow?.setOnClickListener {
+                    dismiss()
+                }
+            }
+            FeedbackStep.Rating -> {
+                // Show rating buttons (default behavior)
+                val ratingContainer = view.findViewById<View>(R.id.ratingContainer)
+                ratingContainer?.visibility = View.VISIBLE
+                
+                // Show subtitle for rating flow
+                val tvSubtitle = view.findViewById<TextView>(R.id.tvSubtitle)
+                tvSubtitle?.visibility = View.VISIBLE
+                
+                // Hide feedback section initially
+                val feedbackSection = view.findViewById<View>(R.id.feedbackSection)
+                feedbackSection?.visibility = View.GONE
+                
+                // Submit button starts disabled until rating is selected
+                val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
+                btnSubmit?.isEnabled = false
+                
+                // Hide "Not now" button for rating flow
+                val btnNotNow = view.findViewById<Button>(R.id.btnNotNow)
+                btnNotNow?.visibility = View.GONE
+            }
+            else -> {
+                // Default to rating flow for other steps
+                val ratingContainer = view.findViewById<View>(R.id.ratingContainer)
+                ratingContainer?.visibility = View.VISIBLE
+                
+                val tvSubtitle = view.findViewById<TextView>(R.id.tvSubtitle)
+                tvSubtitle?.visibility = View.VISIBLE
+                
+                val feedbackSection = view.findViewById<View>(R.id.feedbackSection)
+                feedbackSection?.visibility = View.GONE
+                
+                val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
+                btnSubmit?.isEnabled = false
+                
+                val btnNotNow = view.findViewById<Button>(R.id.btnNotNow)
+                btnNotNow?.visibility = View.GONE
+            }
+        }
     }
 
     private fun setupRatingButtons(view: View) {
@@ -134,6 +241,9 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
 
         // Show feedback input after rating selection
         view?.findViewById<View>(R.id.feedbackSection)?.visibility = View.VISIBLE
+        
+        // Enable submit button when rating is selected
+        view?.findViewById<Button>(R.id.btnSubmit)?.isEnabled = true
     }
     
     private fun resetRatingButtons() {
@@ -175,6 +285,10 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
 
     internal fun setConfig(config: FeedbackPromptConfig) {
         this.config = config
+    }
+    
+    internal fun setInitialStep(step: FeedbackStep) {
+        this.initialStep = step
     }
 
     internal fun setOnSubmitCallback(callback: (rating: Int, feedback: String) -> Unit) {

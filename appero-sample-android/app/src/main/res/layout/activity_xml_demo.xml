@@ -106,16 +106,6 @@
                         android:textSize="12sp"
                         app:backgroundTint="#9C27B0" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnLegacyDialog"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="Legacy Support"
-                        android:textSize="12sp"
-                        app:backgroundTint="#7B1FA2" />
-
                 </LinearLayout>
 
                 <TextView
@@ -244,6 +234,26 @@
                     android:text="Experience Points: 0"
                     android:textSize="14sp"
                     android:gravity="center" />
+                
+                <!-- Auto-trigger testing button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTestAutoTrigger"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="🚀 Test Auto-Trigger (+5 to cross threshold)"
+                    android:textSize="12sp"
+                    app:backgroundTint="#FF5722" />
+                
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="⚡ XML Auto-Trigger: ENABLED"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:textColor="#4CAF50"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 

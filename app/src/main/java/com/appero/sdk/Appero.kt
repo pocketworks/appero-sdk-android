@@ -746,9 +746,22 @@ object Appero {
         initialStep: FeedbackStep,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
-        // For legacy support, we ignore initialStep for now
-        // Future enhancement could support different dialog layouts
-        showFeedbackDialog(activity, config, onResult)
+        requireInitialized()
+        
+        val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
+        dialogFragment.setConfig(config)
+        dialogFragment.setInitialStep(initialStep)
+        dialogFragment.setAnalyticsListener(analyticsListener)
+        
+        dialogFragment.setOnSubmitCallback { rating, feedback ->
+            handleFeedbackSubmission(rating, feedback, onResult)
+        }
+        
+        dialogFragment.setOnDismissCallback {
+            // Dialog dismissed without submission
+        }
+        
+        dialogFragment.show(activity.supportFragmentManager, "ApperoFeedbackDialog")
     }
 
     /**
@@ -774,6 +787,28 @@ object Appero {
         }
         
         return dialogFragment
+    }
+
+    // Legacy XML Auto-Triggering Support
+    
+    /**
+     * Register a FragmentActivity for automatic legacy XML dialog triggering
+     * When experience thresholds are crossed (positive or frustration), the feedback dialog 
+     * will be shown automatically using XML layouts instead of Compose
+     * 
+     * @param activity The FragmentActivity to use for showing dialogs
+     */
+    fun registerLegacyActivity(activity: androidx.fragment.app.FragmentActivity) {
+        requireInitialized()
+        experienceTracker?.registerLegacyActivity(activity)
+    }
+    
+    /**
+     * Unregister the current legacy activity (should be called in onDestroy)
+     * After unregistering, auto-triggering will fall back to Compose dialogs
+     */
+    fun unregisterLegacyActivity() {
+        experienceTracker?.unregisterLegacyActivity()
     }
 
     /**

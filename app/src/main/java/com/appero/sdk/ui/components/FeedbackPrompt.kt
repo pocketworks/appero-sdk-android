@@ -249,19 +249,17 @@ fun FeedbackPrompt(
                                 }
                             }
                             
-                            // Only show title and subtitle when keyboard is not visible
+                            // Only show title when keyboard is not visible (hide subtitle for frustration flow)
                             if (!imeState.value) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                             
                             OutlinedTextField(
                                 value = feedbackText,
                                 onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
-                                placeholder = { Text(text = config.placeholder, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
+                                placeholder = { Text(text = "Would you mind telling us what went wrong?", color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(88.dp)

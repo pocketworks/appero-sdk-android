@@ -34,9 +34,18 @@ class XmlDemoActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_xml_demo)
         
+        // Register for automatic XML dialog triggering
+        Appero.registerLegacyActivity(this)
+        
         // Initialize views
         setupXmlViews()
         setupComposeView()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Unregister to prevent memory leaks
+        Appero.unregisterLegacyActivity()
     }
     
     private fun setupXmlViews() {
@@ -46,10 +55,6 @@ class XmlDemoActivity : FragmentActivity() {
         // XML Dialog buttons
         findViewById<Button>(R.id.btnXmlDialog).setOnClickListener {
             showXmlDialog()
-        }
-        
-        findViewById<Button>(R.id.btnLegacyDialog).setOnClickListener {
-            showLegacyDialog()
         }
         
         // Experience tracking buttons
@@ -69,6 +74,16 @@ class XmlDemoActivity : FragmentActivity() {
             Appero.log(Experience.NEGATIVE)
             updateExperienceState()
             Toast.makeText(this, "Negative experience logged (-1)", Toast.LENGTH_SHORT).show()
+        }
+        
+        // Test auto-trigger button
+        findViewById<Button>(R.id.btnTestAutoTrigger).setOnClickListener {
+            // Add enough positive experiences to cross the threshold (default is 5)
+            repeat(5) {
+                Appero.log(Experience.POSITIVE)
+            }
+            updateExperienceState()
+            Toast.makeText(this, "Added +5 points to trigger threshold! XML dialog should appear automatically.", Toast.LENGTH_LONG).show()
         }
         
         // Back button
@@ -206,31 +221,6 @@ class XmlDemoActivity : FragmentActivity() {
                     "✅ XML Bottom Sheet: Feedback submitted!"
                 } else {
                     "❌ XML Bottom Sheet: Failed to submit: $message"
-                }
-                Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
-                updateExperienceState()
-            }
-        )
-    }
-    
-    private fun showLegacyDialog() {
-        val config = FeedbackPromptConfig(
-            title = "Legacy Support Demo 🔧",
-            subtitle = "Perfect for existing XML projects",
-            followUpQuestion = "How does legacy support feel?",
-            placeholder = "Share your thoughts on legacy XML support...",
-            submitText = "Send via Legacy API",
-            maxCharacters = 120
-        )
-        
-        Appero.showFeedbackDialog(
-            activity = this,
-            config = config,
-            onResult = { success, message ->
-                val toastMessage = if (success) {
-                    "✅ Legacy Dialog: Feedback submitted!"
-                } else {
-                    "❌ Legacy Dialog: Failed: $message"
                 }
                 Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
                 updateExperienceState()

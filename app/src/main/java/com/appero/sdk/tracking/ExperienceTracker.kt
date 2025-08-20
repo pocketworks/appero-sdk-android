@@ -34,6 +34,9 @@ internal class ExperienceTracker(
     private val experienceRepository: ExperienceRepository,
     private val scope: CoroutineScope
 ) {
+    
+    // Legacy XML support for auto-triggering
+    private var legacyActivity: androidx.fragment.app.FragmentActivity? = null
 
     /**
      * Log an experience event using predefined Experience enum
@@ -79,7 +82,18 @@ internal class ExperienceTracker(
                     "frustration" -> FeedbackStep.Frustration
                     else -> FeedbackStep.Rating
                 }
-                Appero.showFeedbackPrompt(config, initialStep)
+                
+                // Check if we have a registered legacy activity
+                val activity = legacyActivity
+                if (activity != null) {
+                    // Use legacy XML dialog for auto-triggering
+                    Appero.showFeedbackDialog(activity, config, initialStep) { success, message ->
+                        ApperoLogger.logCriticalOperation("Legacy auto-trigger result", "success=$success, message=$message")
+                    }
+                } else {
+                    // Use Compose dialog (default behavior)
+                    Appero.showFeedbackPrompt(config, initialStep)
+                }
             } catch (e: Exception) {
                 android.util.Log.e("ApperoSDK", "Error triggering feedback prompt", e)
             }
@@ -163,5 +177,25 @@ internal class ExperienceTracker(
     
     fun resetUser() { 
         userRepository.resetUser() 
+    }
+    
+    /**
+     * Register a FragmentActivity for legacy XML auto-triggering
+     * When thresholds are crossed, the feedback dialog will be shown automatically
+     * using the registered activity's FragmentManager
+     */
+    fun registerLegacyActivity(activity: androidx.fragment.app.FragmentActivity) {
+        legacyActivity = activity
+        ApperoLogger.logCriticalOperation("Legacy activity registered", "auto-triggering: ${activity.javaClass.simpleName}")
+    }
+    
+    /**
+     * Unregister the legacy activity (e.g., when activity is destroyed)
+     */
+    fun unregisterLegacyActivity() {
+        legacyActivity?.let { activity ->
+            ApperoLogger.logCriticalOperation("Legacy activity unregistered", activity.javaClass.simpleName)
+        }
+        legacyActivity = null
     }
 } 
