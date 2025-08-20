@@ -6,15 +6,6 @@
     android:orientation="vertical"
     android:background="@drawable/bottom_sheet_background">
 
-    <!-- Bottom Sheet Handle -->
-    <View
-        android:layout_width="32dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/bottom_sheet_handle" />
-
     <!-- Content -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,7 +14,7 @@
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp">
 
-                <!-- Title -->
+        <!-- Title -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
@@ -33,6 +24,7 @@
             android:textStyle="bold"
             android:gravity="center"
             android:textColor="#FF003143"
+            android:layout_marginTop="24dp"
             android:layout_marginBottom="8dp" />
 
         <!-- Subtitle -->
@@ -128,18 +120,29 @@
         <!-- Feedback Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            android:layout_height="88dp"
+            android:layout_marginBottom="4dp"
+            app:boxBackgroundMode="none"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:hintEnabled="false"
+            app:counterEnabled="true"
+            app:counterMaxLength="120"
+            app:counterTextColor="@color/gray_text">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etFeedback"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minLines="3"
-                android:maxLines="5"
+                android:layout_height="match_parent"
+                android:minLines="4"
+                android:maxLines="4"
                 android:gravity="top"
-                android:inputType="textMultiLine|textCapSentences" />
+                android:inputType="textMultiLine|textCapSentences"
+                android:hint="Tell us more..."
+                android:textColorHint="@color/gray_text"
+                android:background="@drawable/text_input_background"
+                android:padding="16dp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -148,6 +151,7 @@
             android:id="@+id/btnSubmit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Send Feedback"
             style="@style/Widget.Material3.Button" />
 

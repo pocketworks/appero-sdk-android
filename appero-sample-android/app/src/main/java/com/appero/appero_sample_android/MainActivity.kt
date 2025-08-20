@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
             context = this,
             apiKey = "Cu8i7jOIm1cN2IhDO3iqV2cLSzcdI9/zUaws7+d19Rs", // Updated API key to match curl
             clientId = "beeec9b8-3908-4605-9b45-faded129d41e", // Sample client ID
-            debugMode = ApperoDebugMode.PRODUCTION // Enable debug logging for development
+            debugMode = ApperoDebugMode.DEBUG // Enable debug logging for development
         )
         
         // Set up analytics listener for tracking Appero events
