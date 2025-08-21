@@ -284,11 +284,8 @@ fun FeedbackPrompt(
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(onClick = { onSubmit(0, feedbackText); currentStep = FeedbackStep.ThankYou }, enabled = feedbackText.isNotBlank(), modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = config.submitText, color = theme.buttonTextColor) }
                             
-                            // Only show "Not now" button when keyboard is not visible
-                            if (!imeState.value) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text(text = "Not now", color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface) }
-                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text(text = "Not now", color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface) }
                         }
                     }
 

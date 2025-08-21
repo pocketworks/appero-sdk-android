@@ -42,7 +42,7 @@ dependencies {
 }
 ```
 
-### 2. Add Permissions
+### 2. Add Permissions & Activity Configuration
 
 Add to your `AndroidManifest.xml`:
 
@@ -57,6 +57,18 @@ Add to your `AndroidManifest.xml`:
     
 </manifest>
 ```
+
+**Important**: For proper keyboard handling with the feedback bottom sheet, add this to your activity:
+
+```xml
+<activity
+    android:name=".YourActivity"
+    android:windowSoftInputMode="adjustResize">
+    <!-- ... other activity attributes ... -->
+</activity>
+```
+
+This ensures the text input remains visible when the keyboard appears.
 
 ### 3. Initialize the SDK
 

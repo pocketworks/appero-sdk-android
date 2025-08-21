@@ -99,6 +99,47 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                 }
             }
         })
+        
+        // Add focus listeners to hide/show elements when keyboard appears (like Compose)
+        etFeedback?.setOnFocusChangeListener { _, hasFocus ->
+            val tvFollowUp = view.findViewById<TextView>(R.id.tvFollowUp)
+            
+            if (hasFocus) {
+                // Hide title and rating when text input is focused
+                view.findViewById<TextView>(R.id.tvTitle)?.visibility = View.GONE
+                view.findViewById<View>(R.id.ratingContainer)?.visibility = View.GONE
+                view.findViewById<TextView>(R.id.tvSubtitle)?.visibility = View.GONE
+                
+                // Hide "Not now" button when keyboard is visible (frustration flow)
+                view.findViewById<Button>(R.id.btnNotNow)?.visibility = View.GONE
+                
+                // Add top margin to follow-up question when title is hidden
+                tvFollowUp?.let { followUp ->
+                    val layoutParams = followUp.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+                    layoutParams?.topMargin = (32 * resources.displayMetrics.density).toInt() // 32dp
+                    followUp.layoutParams = layoutParams
+                }
+            } else {
+                // Show title and rating when text input loses focus
+                if (currentStep == FeedbackStep.Rating) {
+                    view.findViewById<TextView>(R.id.tvTitle)?.visibility = View.VISIBLE
+                    view.findViewById<View>(R.id.ratingContainer)?.visibility = View.VISIBLE
+                    view.findViewById<TextView>(R.id.tvSubtitle)?.visibility = View.VISIBLE
+                }
+                
+                // Show "Not now" button when keyboard is hidden (frustration flow)
+                if (initialStep == FeedbackStep.Frustration) {
+                    view.findViewById<Button>(R.id.btnNotNow)?.visibility = View.VISIBLE
+                }
+                
+                // Reset top margin to original when title is visible
+                tvFollowUp?.let { followUp ->
+                    val layoutParams = followUp.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+                    layoutParams?.topMargin = 0 // Original margin
+                    followUp.layoutParams = layoutParams
+                }
+            }
+        }
 
         // Setup submit button with theming
         val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
@@ -150,6 +191,8 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         view.findViewById<View>(R.id.ratingContainer)?.visibility = View.GONE
         view.findViewById<TextView>(R.id.tvSubtitle)?.visibility = View.GONE
         view.findViewById<View>(R.id.feedbackSection)?.visibility = View.GONE
+        view.findViewById<Button>(R.id.btnSubmit)?.visibility = View.GONE
+        view.findViewById<Button>(R.id.btnNotNow)?.visibility = View.GONE
         
         // Show thank you section
         view.findViewById<View>(R.id.thankYouSection)?.visibility = View.VISIBLE

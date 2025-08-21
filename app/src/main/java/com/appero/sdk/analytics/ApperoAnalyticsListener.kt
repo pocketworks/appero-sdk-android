@@ -5,41 +5,6 @@ package com.appero.sdk.analytics
  * 
  * Implement this interface to receive analytics events from the Appero SDK
  * and forward them to your analytics platform (Firebase, Mixpanel, etc.)
- * 
- * Example integration:
- * ```kotlin
- * class MyAnalyticsListener : ApperoAnalyticsListener {
- *     override fun onApperoFeedbackSubmitted(rating: Int, feedback: String) {
- *         FirebaseAnalytics.getInstance().logEvent("appero_feedback_submitted") {
- *             param("rating", rating.toLong())
- *             param("feedback_length", feedback.length.toLong())
- *         }
- *     }
- *     
- *     override fun onRatingSelected(rating: Int) {
- *         FirebaseAnalytics.getInstance().logEvent("appero_rating_selected") {
- *             param("rating", rating.toLong())
- *         }
- *     }
- *     
- *     override fun onPlayStoreReviewRequested() {
- *         FirebaseAnalytics.getInstance().logEvent("appero_play_store_review_requested")
- *     }
- *     
- *     override fun onPlayStoreReviewCompleted(successful: Boolean) {
- *         FirebaseAnalytics.getInstance().logEvent("appero_play_store_review_completed") {
- *             param("successful", successful)
- *         }
- *     }
- *     
- *     override fun onPlayStoreFallbackTriggered() {
- *         FirebaseAnalytics.getInstance().logEvent("appero_play_store_fallback_triggered")
- *     }
- * }
- * 
- * // Set the listener
- * Appero.setAnalyticsListener(MyAnalyticsListener())
- * ```
  */
 interface ApperoAnalyticsListener {
     /**

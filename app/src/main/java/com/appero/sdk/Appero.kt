@@ -324,17 +324,6 @@ object Appero {
         _initialFeedbackStep.value = null
         _showFeedbackPrompt.value = true
         onFeedbackSubmissionResult = onResult
-        
-        // Show debug toast for feedback prompt
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "📝 Showing feedback prompt (Rating step)",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
     }
 
     /**
@@ -355,17 +344,6 @@ object Appero {
         _initialFeedbackStep.value = initialStep
         _showFeedbackPrompt.value = true
         onFeedbackSubmissionResult = onResult
-        
-        // Show debug toast for feedback prompt
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "📝 Showing feedback prompt (${initialStep.javaClass.simpleName} step)",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
     }
 
     /**
@@ -383,7 +361,8 @@ object Appero {
         flowConfig: FeedbackFlowConfig = FeedbackFlowConfig(),
         reviewPromptThreshold: Int = 4,
         onRequestReview: () -> Unit = {},
-        onResult: ((success: Boolean, message: String) -> Unit)? = null
+        onResult: ((success: Boolean, message: String) -> Unit)? = null,
+        activity: Activity? = null
     ) {
         requireInitialized()
         val currentConfig = _feedbackPromptConfig.value ?: config
@@ -394,7 +373,7 @@ object Appero {
             theme = theme,
             analyticsListener = analyticsListener,
             onSubmit = { rating, feedback ->
-                handleFeedbackSubmission(rating, feedback, onResult)
+                handleFeedbackSubmission(rating, feedback, onResult, activity)
                 // Keep the bottom sheet open; content will change via FeedbackPrompt's state
             },
             onDismiss = {
@@ -568,7 +547,8 @@ object Appero {
     private fun handleFeedbackSubmission(
         rating: Int,
         feedback: String,
-        onResult: ((success: Boolean, message: String) -> Unit)? = null
+        onResult: ((success: Boolean, message: String) -> Unit)? = null,
+        activity: Activity? = null
     ) {
         ApperoLogger.debug("Submitting feedback: rating=$rating, feedback length=${feedback.length}")
         
@@ -608,7 +588,7 @@ object Appero {
                         
                         // Task 12: Automatic Play Store review integration
                         // This happens after successful feedback submission
-                        triggerPlayStoreReviewIfEligible(rating, playStoreReviewThreshold)
+                        triggerPlayStoreReviewIfEligible(rating, playStoreReviewThreshold, activity)
                     }
                     is FeedbackSubmissionResult.Error -> {
                         onResult?.invoke(false, result.message)
@@ -642,11 +622,12 @@ object Appero {
      */
     private fun triggerPlayStoreReviewIfEligible(
         rating: Int,
-        reviewThreshold: Int = 4
+        reviewThreshold: Int = 4,
+        activity: Activity? = null
     ) {
-        // Get current activity context - this is a limitation we need to handle
-        val context = getContext()
-        if (context !is Activity) {
+        // Use provided activity context or try to get from application context
+        val activityContext = activity ?: (getContext() as? Activity)
+        if (activityContext == null) {
             ApperoLogger.logNetworkError("Play Store Review", "Cannot trigger review: Activity context not available")
             return
         }
@@ -666,7 +647,7 @@ object Appero {
             }
             
                          requestPlayStoreReviewIfRating(
-                 activity = context,
+                 activity = activityContext,
                  rating = rating,
                  threshold = reviewThreshold,
                  fallbackToExternalStore = true
@@ -861,17 +842,6 @@ object Appero {
     ) {
         requireInitialized()
         
-        // Show debug toast for legacy dialog
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "📝 Showing legacy XML feedback dialog",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-        
         val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
         dialogFragment.setConfig(config)
         dialogFragment.setAnalyticsListener(analyticsListener)
@@ -907,17 +877,6 @@ object Appero {
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
-        
-        // Show debug toast for legacy dialog
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "📝 Showing legacy XML feedback dialog (${initialStep.javaClass.simpleName} step)",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
         
         val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
         dialogFragment.setConfig(config)
@@ -985,6 +944,37 @@ object Appero {
      */
     fun unregisterLegacyActivity() {
         experienceTracker?.unregisterLegacyActivity()
+    }
+
+    /**
+     * Test in-app review functionality with a published app
+     * This is useful for SDK development when your app isn't published yet
+     * 
+     * @param activity The current activity
+     * @param testPackageName Package name of a published app to test with (e.g., "com.whatsapp", "com.instagram.android")
+     * @param onComplete Optional callback with the result of the review request
+     */
+    fun testPlayStoreReviewWithPublishedApp(
+        activity: Activity,
+        testPackageName: String,
+        onComplete: ((PlayStoreReviewResult) -> Unit)? = null
+    ) {
+        requireInitialized()
+        
+        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
+            android.widget.Toast.makeText(activity, "🧪 Testing Play Store review with: $testPackageName", android.widget.Toast.LENGTH_SHORT).show()
+        }
+        
+        playStoreReviewManager?.testWithPublishedApp(activity, testPackageName) { result ->
+            val playStoreResult = when (result) {
+                is PlayStoreReviewManager.ReviewResult.InAppReviewShown -> PlayStoreReviewResult.InAppReviewShown
+                is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted -> PlayStoreReviewResult.InAppReviewCompleted
+                is PlayStoreReviewManager.ReviewResult.FallbackTriggered -> PlayStoreReviewResult.FallbackTriggered
+                is PlayStoreReviewManager.ReviewResult.Failed -> PlayStoreReviewResult.Failed(result.reason)
+            }
+            
+            onComplete?.invoke(playStoreResult)
+        }
     }
 
     /**
