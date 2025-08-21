@@ -78,13 +78,12 @@ fun ApperoSampleApp() {
         )
     }
     
-    // Demo config for the two-step flow
+    // Demo config for the feedback flow
     val feedbackFlowConfig = remember {
         FeedbackFlowConfig(
-            rateUsTitle = "Enjoying Appero Sample?",
-            rateUsSubtitle = "If you love our app, please rate us on the Play Store!",
-            rateUsCtaText = "Rate Now",
-            thankYouMessage = "Thank you for your valuable feedback!"
+            thankYouTitle = "Thank you for your valuable feedback!",
+            thankYouSubtitle = "Your input helps us improve our app",
+            thankYouCtaText = "Close"
         )
     }
     val reviewPromptThreshold = 4

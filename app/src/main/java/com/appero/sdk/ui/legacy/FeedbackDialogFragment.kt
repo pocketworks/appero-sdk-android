@@ -39,6 +39,10 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     
     // Flow state
     private var initialStep: FeedbackStep = FeedbackStep.Rating
+    private var currentStep: FeedbackStep = FeedbackStep.Rating
+    private var flowConfig: com.appero.sdk.ui.config.FeedbackFlowConfig? = null
+    private var reviewPromptThreshold: Int = 4
+    private var onRequestReview: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,6 +115,25 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                     onSubmitCallback?.invoke(selectedRating, feedbackText)
                 }
             }
+            // Show thank you step instead of dismissing
+            showThankYouStep(view)
+        }
+        
+        // Setup thank you title and subtitle
+        val tvThankYouTitle = view.findViewById<TextView>(R.id.tvThankYouTitle)
+        tvThankYouTitle?.text = flowConfig?.thankYouTitle ?: "Thank you for your feedback!"
+        
+        val tvThankYouSubtitle = view.findViewById<TextView>(R.id.tvThankYouSubtitle)
+        tvThankYouSubtitle?.text = flowConfig?.thankYouSubtitle ?: "We appreciate your input"
+        
+        // Setup close button
+        val btnClose = view.findViewById<Button>(R.id.btnClose)
+        btnClose?.text = flowConfig?.thankYouCtaText ?: "Close"
+        btnClose?.setOnClickListener {
+            // Trigger Play Store review if eligible before dismissing
+            if (selectedRating >= reviewPromptThreshold) {
+                onRequestReview?.invoke()
+            }
             dismiss()
         }
         
@@ -119,6 +142,20 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         
         // Handle initial step (frustration vs rating flow)
         handleInitialStep(view)
+    }
+    
+    private fun showThankYouStep(view: View) {
+        // Hide all other sections
+        view.findViewById<TextView>(R.id.tvTitle)?.visibility = View.GONE
+        view.findViewById<View>(R.id.ratingContainer)?.visibility = View.GONE
+        view.findViewById<TextView>(R.id.tvSubtitle)?.visibility = View.GONE
+        view.findViewById<View>(R.id.feedbackSection)?.visibility = View.GONE
+        
+        // Show thank you section
+        view.findViewById<View>(R.id.thankYouSection)?.visibility = View.VISIBLE
+        
+        // Update current step
+        currentStep = FeedbackStep.ThankYou
     }
     
     private fun handleInitialStep(view: View) {
@@ -266,9 +303,22 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     }
     
     private fun applyTheme(view: View) {
+        val theme = com.appero.sdk.Appero.theme
+        
+        // Apply theme to submit button
         val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
         btnSubmit?.let { button ->
-            val theme = com.appero.sdk.Appero.theme
+            if (theme.accentColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                button.backgroundTintList = android.content.res.ColorStateList.valueOf(theme.accentColor.toArgb())
+            }
+            if (theme.buttonTextColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                button.setTextColor(theme.buttonTextColor.toArgb())
+            }
+        }
+        
+        // Apply theme to close button (same as submit button)
+        val btnClose = view.findViewById<Button>(R.id.btnClose)
+        btnClose?.let { button ->
             if (theme.accentColor != androidx.compose.ui.graphics.Color.Unspecified) {
                 button.backgroundTintList = android.content.res.ColorStateList.valueOf(theme.accentColor.toArgb())
             }
@@ -297,5 +347,17 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
 
     internal fun setOnDismissCallback(callback: () -> Unit) {
         this.onDismissCallback = callback
+    }
+
+    internal fun setFlowConfig(flowConfig: com.appero.sdk.ui.config.FeedbackFlowConfig) {
+        this.flowConfig = flowConfig
+    }
+
+    internal fun setReviewPromptThreshold(threshold: Int) {
+        this.reviewPromptThreshold = threshold
+    }
+
+    internal fun setOnRequestReview(callback: () -> Unit) {
+        this.onRequestReview = callback
     }
 } 

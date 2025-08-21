@@ -82,7 +82,6 @@ fun rememberImeState(): State<Boolean> {
 sealed class FeedbackStep {
     object Rating : FeedbackStep()
     object Frustration : FeedbackStep()
-    object RateUs : FeedbackStep()
     object ThankYou : FeedbackStep()
 }
 
@@ -225,7 +224,7 @@ fun FeedbackPrompt(
                                 Button(
                                     onClick = {
                                         onSubmit(selectedRating, feedbackText)
-                                        currentStep = if (selectedRating >= reviewPromptThreshold) FeedbackStep.RateUs else FeedbackStep.ThankYou
+                                        currentStep = FeedbackStep.ThankYou
                                     },
                                     enabled = feedbackText.isNotBlank() && selectedRating > 0,
                                     modifier = Modifier.fillMaxWidth(),
@@ -292,27 +291,37 @@ fun FeedbackPrompt(
                             }
                         }
                     }
-                    is FeedbackStep.RateUs -> {
-                        Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                IconButton(onClick = { currentStep = FeedbackStep.ThankYou }, modifier = Modifier.size(24.dp)) {
-                                    Icon(Icons.Default.Close, contentDescription = "Close", tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = flowConfig.rateUsTitle, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = flowConfig.rateUsSubtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(32.dp))
-                            Button(onClick = { onRequestReview(); currentStep = FeedbackStep.ThankYou }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = flowConfig.rateUsCtaText, color = theme.buttonTextColor) }
-                        }
-                    }
+
                     is FeedbackStep.ThankYou -> {
                         Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = flowConfig.thankYouTitle, 
+                                fontSize = 18.sp, 
+                                fontWeight = FontWeight.Bold, 
+                                textAlign = TextAlign.Center, 
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = flowConfig.thankYouSubtitle, 
+                                fontSize = 16.sp, 
+                                textAlign = TextAlign.Center, 
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface
+                            )
                             Spacer(modifier = Modifier.height(32.dp))
-                            Text(text = flowConfig.thankYouMessage, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(32.dp))
-                            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = "Close", color = theme.buttonTextColor) }
+                            Button(
+                                onClick = { 
+                                    // Trigger Play Store review if eligible before dismissing
+                                    if (selectedRating >= reviewPromptThreshold) {
+                                        onRequestReview()
+                                    }
+                                    onDismiss() 
+                                }, 
+                                modifier = Modifier.fillMaxWidth(), 
+                                colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
+                            ) { Text(text = flowConfig.thankYouCtaText, color = theme.buttonTextColor) }
                         }
                     }
                 }

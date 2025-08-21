@@ -165,7 +165,7 @@
             android:text="Send Feedback"
             style="@style/Widget.Material3.Button" />
 
-        <!-- Not Now Button (for frustration flow) -->
+                <!-- Not Now Button (for frustration flow) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNotNow"
             android:layout_width="match_parent"
@@ -177,6 +177,48 @@
 
     </LinearLayout>
 
+    <!-- Thank You Section (Initially Hidden) -->
+    <LinearLayout
+        android:id="@+id/thankYouSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Thank You Title -->
+        <TextView
+            android:id="@+id/tvThankYouTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thank you for your feedback!"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#FF003143"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Thank You Subtitle -->
+        <TextView
+            android:id="@+id/tvThankYouSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="We appreciate your input"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:textColor="#FF003143"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Close Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Close"
+            style="@style/Widget.Material3.Button" />
+
     </LinearLayout>
+
+</LinearLayout>
 
 </LinearLayout> 

@@ -121,10 +121,9 @@ class XmlDemoActivity : FragmentActivity() {
         
         val feedbackFlowConfig = remember {
             FeedbackFlowConfig(
-                rateUsTitle = "Enjoying the Hybrid Approach?",
-                rateUsSubtitle = "ComposeView makes migration easier!",
-                rateUsCtaText = "Rate Now",
-                thankYouMessage = "Thank you for trying the hybrid demo!"
+                thankYouTitle = "Thank you for trying the hybrid demo!",
+                thankYouSubtitle = "You've experienced both XML and Compose",
+                thankYouCtaText = "Close"
             )
         }
         
