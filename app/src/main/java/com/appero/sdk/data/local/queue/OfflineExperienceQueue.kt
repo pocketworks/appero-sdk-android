@@ -5,6 +5,7 @@ import com.appero.sdk.domain.repository.ExperienceRepository
 import com.appero.sdk.domain.repository.ExperienceSubmissionResult
 import com.appero.sdk.domain.repository.QueuedExperience
 import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
+import com.appero.sdk.debug.ApperoLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -42,7 +43,9 @@ internal class OfflineExperienceQueue(
 
     fun onNetworkStateChanged(isAvailable: Boolean) {
         isNetworkAvailable = isAvailable
-        if (isAvailable && getQueueSize() > 0) { scope.launch { processQueue() } }
+        if (isAvailable && getQueueSize() > 0) {
+            scope.launch { processQueue() }
+        }
     }
 
     fun queueExperience(value: Int, context: String) {
@@ -54,21 +57,29 @@ internal class OfflineExperienceQueue(
             retryCount = 0
         )
         val current = experienceRepository.getQueuedExperiences().toMutableList()
-        if (current.size >= MAX_QUEUE_SIZE) current.removeAt(0)
+        if (current.size >= MAX_QUEUE_SIZE) {
+            ApperoLogger.warning("Queue full, removing oldest item")
+            current.removeAt(0)
+        }
         current.add(item)
         experienceRepository.saveQueuedExperiences(current)
     }
 
     fun processQueue() {
-        if (!isNetworkAvailable) return
-        if (!isProcessing.compareAndSet(false, true)) return
+        if (!isNetworkAvailable) {
+            return
+        }
+        if (!isProcessing.compareAndSet(false, true)) {
+            return
+        }
 
         // Take a snapshot and clear stored queue before processing to avoid duplicate batch triggers
         val snapshot = experienceRepository.getQueuedExperiences()
-        if (snapshot.isEmpty()) { isProcessing.set(false); return }
+        if (snapshot.isEmpty()) {
+            isProcessing.set(false)
+            return
+        }
         experienceRepository.saveQueuedExperiences(emptyList())
-
-        Log.i("Appero", "Processing ${snapshot.size} queued experience items")
 
         scope.launch {
             try {
@@ -88,24 +99,27 @@ internal class OfflineExperienceQueue(
                             allowRetry = true
                         )
                         when (result) {
-                            is ExperienceSubmissionResult.Success -> { /* consumed */ }
+                            is ExperienceSubmissionResult.Success -> {
+                                // Successfully submitted
+                            }
                             is ExperienceSubmissionResult.Error -> {
                                 if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                                     remaining.add(item.copy(retryCount = item.retryCount + 1))
+                                } else {
+                                    ApperoLogger.logApiError("/api/experience", "POST", "Max retries reached for item ${item.id}")
                                 }
                             }
                         }
                     } catch (_: Exception) {
                         if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                             remaining.add(item.copy(retryCount = item.retryCount + 1))
+                        } else {
+                            ApperoLogger.logNetworkError("Experience Queue Processing", "Max retries reached for item ${item.id}")
                         }
                     }
                 }
-                // Append any new items that were enqueued while we were processing
-                val newlyQueued = experienceRepository.getQueuedExperiences()
-                if (newlyQueued.isNotEmpty()) {
-                    remaining.addAll(newlyQueued)
-                }
+
+                // Save remaining items back to queue
                 experienceRepository.saveQueuedExperiences(remaining)
             } finally {
                 isProcessing.set(false)
@@ -113,9 +127,15 @@ internal class OfflineExperienceQueue(
         }
     }
 
-    fun getQueueSize(): Int = experienceRepository.getQueuedExperiences().size
+    fun getQueueSize(): Int {
+        return experienceRepository.getQueuedExperiences().size
+    }
 
-    fun clearQueue() { experienceRepository.saveQueuedExperiences(emptyList()) }
+    fun clearQueue() {
+        experienceRepository.saveQueuedExperiences(emptyList())
+    }
 
-    fun cleanup() { stopRetryTimer() }
+    fun cleanup() {
+        stopRetryTimer()
+    }
 } 

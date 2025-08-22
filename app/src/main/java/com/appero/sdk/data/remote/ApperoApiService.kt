@@ -43,7 +43,14 @@ internal class ApperoApiService private constructor(
 	
 	private val retrofit: Retrofit by lazy {
 		// Create HTTP client with logging for debugging
-		val loggingInterceptor = HttpLoggingInterceptor().apply {
+		val loggingInterceptor = HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
+			override fun log(message: String) {
+				// Only log if debug mode is enabled
+				if (com.appero.sdk.debug.ApperoLogger.getDebugMode() == com.appero.sdk.debug.ApperoDebugMode.DEBUG) {
+					android.util.Log.d("ApperoSDK", message)
+				}
+			}
+		}).apply {
 			level = HttpLoggingInterceptor.Level.BODY
 		}
 

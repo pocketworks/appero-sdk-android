@@ -13,12 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -29,6 +29,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +48,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -58,7 +63,6 @@ import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.theme.ApperoTheme
 import com.appero.sdk.ui.theme.DefaultTheme
-import kotlinx.coroutines.delay
 
 @Composable
 fun rememberImeState(): State<Boolean> {
@@ -81,7 +85,6 @@ fun rememberImeState(): State<Boolean> {
 sealed class FeedbackStep {
     object Rating : FeedbackStep()
     object Frustration : FeedbackStep()
-    object RateUs : FeedbackStep()
     object ThankYou : FeedbackStep()
 }
 
@@ -104,9 +107,23 @@ fun FeedbackPrompt(
     var feedbackText by remember { mutableStateOf("") }
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
     val imeState = rememberImeState()
-    val scrollState = rememberScrollState()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
     LaunchedEffect(initialStep) { if (initialStep != null) currentStep = initialStep }
+    
+    // Expand bottom sheet when rating is selected to ensure CTA is visible
+    LaunchedEffect(selectedRating) {
+        if (selectedRating > 0) {
+            bottomSheetState.expand()
+        }
+    }
+    
+    // Keep sheet expanded when keyboard hides or user tries to collapse
+    LaunchedEffect(bottomSheetState.targetValue, selectedRating) {
+        if (selectedRating > 0 && bottomSheetState.targetValue != SheetValue.Expanded) {
+            bottomSheetState.expand()
+        }
+    }
 
     if (visible) {
         Column(
@@ -116,18 +133,18 @@ fun FeedbackPrompt(
             ModalBottomSheet(
                 windowInsets = WindowInsets.ime,
                 onDismissRequest = onDismiss,
-                modifier = modifier.then(if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.73F))
+                dragHandle = null,
+                modifier = modifier,
+                containerColor = Color.White,
+                sheetState = bottomSheetState
             ) {
-                LaunchedEffect(key1 = imeState.value) {
-                    if (imeState.value && currentStep == FeedbackStep.Rating) {
-                        delay(100)
-                        scrollState.animateScrollTo(scrollState.maxValue)
-                    }
-                }
                 when (currentStep) {
                     is FeedbackStep.Rating -> {
                         Column(
-                            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 24.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars), // Handle navigation bar
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -135,34 +152,79 @@ fun FeedbackPrompt(
                                     Icon(Icons.Default.Close, contentDescription = "Close", tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(24.dp))
-                            EmojiRatingScale(
-                                selectedRating = selectedRating,
-                                theme = theme,
-                                onRatingSelected = { rating ->
-                                    selectedRating = rating
-                                    analyticsListener?.onRatingSelected(rating)
-                                }
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            // Only show title and subtitle when keyboard is not visible
+                            if (!imeState.value) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = config.title, 
+                                    fontSize = 18.sp, 
+                                    fontWeight = FontWeight.Bold, 
+                                    textAlign = TextAlign.Center, 
+                                    color = Color(0xFF003143), 
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = config.subtitle, 
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color(0xFF003143), 
+                                    textAlign = TextAlign.Center,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
+                            // Only show emoji rating when keyboard is not visible
+                            if (!imeState.value) {
+                                EmojiRatingScale(
+                                    selectedRating = selectedRating,
+                                    theme = theme,
+                                    onRatingSelected = { rating ->
+                                        selectedRating = rating
+                                        analyticsListener?.onRatingSelected(rating)
+                                    }
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
+                            // Only show feedback input and CTA after a rating is selected
                             if (selectedRating > 0) {
-                                Text(text = config.followUpQuestion, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 16.dp))
+                                // Show follow-up question (always visible when input is shown)
+                                Text(
+                                    text = config.followUpQuestion, 
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal, 
+                                    color = Color(0xFF003143), 
+                                    textAlign = TextAlign.Start, 
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
                                 Spacer(modifier = Modifier.height(16.dp))
+                                
                                 OutlinedTextField(
                                     value = feedbackText,
                                     onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
                                     placeholder = { Text(text = config.placeholder, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
-                                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(88.dp)
+                                        .background(
+                                            color = Color(0xFFF5F5F5),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ),
                                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = theme.textColor,
                                         unfocusedTextColor = theme.textColor,
-                                        focusedBorderColor = theme.accentColor,
-                                        unfocusedBorderColor = theme.dividerColor
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent
                                     ),
                                     shape = RoundedCornerShape(8.dp),
                                     maxLines = 4
@@ -170,11 +232,11 @@ fun FeedbackPrompt(
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                     Text(text = "${feedbackText.length}/${config.maxCharacters}", fontSize = 12.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                                 }
-                                Spacer(modifier = Modifier.height(24.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
                                 Button(
                                     onClick = {
                                         onSubmit(selectedRating, feedbackText)
-                                        currentStep = if (selectedRating >= reviewPromptThreshold) FeedbackStep.RateUs else FeedbackStep.ThankYou
+                                        currentStep = FeedbackStep.ThankYou
                                     },
                                     enabled = feedbackText.isNotBlank() && selectedRating > 0,
                                     modifier = Modifier.fillMaxWidth(),
@@ -185,7 +247,11 @@ fun FeedbackPrompt(
                     }
                     is FeedbackStep.Frustration -> {
                         Column(
-                            modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(24.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 24.dp)
+                                .padding(bottom = if (imeState.value) 16.dp else 0.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars), // Handle navigation bar
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -193,22 +259,33 @@ fun FeedbackPrompt(
                                     Icon(Icons.Default.Close, contentDescription = "Close", tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = config.subtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            // Only show title when keyboard is not visible (hide subtitle for frustration flow)
+                            if (!imeState.value) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = config.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                            
                             OutlinedTextField(
                                 value = feedbackText,
                                 onValueChange = { if (it.length <= config.maxCharacters) feedbackText = it },
-                                placeholder = { Text(text = config.placeholder, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
-                                modifier = Modifier.fillMaxWidth().height(120.dp),
+                                placeholder = { Text(text = "Would you mind telling us what went wrong?", color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(88.dp)
+                                    .background(
+                                        color = Color(0xFFF5F5F5),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ),
                                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedTextColor = theme.textColor,
                                     unfocusedTextColor = theme.textColor,
                                     focusedBorderColor = theme.accentColor,
-                                    unfocusedBorderColor = theme.dividerColor
+                                    unfocusedBorderColor = theme.dividerColor,
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent
                                 ),
                                 shape = RoundedCornerShape(8.dp),
                                 maxLines = 4
@@ -218,31 +295,48 @@ fun FeedbackPrompt(
                             }
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(onClick = { onSubmit(0, feedbackText); currentStep = FeedbackStep.ThankYou }, enabled = feedbackText.isNotBlank(), modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = config.submitText, color = theme.buttonTextColor) }
+                            
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) { Text(text = "Not now", color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface) }
                         }
                     }
-                    is FeedbackStep.RateUs -> {
-                        Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                IconButton(onClick = { currentStep = FeedbackStep.ThankYou }, modifier = Modifier.size(24.dp)) {
-                                    Icon(Icons.Default.Close, contentDescription = "Close", tint = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = flowConfig.rateUsTitle, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = flowConfig.rateUsSubtitle, fontSize = 16.sp, color = if (theme.secondaryTextColor != Color.Unspecified) theme.secondaryTextColor else MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(32.dp))
-                            Button(onClick = { onRequestReview(); currentStep = FeedbackStep.ThankYou }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = flowConfig.rateUsCtaText, color = theme.buttonTextColor) }
-                        }
-                    }
+
                     is FeedbackStep.ThankYou -> {
-                        Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars), // Handle navigation bar
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = flowConfig.thankYouTitle, 
+                                fontSize = 18.sp, 
+                                fontWeight = FontWeight.Bold, 
+                                textAlign = TextAlign.Center, 
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = flowConfig.thankYouSubtitle, 
+                                fontSize = 16.sp, 
+                                textAlign = TextAlign.Center, 
+                                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface
+                            )
                             Spacer(modifier = Modifier.height(32.dp))
-                            Text(text = flowConfig.thankYouMessage, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(modifier = Modifier.height(32.dp))
-                            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)) { Text(text = "Close", color = theme.buttonTextColor) }
+                            Button(
+                                onClick = { 
+                                    // Trigger Play Store review if eligible before dismissing
+                                    if (selectedRating >= reviewPromptThreshold) {
+                                        onRequestReview()
+                                    }
+                                    onDismiss() 
+                                }, 
+                                modifier = Modifier.fillMaxWidth(), 
+                                colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
+                            ) { Text(text = flowConfig.thankYouCtaText, color = theme.buttonTextColor) }
                         }
                     }
                 }
@@ -258,17 +352,51 @@ internal fun EmojiRatingScale(
     onRatingSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val emojis = listOf("😢", "😕", "😐", "😊", "😍")
-    val colors = listOf(theme.veryNegativeColor, theme.negativeColor, theme.neutralColor, theme.positiveColor, theme.veryPositiveColor)
+    val context = LocalContext.current
 
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-        emojis.forEachIndexed { index, emoji ->
-            val rating = index + 1
+        (1..5).forEach { rating ->
             val isSelected = selectedRating == rating
-            val backgroundColor = if (isSelected) colors[index] else Color.LightGray.copy(alpha = 0.3f)
 
-            Box(modifier = Modifier.size(56.dp).clip(RoundedCornerShape(28.dp)).background(backgroundColor).clickable { onRatingSelected(rating) }, contentAlignment = Alignment.Center) {
-                Text(text = emoji, fontSize = 24.sp)
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .clickable { onRatingSelected(rating) },
+                contentAlignment = Alignment.Center
+            ) {
+                val drawableId = context.resources.getIdentifier(
+                    when (rating) {
+                        1 -> "ic_rating_very_negative"
+                        2 -> "ic_rating_negative"
+                        3 -> "ic_rating_neutral"
+                        4 -> "ic_rating_positive"
+                        5 -> "ic_rating_very_positive"
+                        else -> "ic_rating_neutral"
+                    },
+                    "drawable",
+                    context.packageName
+                )
+                
+                // SVG icon with original colors
+                Icon(
+                    painter = painterResource(id = drawableId),
+                    contentDescription = "Rating ${rating}",
+                    modifier = Modifier.size(50.dp),
+                    tint = Color.Unspecified
+                )
+                
+                // Semi-transparent overlay for unselected icons (only when a rating is selected)
+                if (selectedRating > 0 && !isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .background(
+                                color = Color.White.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(25.dp)
+                            )
+                    )
+                }
             }
         }
     }
