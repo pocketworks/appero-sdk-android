@@ -13,12 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -29,6 +29,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -104,9 +107,23 @@ fun FeedbackPrompt(
     var feedbackText by remember { mutableStateOf("") }
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
     val imeState = rememberImeState()
-    val scrollState = rememberScrollState()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
     LaunchedEffect(initialStep) { if (initialStep != null) currentStep = initialStep }
+    
+    // Expand bottom sheet when rating is selected to ensure CTA is visible
+    LaunchedEffect(selectedRating) {
+        if (selectedRating > 0) {
+            bottomSheetState.expand()
+        }
+    }
+    
+    // Keep sheet expanded when keyboard hides or user tries to collapse
+    LaunchedEffect(bottomSheetState.targetValue, selectedRating) {
+        if (selectedRating > 0 && bottomSheetState.targetValue != SheetValue.Expanded) {
+            bottomSheetState.expand()
+        }
+    }
 
     if (visible) {
         Column(
@@ -117,22 +134,17 @@ fun FeedbackPrompt(
                 windowInsets = WindowInsets.ime,
                 onDismissRequest = onDismiss,
                 dragHandle = null,
-                modifier = modifier.then(
-                    if (selectedRating > 0) {
-                        if (imeState.value) Modifier.fillMaxHeight(1.0F) else Modifier.fillMaxHeight(0.85F)
-                    } else {
-                        Modifier
-                    }
-                ),
-                containerColor = Color.White
+                modifier = modifier,
+                containerColor = Color.White,
+                sheetState = bottomSheetState
             ) {
                 when (currentStep) {
                     is FeedbackStep.Rating -> {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScroll(scrollState)
-                                .padding(horizontal = 24.dp, vertical = 24.dp),
+                                .padding(horizontal = 24.dp, vertical = 24.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars), // Handle navigation bar
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -237,9 +249,9 @@ fun FeedbackPrompt(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .verticalScroll(scrollState)
                                 .padding(horizontal = 24.dp, vertical = 24.dp)
-                                .padding(bottom = if (imeState.value) 16.dp else 0.dp),
+                                .padding(bottom = if (imeState.value) 16.dp else 0.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars), // Handle navigation bar
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -290,7 +302,13 @@ fun FeedbackPrompt(
                     }
 
                     is FeedbackStep.ThankYou -> {
-                        Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp)
+                                .windowInsetsPadding(WindowInsets.navigationBars), // Handle navigation bar
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
                                 text = flowConfig.thankYouTitle, 
