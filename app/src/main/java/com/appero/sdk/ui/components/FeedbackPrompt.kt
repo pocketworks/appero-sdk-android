@@ -127,6 +127,13 @@ fun FeedbackPrompt(
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
     val imeState = rememberImeState()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    // Function to reset all state to initial values
+    fun resetState() {
+        selectedRating = 0
+        feedbackText = ""
+        currentStep = initialStep ?: FeedbackStep.Rating
+    }
 
     LaunchedEffect(initialStep) { if (initialStep != null) currentStep = initialStep }
     
@@ -159,7 +166,10 @@ fun FeedbackPrompt(
         ) {
             ModalBottomSheet(
                 windowInsets = WindowInsets.ime,
-                onDismissRequest = onDismiss,
+                onDismissRequest = {
+                    resetState()
+                    onDismiss()
+                },
                 dragHandle = null,
                 modifier = modifier,
                 containerColor = Color.White,
@@ -184,7 +194,10 @@ fun FeedbackPrompt(
                                 onSubmit(selectedRating, feedbackText)
                                 currentStep = FeedbackStep.ThankYou
                             },
-                            onDismiss = onDismiss
+                            onDismiss = {
+                                resetState()
+                                onDismiss()
+                            }
                         )
                     }
                     is FeedbackStep.Frustration -> {
@@ -200,7 +213,10 @@ fun FeedbackPrompt(
                                 onSubmit(0, feedbackText)
                                 currentStep = FeedbackStep.ThankYou
                             },
-                            onDismiss = onDismiss
+                            onDismiss = {
+                                resetState()
+                                onDismiss()
+                            }
                         )
                     }
                     is FeedbackStep.ThankYou -> {
@@ -210,7 +226,10 @@ fun FeedbackPrompt(
                             selectedRating = selectedRating,
                             reviewPromptThreshold = reviewPromptThreshold,
                             onRequestReview = onRequestReview,
-                            onDismiss = onDismiss
+                            onDismiss = {
+                                resetState()
+                                onDismiss()
+                            }
                         )
                     }
                 }
