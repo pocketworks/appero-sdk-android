@@ -126,7 +126,7 @@ fun FeedbackPrompt(
     var feedbackText by remember { mutableStateOf("") }
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
     val imeState = rememberImeState()
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(initialStep) { if (initialStep != null) currentStep = initialStep }
     
@@ -137,9 +137,17 @@ fun FeedbackPrompt(
         }
     }
     
+    // Expand bottom sheet for frustration flow to ensure all content is visible
+    LaunchedEffect(currentStep) {
+        if (currentStep is FeedbackStep.Frustration) {
+            bottomSheetState.expand()
+        }
+    }
+    
     // Keep sheet expanded when keyboard hides or user tries to collapse
-    LaunchedEffect(bottomSheetState.targetValue, selectedRating) {
-        if (selectedRating > 0 && bottomSheetState.targetValue != SheetValue.Expanded) {
+    LaunchedEffect(bottomSheetState.targetValue, selectedRating, currentStep) {
+        if ((selectedRating > 0 || currentStep is FeedbackStep.Frustration) && 
+            bottomSheetState.targetValue != SheetValue.Expanded) {
             bottomSheetState.expand()
         }
     }
@@ -438,8 +446,8 @@ private fun FrustrationStepContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
-            .padding(bottom = if (imeState.value) FeedbackSpacing.medium else 0.dp)
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
