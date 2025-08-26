@@ -76,7 +76,8 @@ internal class ExperienceTracker(
                     subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
                     followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
                     placeholder = "Share your thoughts here",
-                    submitText = "Send feedback"
+                    submitText = "Send feedback",
+                    secondaryButtonText = "Not now"
                 )
                 val initialStep = when (flowType) {
                     "frustration" -> FeedbackStep.Frustration

@@ -31,6 +31,7 @@
     <string name="appero_feedback_default_follow_up">What made your experience positive?</string>
     <string name="appero_feedback_default_placeholder">Share your thoughts here</string>
     <string name="appero_feedback_default_submit">Send feedback</string>
+    <string name="appero_feedback_not_now">Not now</string>
     
     <!-- Error Messages -->
     <string name="appero_error_repository_not_initialized">Repository not initialized</string>

@@ -444,7 +444,7 @@ private fun FrustrationStepContent(
     ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
         
-        // Only show title when keyboard is not visible (hide subtitle for frustration flow)
+        // Only show title and subtitle when keyboard is not visible
         if (!imeState.value) {
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
             Text(
@@ -455,13 +455,21 @@ private fun FrustrationStepContent(
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
                 modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
             )
+            Spacer(modifier = Modifier.height(FeedbackSpacing.small))
+            Text(
+                text = config.subtitle, 
+                fontSize = 16.sp, 
+                textAlign = TextAlign.Center, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
+                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+            )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         }
         
         FeedbackTextInput(
             value = feedbackText,
             onValueChange = onFeedbackTextChanged,
-            placeholder = "Would you mind telling us what went wrong?",
+            placeholder = config.placeholder,
             theme = theme,
             maxCharacters = config.maxCharacters
         )
@@ -478,7 +486,7 @@ private fun FrustrationStepContent(
         Spacer(modifier = Modifier.height(12.dp))
         
         SecondaryButton(
-            text = "Not now",
+            text = config.secondaryButtonText,
             onClick = onDismiss,
             theme = theme
         )
