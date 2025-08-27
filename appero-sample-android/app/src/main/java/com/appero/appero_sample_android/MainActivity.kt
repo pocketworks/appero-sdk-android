@@ -48,6 +48,18 @@ class MainActivity : ComponentActivity() {
         // Set up analytics listener for tracking Appero events
         Appero.setAnalyticsListener(ExampleAnalyticsListener())
         
+        // Set default custom theme for the sample app
+        Appero.theme = CustomTheme(
+            primaryColor = Color(0xFF4CAF50),
+            accentColor = Color(0xFF4CAF50),
+            buttonBackgroundColor = Color(0xFF4CAF50),
+            veryNegativeColor = Color(0xFFFF6B6B),
+            negativeColor = Color(0xFFFF9F43),
+            neutralColor = Color(0xFFFECA57),
+            positiveColor = Color(0xFF48CAE4),
+            veryPositiveColor = Color(0xFF4CAF50)
+        )
+        
         setContent {
             ApperoSampleAndroidTheme {
                 Surface(
@@ -620,7 +632,95 @@ fun ApperoSampleApp() {
                 )
             }
         }
-        
+
+        // Play Store Review Testing
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🧪 Play Store Review Testing",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Test in-app reviews with current package: ${context.packageName}",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { 
+                            // Test with current app's package (should work if using a published app's package)
+                            Appero.requestPlayStoreReview(context as Activity) { result ->
+                                val message = when (result) {
+                                    is Appero.PlayStoreReviewResult.InAppReviewShown -> "✅ In-app review shown!"
+                                    is Appero.PlayStoreReviewResult.InAppReviewCompleted -> "✅ In-app review completed!"
+                                    is Appero.PlayStoreReviewResult.FallbackTriggered -> "✅ Fallback to Play Store"
+                                    is Appero.PlayStoreReviewResult.Failed -> "❌ Failed: ${result.reason}"
+                                }
+                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50)
+                        )
+                    ) {
+                        Text("Test Current Package", fontSize = 10.sp)
+                    }
+                    
+                    Button(
+                        onClick = { 
+                            // Test the feedback flow that triggers review
+                            Appero.showFeedbackPrompt(
+                                config = feedbackConfig.copy(
+                                    title = "Test In-App Review 🧪",
+                                    subtitle = "This should trigger a Play Store review"
+                                ),
+                                onResult = { success, message ->
+                                    val toastMessage = if (success) {
+                                        "✅ Feedback submitted! Check for review dialog"
+                                    } else {
+                                        "❌ Failed to submit: $message"
+                                    }
+                                    Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                    experienceState = Appero.getExperienceState()
+                                }
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2196F3)
+                        )
+                    ) {
+                        Text("Test Full Flow", fontSize = 10.sp)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• Use build variants to test with different package names\n• In-app reviews only work with published app packages\n• If using a published package, you should see the real review dialog!",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
         // General Controls
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -703,7 +803,7 @@ fun ApperoSampleApp() {
         onRequestReview = {
             // Trigger Play Store review prompt
             if (context is Activity) {
-                Appero.requestPlayStoreReview(context)
+                Appero.requestPlayStoreReview(context as Activity)
             }
         },
         onResult = { success, message ->
@@ -714,7 +814,8 @@ fun ApperoSampleApp() {
             }
             Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
             experienceState = Appero.getExperienceState()
-        }
+        },
+        activity = context as? Activity
     )
 }
 

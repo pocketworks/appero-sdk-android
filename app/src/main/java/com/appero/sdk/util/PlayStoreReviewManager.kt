@@ -18,6 +18,7 @@ import com.google.android.gms.tasks.Task
  * - Fallback to external Play Store when in-app review fails
  * - Analytics integration for tracking review events
  * - Proper error handling and user experience
+ * - Testing support for SDK development
  */
 internal class PlayStoreReviewManager(
     private val analyticsListener: ApperoAnalyticsListener?
@@ -29,7 +30,8 @@ internal class PlayStoreReviewManager(
     data class ReviewConfig(
         val fallbackToExternalStore: Boolean = true,
         val timeoutMs: Long = 10000L, // 10 seconds timeout for in-app review
-        val enableAnalytics: Boolean = true
+        val enableAnalytics: Boolean = true,
+        val testPackageName: String? = null // For SDK testing with other apps
     )
     
     /**
@@ -67,6 +69,11 @@ internal class PlayStoreReviewManager(
         
         try {
             val reviewManager = ReviewManagerFactory.create(activity)
+            
+            // Use test package name if provided for in-app review testing
+            val packageName = config.testPackageName ?: activity.packageName
+            ApperoLogger.logCriticalOperation("Play Store Review", "Using package name for review: $packageName")
+            
             val requestReviewFlow = reviewManager.requestReviewFlow()
             
             requestReviewFlow.addOnCompleteListener { task: Task<ReviewInfo> ->
@@ -156,7 +163,8 @@ internal class PlayStoreReviewManager(
         }
         
         try {
-            val packageName = activity.packageName
+            // Use test package name if provided, otherwise use current app's package
+            val packageName = config.testPackageName ?: activity.packageName
             
             // Try to open Play Store app first
             val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
@@ -164,14 +172,14 @@ internal class PlayStoreReviewManager(
             
             if (playStoreIntent.resolveActivity(activity.packageManager) != null) {
                 activity.startActivity(playStoreIntent)
-                ApperoLogger.logCriticalOperation("Play Store Review", "Opened Play Store app successfully")
+                ApperoLogger.logCriticalOperation("Play Store Review", "Opened Play Store app successfully for package: $packageName")
                 onComplete?.invoke(ReviewResult.FallbackTriggered)
             } else {
                 // Fallback to web browser
                 val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
                 webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 activity.startActivity(webIntent)
-                ApperoLogger.logCriticalOperation("Play Store Review", "Opened Play Store in web browser")
+                ApperoLogger.logCriticalOperation("Play Store Review", "Opened Play Store in web browser for package: $packageName")
                 onComplete?.invoke(ReviewResult.FallbackTriggered)
             }
             
@@ -198,5 +206,29 @@ internal class PlayStoreReviewManager(
             ApperoLogger.logNetworkError("Play Store Review", "In-app review not available: ${e.message}")
             false
         }
+    }
+    
+    /**
+     * Test in-app review with a specific published app
+     * This is useful for SDK development when your app isn't published yet
+     * 
+     * @param activity The current activity
+     * @param testPackageName Package name of a published app to test with
+     * @param onComplete Callback with the result
+     */
+    fun testWithPublishedApp(
+        activity: Activity,
+        testPackageName: String,
+        onComplete: ((ReviewResult) -> Unit)? = null
+    ) {
+        ApperoLogger.logCriticalOperation("Play Store Review", "Testing with published app: $testPackageName")
+        
+        val testConfig = ReviewConfig(
+            fallbackToExternalStore = true,
+            enableAnalytics = true,
+            testPackageName = testPackageName
+        )
+        
+        requestReview(activity, testConfig, onComplete)
     }
 } 
