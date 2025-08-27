@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -114,17 +115,22 @@ fun FeedbackPrompt(
     config: FeedbackPromptConfig,
     theme: ApperoTheme = DefaultTheme(),
     analyticsListener: ApperoAnalyticsListener? = null,
-    onSubmit: (rating: Int, feedback: String) -> Unit,
+    onSubmit: (rating: Int, feedback: String, onSuccess: (String) -> Unit) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     flowConfig: FeedbackFlowConfig = FeedbackFlowConfig(),
     reviewPromptThreshold: Int = 4,
     onRequestReview: () -> Unit = {},
-    initialStep: FeedbackStep? = null
+    initialStep: FeedbackStep? = null,
+    serverResponseMessage: String? = null,
+    onSubmissionResult: ((success: Boolean, message: String) -> Unit)? = null,
+    onShowThankYou: (String) -> Unit = {}
 ) {
     var selectedRating by remember { mutableIntStateOf(0) }
     var feedbackText by remember { mutableStateOf("") }
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var internalServerResponseMessage by remember { mutableStateOf<String?>(null) }
     val imeState = rememberImeState()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
@@ -133,9 +139,19 @@ fun FeedbackPrompt(
         selectedRating = 0
         feedbackText = ""
         currentStep = initialStep ?: FeedbackStep.Rating
+        isSubmitting = false
+        internalServerResponseMessage = null
     }
 
     LaunchedEffect(initialStep) { if (initialStep != null) currentStep = initialStep }
+    
+    // Function to transition to thank you step
+    fun transitionToThankYou(message: String) {
+        internalServerResponseMessage = message
+        isSubmitting = false
+        currentStep = FeedbackStep.ThankYou
+    }
+
     
     // Expand bottom sheet when rating is selected to ensure CTA is visible
     LaunchedEffect(selectedRating) {
@@ -175,8 +191,17 @@ fun FeedbackPrompt(
                 containerColor = Color.White,
                 sheetState = bottomSheetState
             ) {
-                when (currentStep) {
-                    is FeedbackStep.Rating -> {
+                when {
+                    isSubmitting -> {
+                        LoadingStepContent(
+                            theme = theme,
+                            onDismiss = {
+                                resetState()
+                                onDismiss()
+                            }
+                        )
+                    }
+                    currentStep is FeedbackStep.Rating -> {
                         RatingStepContent(
                             config = config,
                             theme = theme,
@@ -191,8 +216,10 @@ fun FeedbackPrompt(
                                 if (text.length <= config.maxCharacters) feedbackText = text
                             },
                             onSubmit = {
-                                onSubmit(selectedRating, feedbackText)
-                                currentStep = FeedbackStep.ThankYou
+                                isSubmitting = true
+                                onSubmit(selectedRating, feedbackText) { message ->
+                                    transitionToThankYou(message)
+                                }
                             },
                             onDismiss = {
                                 resetState()
@@ -200,7 +227,7 @@ fun FeedbackPrompt(
                             }
                         )
                     }
-                    is FeedbackStep.Frustration -> {
+                    currentStep is FeedbackStep.Frustration -> {
                         FrustrationStepContent(
                             config = config,
                             theme = theme,
@@ -210,8 +237,10 @@ fun FeedbackPrompt(
                                 if (text.length <= config.maxCharacters) feedbackText = text
                             },
                             onSubmit = {
-                                onSubmit(0, feedbackText)
-                                currentStep = FeedbackStep.ThankYou
+                                isSubmitting = true
+                                onSubmit(0, feedbackText) { message ->
+                                    transitionToThankYou(message)
+                                }
                             },
                             onDismiss = {
                                 resetState()
@@ -219,7 +248,7 @@ fun FeedbackPrompt(
                             }
                         )
                     }
-                    is FeedbackStep.ThankYou -> {
+                    currentStep is FeedbackStep.ThankYou -> {
                         ThankYouStepContent(
                             flowConfig = flowConfig,
                             theme = theme,
@@ -229,7 +258,8 @@ fun FeedbackPrompt(
                             onDismiss = {
                                 resetState()
                                 onDismiss()
-                            }
+                            },
+                            serverResponseMessage = internalServerResponseMessage
                         )
                     }
                 }
@@ -528,7 +558,8 @@ private fun ThankYouStepContent(
     selectedRating: Int,
     reviewPromptThreshold: Int,
     onRequestReview: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    serverResponseMessage: String? = null
 ) {
     Column(
         modifier = Modifier
@@ -539,7 +570,7 @@ private fun ThankYouStepContent(
     ) {
         Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         Text(
-            text = flowConfig.thankYouTitle, 
+            text = serverResponseMessage ?: flowConfig.thankYouTitle, 
             fontSize = 18.sp, 
             fontWeight = FontWeight.Bold, 
             textAlign = TextAlign.Center, 
@@ -547,12 +578,14 @@ private fun ThankYouStepContent(
             modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
         )
         Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-        Text(
-            text = flowConfig.thankYouSubtitle, 
-            fontSize = 16.sp, 
-            textAlign = TextAlign.Center, 
-            color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface
-        )
+        if (serverResponseMessage == null) {
+            Text(
+                text = flowConfig.thankYouSubtitle, 
+                fontSize = 16.sp, 
+                textAlign = TextAlign.Center, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface
+            )
+        }
         Spacer(modifier = Modifier.height(FeedbackSpacing.xlarge))
         
         PrimaryButton(
@@ -566,6 +599,32 @@ private fun ThankYouStepContent(
             },
             theme = theme
         )
+    }
+}
+
+@Composable
+private fun LoadingStepContent(
+    theme: ApperoTheme,
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
+        
+        // Circular loading indicator
+        CircularProgressIndicator(
+            modifier = Modifier.size(48.dp),
+            color = if (theme.accentColor != Color.Unspecified) theme.accentColor else MaterialTheme.colorScheme.primary,
+            strokeWidth = 4.dp
+        )
+        
+        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 

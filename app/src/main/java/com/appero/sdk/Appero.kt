@@ -8,7 +8,10 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.appero.sdk.analytics.ApperoAnalyticsListener
 import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
 import com.appero.sdk.data.local.queue.OfflineExperienceQueue
@@ -216,16 +219,7 @@ object Appero {
         requireInitialized()
         experienceTracker?.log(experience)
         
-        // Show debug toast for experience logging
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "📊 Logged experience: ${experience.name} (rating: ${experience.rating})",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+
     }
 
     /**
@@ -236,16 +230,7 @@ object Appero {
         requireInitialized()
         experienceTracker?.log(points)
         
-        // Show debug toast for custom points logging
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "📊 Logged custom points: $points",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+
     }
 
     /**
@@ -367,13 +352,23 @@ object Appero {
         requireInitialized()
         val currentConfig = _feedbackPromptConfig.value ?: config
         val initialStep = _initialFeedbackStep.value
+        var serverResponseMessage by mutableStateOf<String?>(null)
+        
         FeedbackPrompt(
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
             theme = theme,
             analyticsListener = analyticsListener,
-            onSubmit = { rating, feedback ->
-                handleFeedbackSubmission(rating, feedback, onResult, activity)
+            onSubmit = { rating, feedback, onSuccess ->
+                handleFeedbackSubmission(rating, feedback, { success, message ->
+                    if (success) {
+                        serverResponseMessage = message
+                        onSuccess(message) // Call the callback to trigger thank you step
+                        onResult?.invoke(success, message)
+                    } else {
+                        onResult?.invoke(success, message)
+                    }
+                }, activity)
                 // Keep the bottom sheet open; content will change via FeedbackPrompt's state
             },
             onDismiss = {
@@ -381,11 +376,17 @@ object Appero {
                 _feedbackPromptConfig.value = null
                 _initialFeedbackStep.value = null
                 onFeedbackSubmissionResult = null
+                serverResponseMessage = null
             },
             flowConfig = flowConfig,
             reviewPromptThreshold = reviewPromptThreshold,
             onRequestReview = onRequestReview,
-            initialStep = initialStep
+            initialStep = initialStep,
+            serverResponseMessage = serverResponseMessage,
+            onSubmissionResult = onResult,
+            onShowThankYou = { message ->
+                android.util.Log.d("ApperoSDK", "Thank you callback triggered with message: $message")
+            }
         )
     }
 
@@ -552,16 +553,7 @@ object Appero {
     ) {
         ApperoLogger.debug("Submitting feedback: rating=$rating, feedback length=${feedback.length}")
         
-        // Show debug toast for feedback submission
-        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            appContext?.let { context ->
-                android.widget.Toast.makeText(
-                    context,
-                    "🔄 Submitting feedback: Rating $rating, ${feedback.length} chars",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+
         
         // Submit feedback to backend asynchronously using SDK scope
         scope.launch(Dispatchers.IO) {
@@ -575,16 +567,7 @@ object Appero {
                         onFeedbackSubmissionResult?.invoke(true, result.message)
                         ApperoLogger.logApiSuccess("/api/feedback", "POST", 200)
                         
-                        // Show debug toast for success
-                        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                            appContext?.let { context ->
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "✅ Feedback submitted successfully!",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
+
                         
                         // Task 12: Automatic Play Store review integration
                         // This happens after successful feedback submission
@@ -635,16 +618,7 @@ object Appero {
         if (rating >= reviewThreshold) {
             ApperoLogger.logCriticalOperation("Play Store Review", "Auto-triggering review for rating $rating (threshold: $reviewThreshold)")
             
-            // Show debug toast for Play Store review trigger
-            if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                appContext?.let { ctx ->
-                    android.widget.Toast.makeText(
-                        ctx,
-                        "⭐ Triggering Play Store review (rating: $rating)",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
+
             
                          requestPlayStoreReviewIfRating(
                  activity = activityContext,
@@ -656,44 +630,17 @@ object Appero {
                      is PlayStoreReviewResult.InAppReviewShown -> {
                          ApperoLogger.logCriticalOperation("Play Store Review", "In-app review dialog shown")
                          
-                         // Show debug toast for review shown
-                         if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                             appContext?.let { ctx ->
-                                 android.widget.Toast.makeText(
-                                     ctx,
-                                     "⭐ In-app review dialog shown",
-                                     android.widget.Toast.LENGTH_SHORT
-                                 ).show()
-                             }
-                         }
+
                      }
                      is PlayStoreReviewResult.InAppReviewCompleted -> {
                          ApperoLogger.logCriticalOperation("Play Store Review", "In-app review completed")
                          
-                         // Show debug toast for review completed
-                         if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                             appContext?.let { ctx ->
-                                 android.widget.Toast.makeText(
-                                     ctx,
-                                     "⭐ In-app review completed",
-                                     android.widget.Toast.LENGTH_SHORT
-                                 ).show()
-                             }
-                         }
+
                      }
                      is PlayStoreReviewResult.FallbackTriggered -> {
                          ApperoLogger.logCriticalOperation("Play Store Review", "Fallback to external Play Store triggered")
                          
-                         // Show debug toast for fallback
-                         if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                             appContext?.let { ctx ->
-                                 android.widget.Toast.makeText(
-                                     ctx,
-                                     "⭐ Fallback to external Play Store",
-                                     android.widget.Toast.LENGTH_SHORT
-                                 ).show()
-                             }
-                         }
+
                      }
                      is PlayStoreReviewResult.Failed -> {
                          ApperoLogger.logNetworkError("Play Store Review", "Review failed: ${result.reason}")
@@ -718,16 +665,7 @@ object Appero {
         } else {
             ApperoLogger.debug("Play Store Review not triggered - rating $rating below threshold $reviewThreshold")
             
-            // Show debug toast for skipped review
-            if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                appContext?.let { ctx ->
-                    android.widget.Toast.makeText(
-                        ctx,
-                        "⏭️ Play Store review skipped (rating: $rating < threshold: $reviewThreshold)",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
+
         }
     }
 
