@@ -160,11 +160,11 @@ object Appero {
             apiKey = getApiKey()
         )
         
-        feedbackRepository = FeedbackRepository(sharedPreferences, apiService).also {
+        feedbackRepository = FeedbackRepository(sharedPreferences, apiService, context).also {
             offlineFeedbackQueue = OfflineFeedbackQueue(it, scope)
         }
         
-        experienceRepository = ExperienceRepository(sharedPreferences, apiService)
+        experienceRepository = ExperienceRepository(sharedPreferences, apiService, context)
         
         offlineExperienceQueue = experienceRepository?.let { OfflineExperienceQueue(it, scope) }
         
