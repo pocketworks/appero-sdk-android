@@ -14,7 +14,7 @@
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp">
 
-        <!-- Title -->
+                <!-- Title -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
@@ -219,6 +219,6 @@
 
     </LinearLayout>
 
-</LinearLayout>
+    </LinearLayout>
 
 </LinearLayout> 

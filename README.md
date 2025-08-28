@@ -15,14 +15,83 @@ The intelligent in-app feedback widget that drives organic growth through smart 
 
 ## 🚀 Installation & Setup
 
-### 1. Add Dependencies
+### 1. Add GitHub Packages Repository
+
+Add the GitHub Packages repository to your `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()  // Required for other dependencies
+        maven {
+            url = uri("https://maven.pkg.github.com/pocketworks/appero-sdk-android")
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+```
+
+**Note:** GitHub Packages requires authentication even for public packages. You'll need to set up GitHub credentials as described in step 2.
+
+### 2. Set Up GitHub Token
+
+GitHub Packages requires authentication even for public packages. Create a GitHub Personal Access Token:
+
+#### **Option A: Classic Personal Access Token (Recommended)**
+
+1. Go to **GitHub.com** → Click your profile picture → **Settings**
+2. Scroll down to **Developer settings** (bottom left sidebar)
+3. Click **Personal access tokens** → **Tokens (classic)**
+4. Click **"Generate new token"** → **"Generate new token (classic)"**
+5. Give it a name like "Appero SDK Access"
+6. Set expiration (90 days recommended)
+7. Select scope: ✅ `read:packages`
+8. Click **"Generate token"**
+9. **Copy the token immediately** (you won't see it again!)
+
+#### **Option B: Fine-grained Personal Access Token**
+
+1. Go to **GitHub.com** → Click your profile picture → **Settings**
+2. Scroll down to **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
+3. Click **"Generate new token"**
+4. Give it a name like "Appero SDK Access"
+5. Set expiration and repository access
+6. Under **Repository permissions**:
+   - **Contents**: Read
+   - **Metadata**: Read
+   - **Packages**: Read (if available)
+7. Click **"Generate token"**
+
+#### **Set Environment Variables**
+
+Set the credentials as environment variables:
+
+```bash
+export GITHUB_USERNAME=your_github_username
+export GITHUB_TOKEN=your_github_personal_access_token
+```
+
+**For CI/CD or permanent setup**, add to your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
+```bash
+echo 'export GITHUB_USERNAME=your_github_username' >> ~/.zshrc
+echo 'export GITHUB_TOKEN=your_github_personal_access_token' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**For Android Studio**, you can set environment variables in the IDE settings or run configurations.
+
+### 3. Add Dependencies
 
 Add these to your `app/build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    // Appero SDK
-    implementation("com.example.appero:appero-sdk-android:1.0.0")
+    // Appero SDK from GitHub Packages
+    implementation("com.pocketworks:appero-sdk-android:1.0.0")
     
     // REQUIRED: Google Play In-App Review (for Play Store review feature)
     implementation("com.google.android.play:review:2.0.1")
@@ -42,7 +111,7 @@ dependencies {
 }
 ```
 
-### 2. Add Permissions & Activity Configuration
+### 4. Add Permissions & Activity Configuration
 
 Add to your `AndroidManifest.xml`:
 
@@ -70,7 +139,7 @@ Add to your `AndroidManifest.xml`:
 
 This ensures the text input remains visible when the keyboard appears.
 
-### 3. Initialize the SDK
+### 5. Initialize the SDK
 
 In your `Application` class or `MainActivity.onCreate()`:
 
@@ -731,6 +800,28 @@ Before integrating Appero SDK, ensure:
 ---
 
 ## ⚠️ Common Pitfalls
+
+### GitHub Packages Issues
+
+**Problem:** `401 Unauthorized` or `403 Forbidden` when downloading the SDK
+
+**Solutions:**
+1. **Check token permissions** - Ensure your token has `read:packages` scope
+2. **Verify environment variables** - Make sure `GITHUB_USERNAME` and `GITHUB_TOKEN` are set
+3. **Token expiration** - Classic tokens expire; regenerate if needed
+4. **Organization access** - If using organization token, ensure it has repository access
+5. **Fine-grained token approval** - Organization tokens may need admin approval
+
+**Test your setup:**
+```bash
+# Verify environment variables
+echo "Username: $GITHUB_USERNAME"
+echo "Token: ${GITHUB_TOKEN:0:10}..."
+
+# Test API access
+curl -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/pocketworks/appero-sdk-android"
+```
 
 ### ❌ Don't Do This
 ```kotlin

@@ -151,14 +151,14 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                 onSubmitCallback?.invoke(0, feedbackText)
             } else {
                 // For rating flow, require a rating
-                if (selectedRating > 0) {
-                    analyticsListener?.onRatingSelected(selectedRating)
-                    onSubmitCallback?.invoke(selectedRating, feedbackText)
+            if (selectedRating > 0) {
+                analyticsListener?.onRatingSelected(selectedRating)
+                onSubmitCallback?.invoke(selectedRating, feedbackText)
                 }
             }
             // Show thank you step instead of dismissing
             showThankYouStep(view)
-        }
+            }
         
         // Setup thank you title and subtitle
         val tvThankYouTitle = view.findViewById<TextView>(R.id.tvThankYouTitle)
@@ -180,7 +180,7 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         
         // Apply Appero theme to submit button
         applyTheme(view)
-        
+
         // Handle initial step (frustration vs rating flow)
         handleInitialStep(view)
     }

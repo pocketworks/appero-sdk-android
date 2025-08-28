@@ -61,13 +61,13 @@ data class FeedbackFlowConfig(
      * Example: "Thank you for your feedback!"
      */
     val thankYouTitle: String = "Thank you for your feedback!",
-    
+
     /**
      * Thank you subtitle shown after feedback submission
      * Example: "We appreciate your input"
      */
     val thankYouSubtitle: String = "We appreciate your input",
-    
+
     /**
      * CTA text for the thank you close button
      * Example: "Close"

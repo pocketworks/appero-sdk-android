@@ -62,9 +62,47 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.example.appero"
+                groupId = "com.pocketworks"
                 artifactId = "appero-sdk-android"
                 version = "1.0.0"
+                
+                pom {
+                    name.set("Appero Android SDK")
+                    description.set("Intelligent in-app feedback widget for Android")
+                    url.set("https://github.com/pocketworks/appero-sdk-android")
+                    
+                    licenses {
+                        license {
+                            name.set("MIT License")
+                            url.set("https://opensource.org/licenses/MIT")
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id.set("pocketworks")
+                            name.set("Pocketworks")
+                            email.set("hello@pocketworks.co.uk")
+                        }
+                    }
+                    
+                    scm {
+                        connection.set("scm:git:git://github.com/pocketworks/appero-sdk-android.git")
+                        developerConnection.set("scm:git:ssh://github.com:pocketworks/appero-sdk-android.git")
+                        url.set("https://github.com/pocketworks/appero-sdk-android")
+                    }
+                }
+            }
+        }
+        
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/pocketworks/appero-sdk-android")
+                credentials {
+                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USERNAME")
+                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+                }
             }
         }
     }

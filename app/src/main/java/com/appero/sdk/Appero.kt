@@ -352,7 +352,7 @@ object Appero {
         requireInitialized()
         val currentConfig = _feedbackPromptConfig.value ?: config
         val initialStep = _initialFeedbackStep.value
-        var serverResponseMessage by mutableStateOf<String?>(null)
+        var serverResponseMessage by remember { mutableStateOf<String?>(null) }
         
         FeedbackPrompt(
             visible = _showFeedbackPrompt.value,

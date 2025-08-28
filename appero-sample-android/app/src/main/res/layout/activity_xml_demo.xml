@@ -234,7 +234,7 @@
                     android:text="Experience Points: 0"
                     android:textSize="14sp"
                     android:gravity="center" />
-                
+
                 <!-- Auto-trigger testing button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnTestAutoTrigger"

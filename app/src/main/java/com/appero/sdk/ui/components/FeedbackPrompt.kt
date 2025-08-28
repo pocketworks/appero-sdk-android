@@ -401,74 +401,74 @@ private fun RatingStepContent(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
             .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
             .windowInsetsPadding(WindowInsets.navigationBars),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
-        
-        // Only show title and subtitle when keyboard is not visible
-        if (!imeState.value) {
+                            
+                            // Only show title and subtitle when keyboard is not visible
+                            if (!imeState.value) {
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-            Text(
-                text = config.title, 
-                fontSize = 18.sp, 
-                fontWeight = FontWeight.Bold, 
-                textAlign = TextAlign.Center, 
+                                Text(
+                                    text = config.title, 
+                                    fontSize = 18.sp, 
+                                    fontWeight = FontWeight.Bold, 
+                                    textAlign = TextAlign.Center, 
                 color = FeedbackTextStyles.titleColor, 
                 modifier = Modifier.padding(horizontal = FeedbackSpacing.medium),
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Default
-            )
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-            Text(
-                text = config.subtitle, 
-                fontSize = 16.sp, 
-                fontWeight = FontWeight.Normal,
+                                Text(
+                                    text = config.subtitle, 
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal,
                 color = FeedbackTextStyles.titleColor, 
-                textAlign = TextAlign.Center,
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Default
-            )
+                                    textAlign = TextAlign.Center,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-        }
-        
-        // Only show emoji rating when keyboard is not visible
-        if (!imeState.value) {
-            EmojiRatingScale(
-                selectedRating = selectedRating,
-                theme = theme,
+                            }
+                            
+                            // Only show emoji rating when keyboard is not visible
+                            if (!imeState.value) {
+                                EmojiRatingScale(
+                                    selectedRating = selectedRating,
+                                    theme = theme,
                 onRatingSelected = onRatingSelected
-            )
+                                )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-        }
-        
-        // Only show feedback input and CTA after a rating is selected
-        if (selectedRating > 0) {
-            // Show follow-up question (always visible when input is shown)
-            Text(
-                text = config.followUpQuestion, 
-                fontSize = 16.sp, 
-                fontWeight = FontWeight.Normal, 
+                            }
+                            
+                            // Only show feedback input and CTA after a rating is selected
+                            if (selectedRating > 0) {
+                                // Show follow-up question (always visible when input is shown)
+                                Text(
+                                    text = config.followUpQuestion, 
+                                    fontSize = 16.sp, 
+                                    fontWeight = FontWeight.Normal, 
                 color = FeedbackTextStyles.titleColor, 
-                textAlign = TextAlign.Start, 
-                modifier = Modifier
-                    .fillMaxWidth()
+                                    textAlign = TextAlign.Start, 
+                                    modifier = Modifier
+                                        .fillMaxWidth()
                     .padding(horizontal = FeedbackSpacing.medium),
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Default
-            )
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+                                )
             Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
-            
+                                
             FeedbackTextInput(
-                value = feedbackText,
+                                    value = feedbackText,
                 onValueChange = onFeedbackTextChanged,
                 placeholder = config.placeholder,
                 theme = theme,
                 maxCharacters = config.maxCharacters
             )
             
-            Spacer(modifier = Modifier.height(20.dp))
+                                Spacer(modifier = Modifier.height(20.dp))
             
             PrimaryButton(
                 text = config.submitText,
@@ -491,18 +491,18 @@ private fun FrustrationStepContent(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
             .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
             .windowInsetsPadding(WindowInsets.navigationBars)
             .windowInsetsPadding(WindowInsets.ime),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
-        
-        // Only show title and subtitle when keyboard is not visible
-        if (!imeState.value) {
+                            
+                            // Only show title and subtitle when keyboard is not visible
+                            if (!imeState.value) {
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
             Text(
                 text = config.title, 
@@ -524,7 +524,7 @@ private fun FrustrationStepContent(
         }
         
         FeedbackTextInput(
-            value = feedbackText,
+                                value = feedbackText,
             onValueChange = onFeedbackTextChanged,
             placeholder = config.placeholder,
             theme = theme,
@@ -540,7 +540,7 @@ private fun FrustrationStepContent(
             enabled = feedbackText.isNotBlank()
         )
         
-        Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
         
         SecondaryButton(
             text = config.secondaryButtonText,

@@ -34,7 +34,7 @@ internal class ExperienceTracker(
     private val experienceRepository: ExperienceRepository,
     private val scope: CoroutineScope
 ) {
-    
+
     // Legacy XML support for auto-triggering
     private var legacyActivity: androidx.fragment.app.FragmentActivity? = null
 
@@ -93,7 +93,7 @@ internal class ExperienceTracker(
                     }
                 } else {
                     // Use Compose dialog (default behavior)
-                    Appero.showFeedbackPrompt(config, initialStep)
+                Appero.showFeedbackPrompt(config, initialStep)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ApperoSDK", "Error triggering feedback prompt", e)
