@@ -8,6 +8,7 @@ import com.appero.sdk.data.remote.dto.FeedbackUI
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.components.FeedbackStep
 import com.appero.sdk.Appero
+import com.appero.sdk.debug.ApperoLogger
 import com.appero.sdk.util.DateTimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,9 @@ internal class ExperienceTracker(
     private val experienceRepository: ExperienceRepository,
     private val scope: CoroutineScope
 ) {
+
+    // Legacy XML support for auto-triggering
+    private var legacyActivity: androidx.fragment.app.FragmentActivity? = null
 
     /**
      * Log an experience event using predefined Experience enum
@@ -72,15 +76,27 @@ internal class ExperienceTracker(
                     subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
                     followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
                     placeholder = "Share your thoughts here",
-                    submitText = "Send feedback"
+                    submitText = "Send feedback",
+                    secondaryButtonText = "Not now"
                 )
                 val initialStep = when (flowType) {
                     "frustration" -> FeedbackStep.Frustration
                     else -> FeedbackStep.Rating
                 }
+                
+                // Check if we have a registered legacy activity
+                val activity = legacyActivity
+                if (activity != null) {
+                    // Use legacy XML dialog for auto-triggering
+                    Appero.showFeedbackDialog(activity, config, initialStep) { success, message ->
+                        ApperoLogger.logCriticalOperation("Legacy auto-trigger result", "success=$success, message=$message")
+                    }
+                } else {
+                    // Use Compose dialog (default behavior)
                 Appero.showFeedbackPrompt(config, initialStep)
+                }
             } catch (e: Exception) {
-                android.util.Log.e("Appero", "Error triggering feedback prompt", e)
+                android.util.Log.e("ApperoSDK", "Error triggering feedback prompt", e)
             }
         }
     }
@@ -107,13 +123,16 @@ internal class ExperienceTracker(
                             }
                         }
                         is ExperienceSubmissionResult.Error -> {
+                            ApperoLogger.logApiError("/api/experience", "POST", result.message)
                             Appero.queueExperience(value, context)
                         }
                     }
                 } else {
+                    ApperoLogger.logNetworkError("Experience Submission", "No client ID available")
                     Appero.queueExperience(value, context)
                 }
             } catch (e: Exception) {
+                ApperoLogger.logNetworkError("Experience Submission", "Exception: ${e.message}")
                 Appero.queueExperience(value, context)
             }
         }
@@ -131,9 +150,13 @@ internal class ExperienceTracker(
         get() = userRepository.getRatingThreshold()
         set(value) = userRepository.setRatingThreshold(value)
     
-    fun markFeedbackSubmitted() { userRepository.markFeedbackSubmitted() }
+    fun markFeedbackSubmitted() { 
+        userRepository.markFeedbackSubmitted() 
+    }
     
-    fun resetExperienceAndPrompt() { userRepository.resetExperienceAndPrompt() }
+    fun resetExperienceAndPrompt() { 
+        userRepository.resetExperienceAndPrompt() 
+    }
     
     fun getExperienceState(): ExperienceState {
         return ExperienceState(
@@ -145,9 +168,35 @@ internal class ExperienceTracker(
         )
     }
     
-    fun getCurrentUserId(): String { return userRepository.getCurrentUserId() }
+    fun getCurrentUserId(): String { 
+        return userRepository.getCurrentUserId() 
+    }
     
-    fun setUser(userId: String) { userRepository.setUser(userId) }
+    fun setUser(userId: String) { 
+        userRepository.setUser(userId) 
+    }
     
-    fun resetUser() { userRepository.resetUser() }
+    fun resetUser() { 
+        userRepository.resetUser() 
+    }
+    
+    /**
+     * Register a FragmentActivity for legacy XML auto-triggering
+     * When thresholds are crossed, the feedback dialog will be shown automatically
+     * using the registered activity's FragmentManager
+     */
+    fun registerLegacyActivity(activity: androidx.fragment.app.FragmentActivity) {
+        legacyActivity = activity
+        ApperoLogger.logCriticalOperation("Legacy activity registered", "auto-triggering: ${activity.javaClass.simpleName}")
+    }
+    
+    /**
+     * Unregister the legacy activity (e.g., when activity is destroyed)
+     */
+    fun unregisterLegacyActivity() {
+        legacyActivity?.let { activity ->
+            ApperoLogger.logCriticalOperation("Legacy activity unregistered", activity.javaClass.simpleName)
+        }
+        legacyActivity = null
+    }
 } 

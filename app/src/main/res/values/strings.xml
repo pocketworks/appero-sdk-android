@@ -1,3 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">appero-sdk-android</string>
+    <!-- SDK Debug Messages -->
+    <string name="appero_sdk_debug_mode_set">Debug mode set to: %s</string>
+    <string name="appero_sdk_initialization_starting">Starting with debug mode: %s</string>
+    <string name="appero_sdk_initialization_completed">Completed successfully</string>
+    <string name="appero_sdk_shutdown">Stopping Appero SDK</string>
+    
+    <!-- API Error Messages -->
+    <string name="appero_api_error_format" formatted="false">API Error: %s %s (Status: %d) - %s</string>
+    <string name="appero_api_error_format_no_status" formatted="false">API Error: %s %s - %s</string>
+    <string name="appero_api_success_format" formatted="false">API Success: %s %s (Status: %d)</string>
+    
+    <!-- Network Error Messages -->
+    <string name="appero_network_error_format" formatted="false">Network Error (%s): %s</string>
+    <string name="appero_network_error_no_client_id">No client ID available</string>
+    <string name="appero_network_error_exception_format" formatted="false">Exception: %s</string>
+    <string name="appero_network_error_play_store_review">Failed to request review flow</string>
+    
+    <!-- Critical Operation Messages -->
+    <string name="appero_critical_operation_format" formatted="false">%s: %s</string>
+    <string name="appero_critical_operation_no_details" formatted="false">%s</string>
+    
+    <!-- Queue Error Messages -->
+    <string name="appero_queue_full_warning">Queue full, removing oldest item</string>
+    <string name="appero_max_retries_reached_format">Max retries reached for item %s</string>
+    
+    <!-- Default Feedback UI Strings -->
+    <string name="appero_feedback_default_title">How was your experience?</string>
+    <string name="appero_feedback_default_subtitle">We\'d love to hear your thoughts</string>
+    <string name="appero_feedback_default_follow_up">What made your experience positive?</string>
+    <string name="appero_feedback_default_placeholder">Share your thoughts here</string>
+    <string name="appero_feedback_default_submit">Send feedback</string>
+    <string name="appero_feedback_not_now">Not now</string>
+    
+    <!-- Error Messages -->
+    <string name="appero_error_repository_not_initialized">Repository not initialized</string>
+    <string name="appero_error_sdk_not_initialized">Appero SDK must be initialized before use. Call Appero.start() first.</string>
+    
+    <!-- Log Tags -->
+    <string name="appero_log_tag">ApperoSDK</string>
 </resources>

@@ -19,6 +19,8 @@ internal interface ExperienceApiService {
      * @param value The experience points value
      * @param context Additional context for the experience
      * @param sentAt The timestamp in ISO 8601 format
+     * @param source The platform source (always "android")
+     * @param buildVersion The app version in format "versionName.versionCode"
      * @return Response indicating success or failure
      */
     @Multipart
@@ -27,6 +29,8 @@ internal interface ExperienceApiService {
         @Part("client_id") clientId: RequestBody,
         @Part("value") value: RequestBody,
         @Part("context") context: RequestBody,
-        @Part("sent_at") sentAt: RequestBody
+        @Part("sent_at") sentAt: RequestBody,
+        @Part("source") source: RequestBody,
+        @Part("build_version") buildVersion: RequestBody
     ): Response<com.appero.sdk.data.remote.dto.ExperienceResponse>
 } 

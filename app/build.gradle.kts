@@ -3,6 +3,7 @@ import io.gitlab.arturbosch.detekt.Detekt
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android") version "1.9.0"
+    id("kotlin-parcelize")
     id("io.gitlab.arturbosch.detekt") version("1.23.8")
     `maven-publish`
 }
@@ -61,9 +62,47 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.example.appero"
+                groupId = "com.pocketworks"
                 artifactId = "appero-sdk-android"
                 version = "1.0.0"
+                
+                pom {
+                    name.set("Appero Android SDK")
+                    description.set("Intelligent in-app feedback widget for Android")
+                    url.set("https://github.com/pocketworks/appero-sdk-android")
+                    
+                    licenses {
+                        license {
+                            name.set("MIT License")
+                            url.set("https://opensource.org/licenses/MIT")
+                        }
+                    }
+                    
+                    developers {
+                        developer {
+                            id.set("pocketworks")
+                            name.set("Pocketworks")
+                            email.set("hello@pocketworks.co.uk")
+                        }
+                    }
+                    
+                    scm {
+                        connection.set("scm:git:git://github.com/pocketworks/appero-sdk-android.git")
+                        developerConnection.set("scm:git:ssh://github.com:pocketworks/appero-sdk-android.git")
+                        url.set("https://github.com/pocketworks/appero-sdk-android")
+                    }
+                }
+            }
+        }
+        
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/pocketworks/appero-sdk-android")
+                credentials {
+                    username = System.getenv("GITHUB_USERNAME")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
             }
         }
     }
@@ -100,5 +139,7 @@ dependencies {
     
     // Compose testing
     debugImplementation("androidx.compose.ui:ui-tooling")
+    
+    // Google Play Services
     implementation("com.google.android.play:review:2.0.1")
 }

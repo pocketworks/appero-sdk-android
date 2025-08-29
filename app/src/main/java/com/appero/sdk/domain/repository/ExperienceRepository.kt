@@ -1,8 +1,10 @@
 package com.appero.sdk.domain.repository
 
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.util.AppVersionUtils
 import com.appero.sdk.util.HttpStatusCode
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -23,7 +25,8 @@ import java.net.SocketTimeoutException
  */
 internal class ExperienceRepository(
 	private val sharedPreferences: SharedPreferences,
-	private val apiService: ApperoApiService
+	private val apiService: ApperoApiService,
+	private val context: Context
 ) {
 
 	companion object {
@@ -53,6 +56,8 @@ internal class ExperienceRepository(
 				val valueBody = value.toString().toRequestBody(mediaType)
 				val contextBody = context.toRequestBody(mediaType)
 				val sentAtBody = sentAt.toRequestBody(mediaType)
+				val sourceBody = AppVersionUtils.getSource().toRequestBody(mediaType)
+				val buildVersionBody = AppVersionUtils.getBuildVersion(this.context).toRequestBody(mediaType)
 				
 				val response = try {
 					withTimeout(TIMEOUT * 1000) {
@@ -60,7 +65,9 @@ internal class ExperienceRepository(
 							clientId = clientIdBody,
 							value = valueBody,
 							context = contextBody,
-							sentAt = sentAtBody
+							sentAt = sentAtBody,
+							source = sourceBody,
+							buildVersion = buildVersionBody
 						)
 					}
 				} catch (e: TimeoutCancellationException) {
