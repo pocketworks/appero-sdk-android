@@ -1,9 +1,13 @@
 package com.appero.sdk.ui.config
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
 /**
  * Configuration for the feedback prompt UI
  * All text content must be provided by the developer using the SDK
  */
+@Parcelize
 data class FeedbackPromptConfig(
     /**
      * Main title shown at the top of the prompt
@@ -39,34 +43,34 @@ data class FeedbackPromptConfig(
      * Maximum number of characters allowed in the feedback text
      * Default: 120
      */
-    val maxCharacters: Int = 120
-) 
+    val maxCharacters: Int = 120,
+    
+    /**
+     * Text shown on the secondary button (e.g., "Not now" button in frustration flow)
+     * Default: "Not now"
+     */
+    val secondaryButtonText: String = "Not now"
+) : Parcelable
 
 /**
- * Configuration for the two-step post-feedback flow (Rate Us + Thank You)
+ * Configuration for the post-feedback flow (Thank You message)
  */
 data class FeedbackFlowConfig(
     /**
-     * Title for the "Rate Us" screen (step 2 if rating >= threshold)
-     * Example: "Enjoying our app?"
-     */
-    val rateUsTitle: String = "Enjoying our app?",
-
-    /**
-     * Subtitle for the "Rate Us" screen
-     * Example: "If you like our app, please consider rating us on the Play Store."
-     */
-    val rateUsSubtitle: String = "If you like our app, please consider rating us on the Play Store.",
-
-    /**
-     * CTA text for the "Rate Us" button
-     * Example: "Rate on Play Store"
-     */
-    val rateUsCtaText: String = "Rate on Play Store",
-
-    /**
-     * Thank you message shown after feedback or after skipping the review prompt
+     * Thank you title shown after feedback submission
      * Example: "Thank you for your feedback!"
      */
-    val thankYouMessage: String = "Thank you for your feedback!"
+    val thankYouTitle: String = "Thank you for your feedback!",
+
+    /**
+     * Thank you subtitle shown after feedback submission
+     * Example: "We appreciate your input"
+     */
+    val thankYouSubtitle: String = "We appreciate your input",
+
+    /**
+     * CTA text for the thank you close button
+     * Example: "Close"
+     */
+    val thankYouCtaText: String = "Close"
 ) 

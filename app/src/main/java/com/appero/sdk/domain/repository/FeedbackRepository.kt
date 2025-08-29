@@ -1,9 +1,11 @@
 package com.appero.sdk.domain.repository
 
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.appero.sdk.data.local.queue.QueuedFeedback
 import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.util.AppVersionUtils
 import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
 import com.appero.sdk.util.HttpStatusCode
 import com.google.gson.Gson
@@ -22,7 +24,8 @@ import java.net.SocketTimeoutException
  */
 internal class FeedbackRepository(
     private val sharedPreferences: SharedPreferences,
-    private val apiService: ApperoApiService
+    private val apiService: ApperoApiService,
+    private val context: Context
 ) {
 
     companion object {
@@ -54,6 +57,8 @@ internal class FeedbackRepository(
                 val ratingBody = rating.toString().toRequestBody(mediaType)
                 val feedbackBody = feedback.toRequestBody(mediaType)
                 val sentAtBody = getCurrentTimestamp().toRequestBody(mediaType)
+                val sourceBody = AppVersionUtils.getSource().toRequestBody(mediaType)
+                val buildVersionBody = AppVersionUtils.getBuildVersion(context).toRequestBody(mediaType)
 
                 val response = try {
                     // Use withTimeout to prevent hanging indefinitely
@@ -62,7 +67,9 @@ internal class FeedbackRepository(
                         apiService.feedbackApi.submitFeedback(
                             rating = ratingBody,
                             feedback = feedbackBody,
-                            sentAt = sentAtBody
+                            sentAt = sentAtBody,
+                            source = sourceBody,
+                            buildVersion = buildVersionBody
                         )
                     }
                 } catch (e: TimeoutCancellationException) {

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bottom_sheet_background">
+
+    <!-- Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="24dp">
+
+                <!-- Title -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="How was your experience?"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#FF003143"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="We'd love to hear your thoughts"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:textColor="#FF003143"
+            android:layout_marginBottom="24dp" />
+
+    <!-- Rating Buttons (SpaceEvenly like Compose) -->
+    <LinearLayout
+        android:id="@+id/ratingContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:weightSum="5">
+
+        <ImageButton
+            android:id="@+id/btnRating1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_rating_very_negative"
+            android:contentDescription="1 star"
+            android:scaleType="centerInside" />
+
+        <ImageButton
+            android:id="@+id/btnRating2"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_rating_negative"
+            android:contentDescription="2 stars"
+            android:scaleType="centerInside" />
+
+        <ImageButton
+            android:id="@+id/btnRating3"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_rating_neutral"
+            android:contentDescription="3 stars"
+            android:scaleType="centerInside" />
+
+        <ImageButton
+            android:id="@+id/btnRating4"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_rating_positive"
+            android:contentDescription="4 stars"
+            android:scaleType="centerInside" />
+
+        <ImageButton
+            android:id="@+id/btnRating5"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_rating_very_positive"
+            android:contentDescription="5 stars"
+            android:scaleType="centerInside" />
+
+    </LinearLayout>
+
+    <!-- Feedback Section (Initially Hidden) -->
+    <LinearLayout
+        android:id="@+id/feedbackSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Follow-up Question -->
+        <TextView
+            android:id="@+id/tvFollowUp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tell us more..."
+            android:textSize="16sp"
+            android:textColor="#FF003143"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Feedback Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="88dp"
+            android:layout_marginBottom="4dp"
+            app:boxBackgroundMode="none"
+            app:boxStrokeColor="@android:color/transparent"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:hintEnabled="false">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etFeedback"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:minLines="4"
+                android:maxLines="4"
+                android:gravity="top"
+                android:inputType="textMultiLine|textCapSentences"
+                android:hint="Tell us more..."
+                android:textColorHint="@color/gray_text"
+                android:background="@drawable/text_input_background"
+                android:padding="16dp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Character Counter (like Compose) -->
+        <TextView
+            android:id="@+id/tvCharacterCounter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0/120"
+            android:textSize="12sp"
+            android:textColor="@color/gray_text"
+            android:gravity="end"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Submit Button (full width like Compose) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSubmit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Send Feedback"
+            style="@style/Widget.Material3.Button" />
+
+                <!-- Not Now Button (for frustration flow) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNotNow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Not now"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Thank You Section (Initially Hidden) -->
+    <LinearLayout
+        android:id="@+id/thankYouSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Thank You Title -->
+        <TextView
+            android:id="@+id/tvThankYouTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thank you for your feedback!"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#FF003143"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Thank You Subtitle -->
+        <TextView
+            android:id="@+id/tvThankYouSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="We appreciate your input"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:textColor="#FF003143"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Close Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Close"
+            style="@style/Widget.Material3.Button" />
+
+    </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout> 

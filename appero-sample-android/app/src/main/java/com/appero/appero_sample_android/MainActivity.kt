@@ -1,5 +1,6 @@
 package com.appero.appero_sample_android
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.appero.appero_sample_android.ui.theme.ApperoSampleAndroidTheme
 import android.app.Activity
 import com.appero.sdk.Appero
+import com.appero.sdk.debug.ApperoDebugMode
 import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
@@ -35,15 +37,28 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        // Initialize the Appero SDK
+        // Initialize the Appero SDK with DEBUG mode for development
         Appero.start(
             context = this,
             apiKey = "Cu8i7jOIm1cN2IhDO3iqV2cLSzcdI9/zUaws7+d19Rs", // Updated API key to match curl
-            clientId = "beeec9b8-3908-4605-9b45-faded129d41e" // Sample client ID
+            clientId = "beeec9b8-3908-4605-9b45-faded129d41e", // Sample client ID
+            debugMode = ApperoDebugMode.DEBUG // Enable debug logging for development
         )
         
         // Set up analytics listener for tracking Appero events
         Appero.setAnalyticsListener(ExampleAnalyticsListener())
+        
+        // Set default custom theme for the sample app
+        Appero.theme = CustomTheme(
+            primaryColor = Color(0xFF4CAF50),
+            accentColor = Color(0xFF4CAF50),
+            buttonBackgroundColor = Color(0xFF4CAF50),
+            veryNegativeColor = Color(0xFFFF6B6B),
+            negativeColor = Color(0xFFFF9F43),
+            neutralColor = Color(0xFFFECA57),
+            positiveColor = Color(0xFF48CAE4),
+            veryPositiveColor = Color(0xFF4CAF50)
+        )
         
         setContent {
             ApperoSampleAndroidTheme {
@@ -75,13 +90,12 @@ fun ApperoSampleApp() {
         )
     }
     
-    // Demo config for the two-step flow
+    // Demo config for the feedback flow
     val feedbackFlowConfig = remember {
         FeedbackFlowConfig(
-            rateUsTitle = "Enjoying Appero Sample?",
-            rateUsSubtitle = "If you love our app, please rate us on the Play Store!",
-            rateUsCtaText = "Rate Now",
-            thankYouMessage = "Thank you for your valuable feedback!"
+            thankYouTitle = "Thank you for your valuable feedback!",
+            thankYouSubtitle = "Your input helps us improve our app",
+            thankYouCtaText = "Close"
         )
     }
     val reviewPromptThreshold = 4
@@ -111,6 +125,85 @@ fun ApperoSampleApp() {
             textAlign = TextAlign.Center
         )
         
+        // Prominent CTA to XML Demo
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "🚀 Try the Hybrid Approach!",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "See how XML projects can adopt Compose gradually",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Button(
+                    onClick = { 
+                        context.startActivity(Intent(context, XmlDemoActivity::class.java))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                ) {
+                    Text(
+                        text = "🔄 View XML + ComposeView Demo",
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+        
+        // API Comparison Info
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🚀 Dual API Support",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "This sample demonstrates both UI approaches:",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• 🎛️ Compose UI: Modern bottom sheet (recommended)\n• 🏛️ XML Dialog: Traditional DialogFragment (legacy support)\n• 🔄 Same backend: Both use identical analytics & API integration",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                
+
+            }
+        }
+        
         // Hello World from SDK
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -131,6 +224,46 @@ fun ApperoSampleApp() {
                 Text(
                     text = "SDK Initialized: ${Appero.isInitialized()}",
                     fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        
+        // Debug Mode Selector
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Debug Mode",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Current: DEBUG (check logcat for API errors)",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Available modes: PRODUCTION, DEBUG",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• PRODUCTION: No logging\n• DEBUG: API errors and critical operations",
+                    fontSize = 12.sp,
                     color = Color.Gray
                 )
             }
@@ -499,19 +632,28 @@ fun ApperoSampleApp() {
                 )
             }
         }
-        
-        // General Controls
+
+        // Play Store Review Testing
         Card(
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "General Controls",
+                    text = "🧪 Play Store Review Testing",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Test in-app reviews with current package: ${context.packageName}",
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
                 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -522,11 +664,36 @@ fun ApperoSampleApp() {
                 ) {
                     Button(
                         onClick = { 
+                            // Test with current app's package (should work if using a published app's package)
+                            Appero.requestPlayStoreReview(context as Activity) { result ->
+                                val message = when (result) {
+                                    is Appero.PlayStoreReviewResult.InAppReviewShown -> "✅ In-app review shown!"
+                                    is Appero.PlayStoreReviewResult.InAppReviewCompleted -> "✅ In-app review completed!"
+                                    is Appero.PlayStoreReviewResult.FallbackTriggered -> "✅ Fallback to Play Store"
+                                    is Appero.PlayStoreReviewResult.Failed -> "❌ Failed: ${result.reason}"
+                                }
+                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50)
+                        )
+                    ) {
+                        Text("Test Current Package", fontSize = 10.sp)
+                    }
+                    
+                    Button(
+                        onClick = { 
+                            // Test the feedback flow that triggers review
                             Appero.showFeedbackPrompt(
-                                config = feedbackConfig,
+                                config = feedbackConfig.copy(
+                                    title = "Test In-App Review 🧪",
+                                    subtitle = "This should trigger a Play Store review"
+                                ),
                                 onResult = { success, message ->
                                     val toastMessage = if (success) {
-                                        "✅ Feedback submitted: $message"
+                                        "✅ Feedback submitted! Check for review dialog"
                                     } else {
                                         "❌ Failed to submit: $message"
                                     }
@@ -540,7 +707,72 @@ fun ApperoSampleApp() {
                             containerColor = Color(0xFF2196F3)
                         )
                     ) {
-                        Text("Show Current Theme", fontSize = 11.sp)
+                        Text("Test Full Flow", fontSize = 10.sp)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "• Use build variants to test with different package names\n• In-app reviews only work with published app packages\n• If using a published package, you should see the real review dialog!",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+
+        // General Controls
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "🎛️ Compose UI Controls",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Modern Jetpack Compose feedback UI",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { 
+                            Appero.showFeedbackPrompt(
+                                config = feedbackConfig.copy(
+                                    title = "Compose UI Feedback 🚀",
+                                    subtitle = "Modern Jetpack Compose approach"
+                                ),
+                                onResult = { success, message ->
+                                    val toastMessage = if (success) {
+                                        "✅ Compose UI: Feedback submitted!"
+                                    } else {
+                                        "❌ Compose UI: Failed to submit: $message"
+                                    }
+                                    Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+                                    experienceState = Appero.getExperienceState()
+                                }
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2196F3)
+                        )
+                    ) {
+                        Text("Compose Bottom Sheet", fontSize = 10.sp)
                     }
                     
                     Button(
@@ -554,7 +786,7 @@ fun ApperoSampleApp() {
                             containerColor = Color(0xFF9E9E9E)
                         )
                     ) {
-                        Text("Reset", fontSize = 11.sp)
+                        Text("Reset State", fontSize = 11.sp)
                     }
                 }
             }
@@ -571,7 +803,7 @@ fun ApperoSampleApp() {
         onRequestReview = {
             // Trigger Play Store review prompt
             if (context is Activity) {
-                Appero.requestPlayStoreReview(context)
+                Appero.requestPlayStoreReview(context as Activity)
             }
         },
         onResult = { success, message ->
@@ -582,7 +814,8 @@ fun ApperoSampleApp() {
             }
             Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
             experienceState = Appero.getExperienceState()
-        }
+        },
+        activity = context as? Activity
     )
 }
 

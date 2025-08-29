@@ -18,6 +18,8 @@ internal interface FeedbackApiService {
      * @param rating The rating (1-5)
      * @param feedback The feedback text
      * @param sentAt The timestamp in ISO 8601 format
+     * @param source The platform source (always "android")
+     * @param buildVersion The app version in format "versionName.versionCode"
      * @return Response indicating success or failure
      */
     @Multipart
@@ -25,7 +27,9 @@ internal interface FeedbackApiService {
     suspend fun submitFeedback(
         @Part("rating") rating: RequestBody,
         @Part("feedback") feedback: RequestBody,
-        @Part("sent_at") sentAt: RequestBody
+        @Part("sent_at") sentAt: RequestBody,
+        @Part("source") source: RequestBody,
+        @Part("build_version") buildVersion: RequestBody
     ): Response<FeedbackResponse>
     
 

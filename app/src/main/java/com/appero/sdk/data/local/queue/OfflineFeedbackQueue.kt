@@ -3,6 +3,7 @@ package com.appero.sdk.data.local.queue
 import com.appero.sdk.domain.repository.FeedbackRepository
 import com.appero.sdk.domain.repository.FeedbackSubmissionResult
 import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
+import com.appero.sdk.debug.ApperoLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -98,11 +99,10 @@ internal class OfflineFeedbackQueue(
         )
 
         val currentQueue = feedbackRepository.getQueuedFeedback().toMutableList()
-
-        // Prevent queue from growing too large
+        
         if (currentQueue.size >= MAX_QUEUE_SIZE) {
-            // Remove oldest items
-            currentQueue.removeAt(0)
+            ApperoLogger.warning("Queue full, removing oldest item")
+            currentQueue.removeAt(0) // Remove oldest item
         }
 
         currentQueue.add(queuedFeedback)
@@ -117,15 +117,15 @@ internal class OfflineFeedbackQueue(
         if (!isNetworkAvailable) {
             return // Skip processing if no network
         }
-        if (!isProcessing.compareAndSet(false, true)) return
+        if (!isProcessing.compareAndSet(false, true)) {
+            return
+        }
 
         val queuedItems = feedbackRepository.getQueuedFeedback()
         if (queuedItems.isEmpty()) {
             isProcessing.set(false)
             return // No items to process
         }
-
-        Log.i("Appero", "Processing ${queuedItems.size} queued feedback items")
 
         scope.launch {
             try {
@@ -150,6 +150,9 @@ internal class OfflineFeedbackQueue(
                                 if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                                     // Add back to queue with incremented retry count
                                     updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                                } else {
+                                    ApperoLogger.logApiError("/api/feedback", "POST", 
+                                        "Max retries reached for item ${item.id}")
                                 }
                                 // If max retries reached, item is dropped (not added to updatedQueue)
                             }
@@ -158,6 +161,9 @@ internal class OfflineFeedbackQueue(
                         // Network error - retry if under limit
                         if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                             updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
+                        } else {
+                            ApperoLogger.logNetworkError("Feedback Queue Processing", 
+                                "Max retries reached for item ${item.id}")
                         }
                     }
                 }
