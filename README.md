@@ -957,6 +957,18 @@ class MainActivity : ComponentActivity() {
 
 ---
 
+## 🚀 Flutter Integration
+
+For Flutter projects, use the official Appero Flutter plugin instead of integrating this Android SDK directly:
+
+- **Flutter Plugin**: [appero-sdk-flutter](https://github.com/pocketworks/appero-sdk-flutter)
+- **Installation**: Add `appero_flutter` to your `pubspec.yaml`
+- **Features**: Auto-trigger callbacks, native UI integration, unified iOS/Android API
+
+The Flutter plugin wraps this Android SDK and provides additional features like auto-trigger callbacks for seamless Flutter integration.
+
+---
+
 ## 📄 License
 
 MIT 

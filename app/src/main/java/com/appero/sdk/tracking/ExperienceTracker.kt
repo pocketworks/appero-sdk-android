@@ -64,6 +64,10 @@ internal class ExperienceTracker(
     
     /**
      * Trigger feedback prompt with server-provided configuration
+     * This method handles auto-triggering for different integration types:
+     * - Flutter apps with registered callback will use the callback
+     * - Legacy XML apps with registered activity will use XML dialog
+     * - Native Compose apps will use Compose dialog
      */
     private fun triggerFeedbackPrompt(
         feedbackUI: FeedbackUI?,
@@ -71,29 +75,29 @@ internal class ExperienceTracker(
     ) {
         scope.launch(Dispatchers.Main) {
             try {
-                val config = FeedbackPromptConfig(
-                    title = feedbackUI?.title ?: "How was your experience?",
-                    subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
-                    followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
-                    placeholder = "Share your thoughts here",
-                    submitText = "Send feedback",
-                    secondaryButtonText = "Not now"
-                )
-                val initialStep = when (flowType) {
-                    "frustration" -> FeedbackStep.Frustration
-                    else -> FeedbackStep.Rating
-                }
-                
-                // Check if we have a registered legacy activity
+                // Check if we have a registered legacy activity for XML auto-triggering
                 val activity = legacyActivity
-                if (activity != null) {
-                    // Use legacy XML dialog for auto-triggering
+                if (activity != null && !Appero.hasAutoTriggerCallback()) {
+                    // Use legacy XML dialog for auto-triggering only if no Flutter callback is registered
+                    val config = FeedbackPromptConfig(
+                        title = feedbackUI?.title ?: "How was your experience?",
+                        subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
+                        followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
+                        placeholder = "Share your thoughts here",
+                        submitText = "Send feedback",
+                        secondaryButtonText = "Not now"
+                    )
+                    val initialStep = when (flowType) {
+                        "frustration" -> FeedbackStep.Frustration
+                        else -> FeedbackStep.Rating
+                    }
+                    
                     Appero.showFeedbackDialog(activity, config, initialStep) { success, message ->
                         ApperoLogger.logCriticalOperation("Legacy auto-trigger result", "success=$success, message=$message")
                     }
                 } else {
-                    // Use Compose dialog (default behavior)
-                Appero.showFeedbackPrompt(config, initialStep)
+                    // Use the new auto-trigger method that handles Flutter callbacks or Compose UI
+                    Appero.triggerAutoFeedbackPrompt(feedbackUI, flowType)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ApperoSDK", "Error triggering feedback prompt", e)

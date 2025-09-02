@@ -43,6 +43,30 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.fragment.app.FragmentActivity
+import com.appero.sdk.data.remote.dto.FeedbackUI
+
+/**
+ * Public data class representing feedback prompt information for auto-trigger callbacks
+ */
+data class FeedbackPromptInfo(
+    val title: String? = null,
+    val subtitle: String? = null,
+    val prompt: String? = null
+)
+
+/**
+ * Callback interface for Flutter auto-trigger notifications
+ * Implement this interface to receive notifications when feedback prompts should be shown
+ */
+interface ApperoAutoTriggerCallback {
+    /**
+     * Called when a feedback prompt should be automatically triggered
+     * @param promptInfo Server-provided UI configuration (title, subtitle, prompt)
+     * @param flowType The type of flow that triggered this ("frustration" or null for normal)
+     */
+    fun onAutoTriggerFeedbackPrompt(promptInfo: FeedbackPromptInfo?, flowType: String?)
+}
 
 /**
  * Main Appero SDK class - singleton instance for global access
@@ -100,6 +124,24 @@ object Appero {
         // Recreate Play Store review manager with new listener
         playStoreReviewManager = PlayStoreReviewManager(analyticsListener)
     }
+    
+    /**
+     * Set the auto-trigger callback for Flutter integration
+     * When this is set, auto-triggers will call this callback instead of showing native Android UI
+     * @param callback Your implementation of ApperoAutoTriggerCallback (or null to remove)
+     */
+    fun setAutoTriggerCallback(callback: ApperoAutoTriggerCallback?) {
+        autoTriggerCallback = callback
+        ApperoLogger.logCriticalOperation("Auto-trigger callback", if (callback != null) "registered" else "unregistered")
+    }
+    
+    /**
+     * Check if auto-trigger callback is registered (useful for Flutter integration)
+     * @return true if callback is registered, false otherwise
+     */
+    fun hasAutoTriggerCallback(): Boolean {
+        return autoTriggerCallback != null
+    }
 
     // UI state for feedback prompt
     private var _showFeedbackPrompt: MutableState<Boolean> = mutableStateOf(false)
@@ -108,6 +150,9 @@ object Appero {
 
     // Callback for feedback submission results
     private var onFeedbackSubmissionResult: ((Boolean, String) -> Unit)? = null
+    
+    // Flutter auto-trigger callback
+    private var autoTriggerCallback: ApperoAutoTriggerCallback? = null
 
     /**
      * Initialize the Appero SDK with API key and client ID
@@ -329,6 +374,46 @@ object Appero {
         _initialFeedbackStep.value = initialStep
         _showFeedbackPrompt.value = true
         onFeedbackSubmissionResult = onResult
+    }
+    
+    /**
+     * Internal method to trigger auto-feedback prompt
+     * This checks if a Flutter callback is registered and uses it instead of native UI
+     * @param feedbackUI Server-provided UI configuration
+     * @param flowType The type of flow that triggered this
+     */
+    internal fun triggerAutoFeedbackPrompt(feedbackUI: FeedbackUI?, flowType: String?) {
+        requireInitialized()
+        
+        val callback = autoTriggerCallback
+        if (callback != null) {
+            // Flutter callback is registered, use it instead of native UI
+            ApperoLogger.logCriticalOperation("Auto-trigger", "Using Flutter callback")
+            val promptInfo = feedbackUI?.let {
+                FeedbackPromptInfo(
+                    title = it.title,
+                    subtitle = it.subtitle,
+                    prompt = it.prompt
+                )
+            }
+            callback.onAutoTriggerFeedbackPrompt(promptInfo, flowType)
+        } else {
+            // No Flutter callback, proceed with native Android UI
+            ApperoLogger.logCriticalOperation("Auto-trigger", "Using native Android UI")
+            val config = FeedbackPromptConfig(
+                title = feedbackUI?.title ?: "How was your experience?",
+                subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
+                followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
+                placeholder = "Share your thoughts here",
+                submitText = "Send feedback",
+                secondaryButtonText = "Not now"
+            )
+            val initialStep = when (flowType) {
+                "frustration" -> FeedbackStep.Frustration
+                else -> FeedbackStep.Rating
+            }
+            showFeedbackPrompt(config, initialStep)
+        }
     }
 
     /**
