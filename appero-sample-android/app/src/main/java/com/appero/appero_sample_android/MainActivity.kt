@@ -559,12 +559,6 @@ fun ApperoSampleApp() {
                                 subtitle = "Using system colors (auto light/dark)"
                             ),
                             onResult = { success, message ->
-                                val toastMessage = if (success) {
-                                    "✅ Feedback submitted with Default theme!"
-                                } else {
-                                    "❌ Failed to submit: $message"
-                                }
-                                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                                 experienceState = Appero.getExperienceState()
                                 // Restore original theme
                                 Appero.theme = originalTheme
@@ -603,12 +597,6 @@ fun ApperoSampleApp() {
                                 subtitle = "Using the classic green colors we had before"
                             ),
                             onResult = { success, message ->
-                                val toastMessage = if (success) {
-                                    "✅ Feedback submitted with Green theme!"
-                                } else {
-                                    "❌ Failed to submit: $message"
-                                }
-                                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                                 experienceState = Appero.getExperienceState()
                                 // Restore original theme
                                 Appero.theme = originalTheme
@@ -692,12 +680,6 @@ fun ApperoSampleApp() {
                                     subtitle = "This should trigger a Play Store review"
                                 ),
                                 onResult = { success, message ->
-                                    val toastMessage = if (success) {
-                                        "✅ Feedback submitted! Check for review dialog"
-                                    } else {
-                                        "❌ Failed to submit: $message"
-                                    }
-                                    Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                                     experienceState = Appero.getExperienceState()
                                 }
                             )
@@ -720,77 +702,6 @@ fun ApperoSampleApp() {
                 )
             }
         }
-
-        // General Controls
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "🎛️ Compose UI Controls",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Modern Jetpack Compose feedback UI",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { 
-                            Appero.showFeedbackPrompt(
-                                config = feedbackConfig.copy(
-                                    title = "Compose UI Feedback 🚀",
-                                    subtitle = "Modern Jetpack Compose approach"
-                                ),
-                                onResult = { success, message ->
-                                    val toastMessage = if (success) {
-                                        "✅ Compose UI: Feedback submitted!"
-                                    } else {
-                                        "❌ Compose UI: Failed to submit: $message"
-                                    }
-                                    Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
-                                    experienceState = Appero.getExperienceState()
-                                }
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2196F3)
-                        )
-                    ) {
-                        Text("Compose Bottom Sheet", fontSize = 10.sp)
-                    }
-                    
-                    Button(
-                        onClick = { 
-                            Appero.resetExperienceAndPrompt()
-                            experienceState = Appero.getExperienceState()
-                            Toast.makeText(context, "Experience and feedback status reset", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF9E9E9E)
-                        )
-                    ) {
-                        Text("Reset State", fontSize = 11.sp)
-                    }
-                }
-            }
-        }
         
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -807,12 +718,6 @@ fun ApperoSampleApp() {
             }
         },
         onResult = { success, message ->
-            val toastMessage = if (success) {
-                "✅ Feedback submitted successfully!"
-            } else {
-                "❌ Failed to submit feedback: $message"
-            }
-            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
             experienceState = Appero.getExperienceState()
         },
         activity = context as? Activity

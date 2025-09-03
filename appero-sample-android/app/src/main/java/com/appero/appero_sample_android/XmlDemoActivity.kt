@@ -139,12 +139,6 @@ class XmlDemoActivity : FragmentActivity() {
                     Appero.showFeedbackPrompt(
                         config = feedbackConfig,
                         onResult = { success, message ->
-                            val toastMessage = if (success) {
-                                "✅ ComposeView: Feedback submitted!"
-                            } else {
-                                "❌ ComposeView: Failed to submit: $message"
-                            }
-                            Toast.makeText(this@XmlDemoActivity, toastMessage, Toast.LENGTH_LONG).show()
                             experienceState = Appero.getExperienceState()
                             updateExperienceState() // Update XML TextView too
                         }
@@ -190,12 +184,6 @@ class XmlDemoActivity : FragmentActivity() {
                 Appero.requestPlayStoreReview(this@XmlDemoActivity)
             },
             onResult = { success, message ->
-                val toastMessage = if (success) {
-                    "✅ ComposeView: Feedback submitted successfully!"
-                } else {
-                    "❌ ComposeView: Failed to submit feedback: $message"
-                }
-                Toast.makeText(this@XmlDemoActivity, toastMessage, Toast.LENGTH_LONG).show()
                 experienceState = Appero.getExperienceState()
                 updateExperienceState() // Update XML TextView too
             }
@@ -216,12 +204,6 @@ class XmlDemoActivity : FragmentActivity() {
             activity = this,
             config = config,
             onResult = { success, message ->
-                val toastMessage = if (success) {
-                    "✅ XML Bottom Sheet: Feedback submitted!"
-                } else {
-                    "❌ XML Bottom Sheet: Failed to submit: $message"
-                }
-                Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show()
                 updateExperienceState()
             }
         )

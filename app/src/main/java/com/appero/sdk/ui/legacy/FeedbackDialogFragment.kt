@@ -32,6 +32,7 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     private var analyticsListener: ApperoAnalyticsListener? = null
     private var onSubmitCallback: ((rating: Int, feedback: String) -> Unit)? = null
     private var onDismissCallback: (() -> Unit)? = null
+    private var onFeedbackSubmissionCallback: ((success: Boolean, message: String?) -> Unit)? = null
     
     // Rating state
     private var selectedRating: Int = 0
@@ -40,6 +41,7 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     // Flow state
     private var initialStep: FeedbackStep = FeedbackStep.Rating
     private var currentStep: FeedbackStep = FeedbackStep.Rating
+    private var isSubmitting: Boolean = false
     private var flowConfig: com.appero.sdk.ui.config.FeedbackFlowConfig? = null
     private var reviewPromptThreshold: Int = 4
     private var onRequestReview: (() -> Unit)? = null
@@ -102,6 +104,11 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         
         // Add focus listeners to hide/show elements when keyboard appears (like Compose)
         etFeedback?.setOnFocusChangeListener { _, hasFocus ->
+            // Don't change UI if we're currently submitting
+            if (isSubmitting) {
+                return@setOnFocusChangeListener
+            }
+            
             val tvFollowUp = view.findViewById<TextView>(R.id.tvFollowUp)
             
             if (hasFocus) {
@@ -146,19 +153,35 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         btnSubmit?.text = config.submitText
         btnSubmit?.setOnClickListener {
             val feedbackText = etFeedback?.text?.toString() ?: ""
+            
+            // Validate input before submission
+            if (feedbackText.isBlank()) {
+                return@setOnClickListener
+            }
+            
+            // Prevent double submission
+            if (isSubmitting) {
+                return@setOnClickListener
+            }
+            
+            // Show loading state FIRST (like Compose isSubmitting = true)
+            showLoadingState(view)
+            
+            // Submit feedback through callback
             if (initialStep == FeedbackStep.Frustration) {
                 // For frustration flow, always submit with rating 0
                 onSubmitCallback?.invoke(0, feedbackText)
             } else {
                 // For rating flow, require a rating
-            if (selectedRating > 0) {
-                analyticsListener?.onRatingSelected(selectedRating)
-                onSubmitCallback?.invoke(selectedRating, feedbackText)
+                if (selectedRating > 0) {
+                    analyticsListener?.onRatingSelected(selectedRating)
+                    onSubmitCallback?.invoke(selectedRating, feedbackText)
                 }
             }
-            // Show thank you step instead of dismissing
-            showThankYouStep(view)
-            }
+            
+            // Note: Thank you step will be shown after API response
+            // The SDK should call handleFeedbackSubmissionResult() after API completion
+        }
         
         // Setup thank you title and subtitle
         val tvThankYouTitle = view.findViewById<TextView>(R.id.tvThankYouTitle)
@@ -185,17 +208,99 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         handleInitialStep(view)
     }
     
-    private fun showThankYouStep(view: View) {
-        // Hide all other sections
-        view.findViewById<TextView>(R.id.tvTitle)?.visibility = View.GONE
+    private fun showLoadingState(view: View) {
+        // Set submitting state to true (like Compose isSubmitting = true)
+        isSubmitting = true
+        
+        // Hide ALL interactive elements to make room for the loader
         view.findViewById<View>(R.id.ratingContainer)?.visibility = View.GONE
-        view.findViewById<TextView>(R.id.tvSubtitle)?.visibility = View.GONE
         view.findViewById<View>(R.id.feedbackSection)?.visibility = View.GONE
         view.findViewById<Button>(R.id.btnSubmit)?.visibility = View.GONE
         view.findViewById<Button>(R.id.btnNotNow)?.visibility = View.GONE
         
+        // Show the loading container - this should now be visible
+        val loadingContainer = view.findViewById<View>(R.id.loadingContainer)
+        loadingContainer?.visibility = View.VISIBLE
+        
+        // Debug: Log the visibility state
+        android.util.Log.d("ApperoSDK", "showLoadingState: loadingContainer visibility = ${loadingContainer?.visibility}")
+        android.util.Log.d("ApperoSDK", "showLoadingState: loadingContainer found = ${loadingContainer != null}")
+    }
+    
+    private fun hideLoadingState(view: View) {
+        // Reset submitting state to false (like Compose isSubmitting = false)
+        isSubmitting = false
+        
+        // Hide loading progress bar
+        val loadingContainer = view.findViewById<View>(R.id.loadingContainer)
+        loadingContainer?.visibility = View.GONE
+        
+        // Restore the UI to the previous state based on current step
+        if (currentStep == FeedbackStep.ThankYou || isSubmitting) {
+            // If we're already in thank you step or still submitting, don't restore anything
+            return
+        }
+        
+        // Restore the appropriate UI state
+        when (initialStep) {
+            FeedbackStep.Frustration -> {
+                // For frustration flow, show feedback section and submit button
+                view.findViewById<View>(R.id.feedbackSection)?.visibility = View.VISIBLE
+                view.findViewById<Button>(R.id.btnSubmit)?.visibility = View.VISIBLE
+                view.findViewById<Button>(R.id.btnNotNow)?.visibility = View.VISIBLE
+            }
+            FeedbackStep.Rating -> {
+                // For rating flow, show rating and feedback sections
+                view.findViewById<View>(R.id.ratingContainer)?.visibility = View.VISIBLE
+                view.findViewById<View>(R.id.feedbackSection)?.visibility = View.VISIBLE
+                view.findViewById<Button>(R.id.btnSubmit)?.visibility = View.VISIBLE
+            }
+            else -> {
+                // Default to rating flow for other steps
+                view.findViewById<View>(R.id.ratingContainer)?.visibility = View.VISIBLE
+                view.findViewById<View>(R.id.feedbackSection)?.visibility = View.VISIBLE
+                view.findViewById<Button>(R.id.btnSubmit)?.visibility = View.VISIBLE
+            }
+        }
+    }
+    
+    private fun onFeedbackSubmitted(success: Boolean, message: String? = null) {
+        view?.let { view ->
+            if (success) {
+                // Show thank you step on success
+                showThankYouStep(view)
+            } else {
+                // Show error and reset to input state
+                hideLoadingState(view)
+                // You could show a toast or error message here
+            }
+        }
+        
+        // Call the external callback if set
+        onFeedbackSubmissionCallback?.invoke(success, message)
+    }
+    
+    private fun showThankYouStep(view: View, apiMessage: String? = null) {
+        // Reset submitting state (like Compose transitionToThankYou)
+        isSubmitting = false
+        
+        // Hide all other sections
+        view.findViewById<TextView>(R.id.tvTitle)?.visibility = View.GONE
+        view.findViewById<TextView>(R.id.tvSubtitle)?.visibility = View.GONE
+        view.findViewById<View>(R.id.ratingContainer)?.visibility = View.GONE
+        view.findViewById<View>(R.id.feedbackSection)?.visibility = View.GONE
+        view.findViewById<Button>(R.id.btnSubmit)?.visibility = View.GONE
+        view.findViewById<Button>(R.id.btnNotNow)?.visibility = View.GONE
+        view.findViewById<View>(R.id.loadingContainer)?.visibility = View.GONE
+        
         // Show thank you section
         view.findViewById<View>(R.id.thankYouSection)?.visibility = View.VISIBLE
+        
+        // Update thank you message with API response if available
+        if (apiMessage != null) {
+            val tvThankYouSubtitle = view.findViewById<TextView>(R.id.tvThankYouSubtitle)
+            tvThankYouSubtitle?.text = apiMessage
+        }
         
         // Update current step
         currentStep = FeedbackStep.ThankYou
@@ -227,6 +332,7 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                 // Update submit button to work without rating
                 val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
                 btnSubmit?.isEnabled = true
+                btnSubmit?.visibility = View.VISIBLE
                 
                 // Show "Not now" button for frustration flow
                 val btnNotNow = view.findViewById<Button>(R.id.btnNotNow)
@@ -369,6 +475,14 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                 button.setTextColor(theme.buttonTextColor.toArgb())
             }
         }
+        
+        // Apply theme to loading progress bar (same as CTA button)
+        val loadingProgressBar = view.findViewById<com.google.android.material.progressindicator.CircularProgressIndicator>(R.id.loadingContainer)
+        loadingProgressBar?.let { progressBar ->
+            if (theme.accentColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                progressBar.setIndicatorColor(theme.accentColor.toArgb())
+            }
+        }
     }
 
     // Internal methods for SDK integration
@@ -386,6 +500,34 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
 
     internal fun setOnSubmitCallback(callback: (rating: Int, feedback: String) -> Unit) {
         this.onSubmitCallback = callback
+    }
+    
+    internal fun setFeedbackSubmissionCallback(callback: (success: Boolean, message: String?) -> Unit) {
+        // This callback will be called by the SDK after API submission
+        // It should be set by the SDK to handle the response
+        this.onFeedbackSubmissionCallback = callback
+    }
+    
+    internal fun showThankYouStep(apiMessage: String? = null) {
+        // Public method to show thank you step from SDK
+        view?.let { showThankYouStep(it, apiMessage) }
+    }
+    
+    internal fun handleFeedbackSubmissionResult(success: Boolean, message: String?) {
+        view?.let { view ->
+            if (success) {
+                // Show thank you step on success with API message
+                showThankYouStep(view, message)
+            } else {
+                // Show error and reset to input state
+                hideLoadingState(view)
+                // You could show a toast or error message here
+                // For now, we'll just reset the button state
+            }
+        }
+        
+        // Call the external callback if set
+        onFeedbackSubmissionCallback?.invoke(success, message)
     }
 
     internal fun setOnDismissCallback(callback: () -> Unit) {

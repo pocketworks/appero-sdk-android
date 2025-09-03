@@ -664,16 +664,6 @@ object Appero {
                         offlineFeedbackQueue?.queueFeedback(rating, feedback)
                         ApperoLogger.logApiError("/api/feedback", "POST", result.message)
                         
-                        // Show debug toast for error
-                        if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                            appContext?.let { context ->
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "❌ Feedback submission failed: ${result.message}",
-                                    android.widget.Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
                     }
                 }
                 onFeedbackSubmissionResult = null
@@ -730,16 +720,6 @@ object Appero {
                      is PlayStoreReviewResult.Failed -> {
                          ApperoLogger.logNetworkError("Play Store Review", "Review failed: ${result.reason}")
                          
-                         // Show debug toast for failure
-                         if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                             appContext?.let { ctx ->
-                                 android.widget.Toast.makeText(
-                                     ctx,
-                                     "❌ Play Store review failed: ${result.reason}",
-                                     android.widget.Toast.LENGTH_LONG
-                                 ).show()
-                             }
-                         }
                      }
                      null -> {
                          // Rating below threshold - this shouldn't happen since we check above
@@ -875,7 +855,12 @@ object Appero {
         }
         
         dialogFragment.setOnSubmitCallback { rating, feedback ->
-            handleFeedbackSubmission(rating, feedback, onResult)
+            handleFeedbackSubmission(rating, feedback, { success, message ->
+                // Call the provided onResult callback
+                onResult?.invoke(success, message)
+                // Also call the dialog's feedback submission callback
+                dialogFragment.handleFeedbackSubmissionResult(success, message)
+            })
         }
         
         dialogFragment.setOnDismissCallback {
@@ -912,7 +897,12 @@ object Appero {
         }
         
         dialogFragment.setOnSubmitCallback { rating, feedback ->
-            handleFeedbackSubmission(rating, feedback, onResult)
+            handleFeedbackSubmission(rating, feedback, { success, message ->
+                // Call the provided onResult callback
+                onResult?.invoke(success, message)
+                // Also call the dialog's feedback submission callback
+                dialogFragment.handleFeedbackSubmissionResult(success, message)
+            })
         }
         
         dialogFragment.setOnDismissCallback {
@@ -941,7 +931,12 @@ object Appero {
         dialogFragment.setAnalyticsListener(analyticsListener)
         
         dialogFragment.setOnSubmitCallback { rating, feedback ->
-            handleFeedbackSubmission(rating, feedback, onResult)
+            handleFeedbackSubmission(rating, feedback, { success, message ->
+                // Call the provided onResult callback
+                onResult?.invoke(success, message)
+                // Also call the dialog's feedback submission callback
+                dialogFragment.handleFeedbackSubmissionResult(success, message)
+            })
         }
         
         return dialogFragment
