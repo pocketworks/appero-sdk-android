@@ -115,7 +115,7 @@ class XmlDemoActivity : FragmentActivity() {
                 followUpQuestion = "How does the hybrid approach feel?",
                 placeholder = "Share your thoughts on XML + Compose...",
                 submitText = "Send via ComposeView",
-                maxCharacters = 120
+                maxCharacters = 240
             )
         }
         
@@ -197,7 +197,7 @@ class XmlDemoActivity : FragmentActivity() {
             followUpQuestion = "How does the XML bottom sheet feel?",
             placeholder = "Share your XML bottom sheet experience...",
             submitText = "Send via XML Bottom Sheet",
-            maxCharacters = 120
+            maxCharacters = 240
         )
         
         Appero.showFeedbackDialog(

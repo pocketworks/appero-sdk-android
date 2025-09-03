@@ -86,7 +86,7 @@ fun ApperoSampleApp() {
             followUpQuestion = "What made your experience positive?",
             placeholder = "Share your thoughts here",
             submitText = "Send feedback",
-            maxCharacters = 120
+            maxCharacters = 240
         )
     }
     

@@ -149,7 +149,7 @@
             android:id="@+id/tvCharacterCounter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="0/120"
+            android:text="0/240"
             android:textSize="12sp"
             android:textColor="@color/gray_text"
             android:gravity="end"
