@@ -183,12 +183,9 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
             // The SDK should call handleFeedbackSubmissionResult() after API completion
         }
         
-        // Setup thank you title and subtitle
+        // Setup thank you title
         val tvThankYouTitle = view.findViewById<TextView>(R.id.tvThankYouTitle)
         tvThankYouTitle?.text = flowConfig?.thankYouTitle ?: "Thank you for your feedback!"
-        
-        val tvThankYouSubtitle = view.findViewById<TextView>(R.id.tvThankYouSubtitle)
-        tvThankYouSubtitle?.text = flowConfig?.thankYouSubtitle ?: "We appreciate your input"
         
         // Setup close button
         val btnClose = view.findViewById<Button>(R.id.btnClose)
@@ -297,10 +294,7 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         view.findViewById<View>(R.id.thankYouSection)?.visibility = View.VISIBLE
         
         // Update thank you message with API response if available
-        if (apiMessage != null) {
-            val tvThankYouSubtitle = view.findViewById<TextView>(R.id.tvThankYouSubtitle)
-            tvThankYouSubtitle?.text = apiMessage
-        }
+        // Note: API message functionality removed as subtitle was removed
         
         // Update current step
         currentStep = FeedbackStep.ThankYou
