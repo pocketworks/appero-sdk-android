@@ -55,7 +55,10 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_rating_very_negative"
-            android:contentDescription="1 star"
+            android:contentDescription="@string/appero_accessibility_rating_1"
+            android:importantForAccessibility="yes"
+            android:focusable="true"
+            android:clickable="true"
             android:scaleType="centerInside" />
 
         <ImageButton
@@ -65,7 +68,10 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_rating_negative"
-            android:contentDescription="2 stars"
+            android:contentDescription="@string/appero_accessibility_rating_2"
+            android:importantForAccessibility="yes"
+            android:focusable="true"
+            android:clickable="true"
             android:scaleType="centerInside" />
 
         <ImageButton
@@ -75,7 +81,10 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_rating_neutral"
-            android:contentDescription="3 stars"
+            android:contentDescription="@string/appero_accessibility_rating_3"
+            android:importantForAccessibility="yes"
+            android:focusable="true"
+            android:clickable="true"
             android:scaleType="centerInside" />
 
         <ImageButton
@@ -85,7 +94,10 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_rating_positive"
-            android:contentDescription="4 stars"
+            android:contentDescription="@string/appero_accessibility_rating_4"
+            android:importantForAccessibility="yes"
+            android:focusable="true"
+            android:clickable="true"
             android:scaleType="centerInside" />
 
         <ImageButton
@@ -95,7 +107,10 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_rating_very_positive"
-            android:contentDescription="5 stars"
+            android:contentDescription="@string/appero_accessibility_rating_5"
+            android:importantForAccessibility="yes"
+            android:focusable="true"
+            android:clickable="true"
             android:scaleType="centerInside" />
 
     </LinearLayout>
@@ -140,7 +155,10 @@
                 android:hint="Tell us more..."
                 android:textColorHint="@color/gray_text"
                 android:background="@drawable/text_input_background"
-                android:padding="16dp" />
+                android:padding="16dp"
+                android:contentDescription="@string/appero_accessibility_feedback_input"
+                android:importantForAccessibility="yes"
+                android:accessibilityLiveRegion="polite" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -154,7 +172,10 @@
             android:textColor="@color/gray_text"
             android:gravity="end"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/appero_accessibility_character_counter"
+            android:importantForAccessibility="yes"
+            android:accessibilityLiveRegion="polite" />
 
         <!-- Submit Button (full width like Compose) -->
         <com.google.android.material.button.MaterialButton
@@ -163,7 +184,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Send Feedback"
-            style="@style/Widget.Material3.Button" />
+            style="@style/Widget.Material3.Button"
+            android:contentDescription="@string/appero_accessibility_submit_button"
+            android:importantForAccessibility="yes" />
 
                 <!-- Not Now Button (for frustration flow) -->
         <com.google.android.material.button.MaterialButton
@@ -173,7 +196,9 @@
             android:layout_marginTop="12dp"
             android:text="Not now"
             style="@style/Widget.Material3.Button.TextButton"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:contentDescription="@string/appero_accessibility_not_now_button"
+            android:importantForAccessibility="yes" />
 
     </LinearLayout>
 
@@ -186,7 +211,9 @@
         android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
         android:indeterminate="true"
-        android:visibility="gone" />
+        android:visibility="gone"
+        android:contentDescription="@string/appero_accessibility_loading_indicator"
+        android:importantForAccessibility="yes" />
 
     <!-- Thank You Section (Initially Hidden) -->
     <LinearLayout
@@ -194,7 +221,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:contentDescription="@string/appero_accessibility_thank_you_section"
+        android:importantForAccessibility="yes">
 
         <!-- Thank You Title -->
         <TextView
@@ -215,7 +244,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Close"
-            style="@style/Widget.Material3.Button" />
+            style="@style/Widget.Material3.Button"
+            android:contentDescription="@string/appero_accessibility_close_button"
+            android:importantForAccessibility="yes" />
 
     </LinearLayout>
 

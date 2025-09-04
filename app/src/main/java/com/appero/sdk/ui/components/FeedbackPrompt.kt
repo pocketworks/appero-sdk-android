@@ -52,6 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -174,6 +178,8 @@ fun FeedbackPrompt(
             bottomSheetState.expand()
         }
     }
+    
+    // Note: Accessibility announcements moved to RatingStepContent for proper Composable context
 
     if (visible) {
         Column(
@@ -187,7 +193,9 @@ fun FeedbackPrompt(
                     onDismiss()
                 },
                 dragHandle = null,
-                modifier = modifier,
+                modifier = modifier.semantics {
+                    contentDescription = "Feedback prompt bottom sheet"
+                },
                 containerColor = Color.White,
                 sheetState = bottomSheetState
             ) {
@@ -275,10 +283,17 @@ private fun CloseButton(
     onDismiss: () -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        IconButton(onClick = onDismiss, modifier = Modifier.size(FeedbackSpacing.iconSize)) {
+        IconButton(
+            onClick = onDismiss, 
+            modifier = Modifier
+                .size(FeedbackSpacing.iconSize)
+                .semantics {
+                    contentDescription = "Close button, dismisses feedback prompt"
+                }
+        ) {
             Icon(
                 Icons.Default.Close, 
-                contentDescription = "Close", 
+                contentDescription = null, // Handled by semantics
                 tint = if (theme.secondaryTextColor != Color.Unspecified) 
                     theme.secondaryTextColor 
                 else 
@@ -317,7 +332,10 @@ private fun FeedbackTextInput(
                 .background(
                     color = FeedbackTextStyles.inputBackgroundColor,
                     shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius)
-                ),
+                )
+                .semantics {
+                    contentDescription = "Feedback input field, maximum $maxCharacters characters"
+                },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = theme.textColor,
@@ -340,7 +358,11 @@ private fun FeedbackTextInput(
                     theme.secondaryTextColor 
                 else 
                     MaterialTheme.colorScheme.onSurfaceVariant, 
-                modifier = Modifier.padding(top = FeedbackSpacing.tiny)
+                modifier = Modifier
+                    .padding(top = FeedbackSpacing.tiny)
+                    .semantics {
+                        contentDescription = "Character counter, ${value.length} of $maxCharacters characters"
+                    }
             )
         }
     }
@@ -358,7 +380,15 @@ private fun PrimaryButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = when {
+                    text.contains("feedback", ignoreCase = true) -> "Submit feedback button"
+                    text.contains("close", ignoreCase = true) -> "Close button, dismisses thank you message"
+                    else -> "$text button"
+                }
+            },
         colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
     ) { 
         Text(text = text, color = theme.buttonTextColor) 
@@ -375,7 +405,14 @@ private fun SecondaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = when {
+                    text.contains("not now", ignoreCase = true) -> "Not now button, dismisses feedback prompt"
+                    else -> "$text button"
+                }
+            },
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
     ) { 
         Text(
@@ -419,7 +456,12 @@ private fun RatingStepContent(
                                     fontWeight = FontWeight.Bold, 
                                     textAlign = TextAlign.Center, 
                 color = FeedbackTextStyles.titleColor, 
-                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium),
+                modifier = Modifier
+                    .padding(horizontal = FeedbackSpacing.medium)
+                    .semantics {
+                        heading()
+                        contentDescription = "Feedback prompt title: ${config.title}"
+                    },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
@@ -429,6 +471,9 @@ private fun RatingStepContent(
                                     fontWeight = FontWeight.Normal,
                 color = FeedbackTextStyles.titleColor, 
                                     textAlign = TextAlign.Center,
+                                    modifier = Modifier.semantics {
+                        contentDescription = "Feedback prompt subtitle: ${config.subtitle}"
+                    },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
@@ -455,7 +500,10 @@ private fun RatingStepContent(
                                     textAlign = TextAlign.Start, 
                                     modifier = Modifier
                                         .fillMaxWidth()
-                    .padding(horizontal = FeedbackSpacing.medium),
+                    .padding(horizontal = FeedbackSpacing.medium)
+                                        .semantics {
+                                            contentDescription = "Follow-up question: ${config.followUpQuestion}"
+                                        },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
             Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
@@ -510,7 +558,12 @@ private fun FrustrationStepContent(
                 fontWeight = FontWeight.SemiBold, 
                 textAlign = TextAlign.Center, 
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+                modifier = Modifier
+                    .padding(horizontal = FeedbackSpacing.medium)
+                    .semantics {
+                        heading()
+                        contentDescription = "Frustration flow title: ${config.title}"
+                    }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
             Text(
@@ -518,7 +571,11 @@ private fun FrustrationStepContent(
                 fontSize = 16.sp, 
                 textAlign = TextAlign.Center, 
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+                modifier = Modifier
+                    .padding(horizontal = FeedbackSpacing.medium)
+                    .semantics {
+                        contentDescription = "Frustration flow subtitle: ${config.subtitle}"
+                    }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         }
@@ -575,7 +632,12 @@ private fun ThankYouStepContent(
             fontWeight = FontWeight.Bold, 
             textAlign = TextAlign.Center, 
             color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-            modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+            modifier = Modifier
+                .padding(horizontal = FeedbackSpacing.medium)
+                .semantics {
+                    heading()
+                    contentDescription = "Thank you message: ${serverResponseMessage ?: flowConfig.thankYouTitle}"
+                }
         )
         Spacer(modifier = Modifier.height(FeedbackSpacing.small))
         if (serverResponseMessage == null) {
@@ -583,7 +645,10 @@ private fun ThankYouStepContent(
                 text = flowConfig.thankYouSubtitle, 
                 fontSize = 16.sp, 
                 textAlign = TextAlign.Center, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics {
+                    contentDescription = "Thank you subtitle: ${flowConfig.thankYouSubtitle}"
+                }
             )
         }
         Spacer(modifier = Modifier.height(FeedbackSpacing.xlarge))
@@ -619,7 +684,11 @@ private fun LoadingStepContent(
         
         // Circular loading indicator
         CircularProgressIndicator(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier
+                .size(48.dp)
+                .semantics {
+                    contentDescription = "Loading, please wait"
+                },
             color = if (theme.accentColor != Color.Unspecified) theme.accentColor else MaterialTheme.colorScheme.primary,
             strokeWidth = 4.dp
         )
@@ -638,7 +707,11 @@ internal fun EmojiRatingScale(
     val context = LocalContext.current
 
     Row(
-        modifier = modifier.fillMaxWidth(), 
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = "Rating scale from 1 to 5 stars"
+            }, 
         horizontalArrangement = Arrangement.SpaceEvenly, 
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -649,7 +722,21 @@ internal fun EmojiRatingScale(
                 modifier = Modifier
                     .size(FeedbackSpacing.ratingSize)
                     .clip(RoundedCornerShape(25.dp))
-                    .clickable { onRatingSelected(rating) },
+                    .clickable { onRatingSelected(rating) }
+                    .semantics {
+                        val ratingDescription = when (rating) {
+                            1 -> "Very negative experience, 1 star"
+                            2 -> "Negative experience, 2 stars"
+                            3 -> "Neutral experience, 3 stars"
+                            4 -> "Positive experience, 4 stars"
+                            5 -> "Very positive experience, 5 stars"
+                            else -> "Rating $rating"
+                        }
+                        contentDescription = ratingDescription
+                        stateDescription = if (isSelected) "Selected" else "Not selected"
+                        // Note: accessibilityAction not available in current Compose version
+                        // Using contentDescription and stateDescription for accessibility
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 val drawableId = context.resources.getIdentifier(
@@ -668,7 +755,7 @@ internal fun EmojiRatingScale(
                 // SVG icon with original colors
                 Icon(
                     painter = painterResource(id = drawableId),
-                    contentDescription = "Rating ${rating}",
+                    contentDescription = null, // Handled by semantics
                     modifier = Modifier.size(FeedbackSpacing.ratingSize),
                     tint = Color.Unspecified
                 )

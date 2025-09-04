@@ -969,6 +969,9 @@ The Flutter plugin wraps this Android SDK and provides additional features like 
 
 ---
 
+## ♿ TalkBack Support
+
+The Appero Android SDK includes comprehensive TalkBack support for users with visual impairments, ensuring an inclusive user experience across both XML and Compose implementations.
 ## 📄 License
 
 MIT 

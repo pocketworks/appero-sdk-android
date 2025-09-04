@@ -93,6 +93,13 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
                 val text = s?.toString() ?: ""
                 tvCharacterCounter?.text = "${text.length}/${config.maxCharacters}"
                 
+                // Update accessibility content description for character counter
+                tvCharacterCounter?.contentDescription = getString(
+                    R.string.appero_accessibility_character_counter, 
+                    text.length, 
+                    config.maxCharacters
+                )
+                
                 // Enforce character limit
                 if (text.length > config.maxCharacters) {
                     val limitedText = text.substring(0, config.maxCharacters)
@@ -391,8 +398,15 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
             val button: ImageButton? = view.findViewById<ImageButton>(id)
             button?.let { btn ->
                 ratingButtons.add(btn)
+                
+                // Set accessibility focus order
+                btn.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+                
                 btn.setOnClickListener {
                     selectRating(index + 1)
+                    
+                    // Announce rating selection for screen readers
+                    announceForAccessibility(getString(R.string.appero_accessibility_rating_selected, index + 1))
                 }
             }
         }
@@ -538,5 +552,15 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
 
     internal fun setOnRequestReview(callback: () -> Unit) {
         this.onRequestReview = callback
+    }
+    
+    /**
+     * Announces text for accessibility services (screen readers)
+     * @param text The text to announce
+     */
+    private fun announceForAccessibility(text: String) {
+        view?.let { view ->
+            view.announceForAccessibility(text)
+        }
     }
 } 

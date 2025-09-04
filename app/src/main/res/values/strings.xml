@@ -39,4 +39,25 @@
     
     <!-- Log Tags -->
     <string name="appero_log_tag">ApperoSDK</string>
+    
+    <!-- Accessibility Labels for Rating System -->
+    <string name="appero_accessibility_rating_1">Very negative experience</string>
+    <string name="appero_accessibility_rating_2">Negative experience</string>
+    <string name="appero_accessibility_rating_3">Neutral experience</string>
+    <string name="appero_accessibility_rating_4">Positive experience</string>
+    <string name="appero_accessibility_rating_5">Very positive experience</string>
+    
+    <!-- Accessibility Labels for UI Elements -->
+    <string name="appero_accessibility_feedback_input">Feedback input field, maximum 240 characters</string>
+    <string name="appero_accessibility_character_counter">Character counter, %1$d of %2$d characters</string>
+    <string name="appero_accessibility_submit_button">Submit feedback button</string>
+    <string name="appero_accessibility_not_now_button">Not now button, dismisses feedback prompt</string>
+    <string name="appero_accessibility_close_button">Close button, dismisses thank you message</string>
+    <string name="appero_accessibility_loading_indicator">Loading, please wait</string>
+    <string name="appero_accessibility_thank_you_section">Thank you message section</string>
+    
+    <!-- Accessibility Announcements -->
+    <string name="appero_accessibility_rating_selected">Rating %1$d selected</string>
+    <string name="appero_accessibility_feedback_submitted">Feedback submitted successfully</string>
+    <string name="appero_accessibility_feedback_error">Error submitting feedback</string>
 </resources>
