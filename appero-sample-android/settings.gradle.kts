@@ -22,6 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Appero-Sample-android"
 include(":app")
-include(":appero-sdk")
-project(":appero-sdk").projectDir = file("../app")
  

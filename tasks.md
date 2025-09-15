@@ -24,6 +24,7 @@ The Android SDK is **production-ready** with full iOS SDK parity:
 - ✅ Play Store review integration
 - ✅ Experience reset functionality
 - ✅ String management and localization
+- ✅ Multi-language accessibility support (English, Spanish, French, German)
 
 ---
 

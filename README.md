@@ -91,7 +91,7 @@ Add these to your `app/build.gradle.kts`:
 ```kotlin
 dependencies {
     // Appero SDK from GitHub Packages
-    implementation("com.pocketworks:appero-sdk-android:1.0.0")
+    implementation("com.pocketworks:appero-sdk-android:1.0.2")
     
     // REQUIRED: Google Play In-App Review (for Play Store review feature)
     implementation("com.google.android.play:review:2.0.1")
@@ -181,6 +181,8 @@ class MainActivity : ComponentActivity() {
 ---
 
 ## 🎯 Core Features
+
+The SDK includes comprehensive TalkBack support for users with visual impairments, ensuring an inclusive user experience across both XML and Compose implementations.
 
 ### Experience Tracking
 
@@ -969,9 +971,30 @@ The Flutter plugin wraps this Android SDK and provides additional features like 
 
 ---
 
-## ♿ TalkBack Support
+## ♿ Accessibility & Internationalization
 
-The Appero Android SDK includes comprehensive TalkBack support for users with visual impairments, ensuring an inclusive user experience across both XML and Compose implementations.
+The Appero Android SDK includes comprehensive accessibility support and multi-language internationalization:
+
+### **TalkBack Support**
+Comprehensive TalkBack support for users with visual impairments, ensuring an inclusive user experience across both XML and Compose implementations.
+
+### **Multi-Language Support**
+The SDK includes accessibility strings in **4 languages**:
+
+- **🇺🇸 English** (default) - Complete accessibility labels and announcements
+- **🇪🇸 Spanish** - Full Spanish translations for all accessibility features
+- **🇫🇷 French** - Complete French accessibility support
+- **🇩🇪 German** - Full German accessibility translations
+
+**Supported Accessibility Features:**
+- Rating system descriptions (1-5 stars)
+- UI element descriptions (input fields, buttons, loading indicators)
+- Accessibility announcements (selection confirmations, success/error messages)
+- Character counter announcements
+- Keyboard navigation support
+
+**Automatic Language Detection:**
+The SDK automatically uses the appropriate language based on the user's device language settings. No additional configuration required.
 ## 📄 License
 
 MIT 

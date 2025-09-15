@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility Labels for Rating System - German -->
+    <string name="appero_accessibility_rating_1">Sehr negative Erfahrung</string>
+    <string name="appero_accessibility_rating_2">Negative Erfahrung</string>
+    <string name="appero_accessibility_rating_3">Neutrale Erfahrung</string>
+    <string name="appero_accessibility_rating_4">Positive Erfahrung</string>
+    <string name="appero_accessibility_rating_5">Sehr positive Erfahrung</string>
+    
+    <!-- Accessibility Labels for UI Elements - German -->
+    <string name="appero_accessibility_feedback_input">Eingabefeld für Feedback, maximal 240 Zeichen</string>
+    <string name="appero_accessibility_character_counter">Zeichenzähler, %1$d von %2$d Zeichen</string>
+    <string name="appero_accessibility_submit_button">Button zum Senden von Feedback</string>
+    <string name="appero_accessibility_not_now_button">Nicht jetzt Button, verwirft Feedback-Eingabeaufforderung</string>
+    <string name="appero_accessibility_close_button">Schließen Button, verwirft Dankesnachricht</string>
+    <string name="appero_accessibility_loading_indicator">Lädt, bitte warten</string>
+    <string name="appero_accessibility_thank_you_section">Dankesnachricht-Bereich</string>
+    
+    <!-- Accessibility Announcements - German -->
+    <string name="appero_accessibility_rating_selected">Bewertung %1$d ausgewählt</string>
+    <string name="appero_accessibility_feedback_submitted">Feedback erfolgreich gesendet</string>
+    <string name="appero_accessibility_feedback_error">Fehler beim Senden des Feedbacks</string>
+</resources>

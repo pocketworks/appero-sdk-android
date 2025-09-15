@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Accessibility Labels for Rating System - Spanish -->
-    <string name="appero_accessibility_rating_1">Experiencia muy negativa, 1 estrella</string>
-    <string name="appero_accessibility_rating_2">Experiencia negativa, 2 estrellas</string>
-    <string name="appero_accessibility_rating_3">Experiencia neutral, 3 estrellas</string>
-    <string name="appero_accessibility_rating_4">Experiencia positiva, 4 estrellas</string>
-    <string name="appero_accessibility_rating_5">Experiencia muy positiva, 5 estrellas</string>
+    <string name="appero_accessibility_rating_1">Experiencia muy negativa</string>
+    <string name="appero_accessibility_rating_2">Experiencia negativa</string>
+    <string name="appero_accessibility_rating_3">Experiencia neutral</string>
+    <string name="appero_accessibility_rating_4">Experiencia positiva</string>
+    <string name="appero_accessibility_rating_5">Experiencia muy positiva</string>
     
     <!-- Accessibility Labels for UI Elements - Spanish -->
     <string name="appero_accessibility_feedback_input">Campo de entrada de comentarios, máximo 240 caracteres</string>

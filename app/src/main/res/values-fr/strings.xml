@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility Labels for Rating System - French -->
+    <string name="appero_accessibility_rating_1">Expérience très négative</string>
+    <string name="appero_accessibility_rating_2">Expérience négative</string>
+    <string name="appero_accessibility_rating_3">Expérience neutre</string>
+    <string name="appero_accessibility_rating_4">Expérience positive</string>
+    <string name="appero_accessibility_rating_5">Expérience très positive</string>
+    
+    <!-- Accessibility Labels for UI Elements - French -->
+    <string name="appero_accessibility_feedback_input">Champ de saisie de commentaires, maximum 240 caractères</string>
+    <string name="appero_accessibility_character_counter">Compteur de caractères, %1$d sur %2$d caractères</string>
+    <string name="appero_accessibility_submit_button">Bouton pour envoyer les commentaires</string>
+    <string name="appero_accessibility_not_now_button">Bouton pas maintenant, ignore l\'invitation de commentaires</string>
+    <string name="appero_accessibility_close_button">Bouton fermer, ignore le message de remerciement</string>
+    <string name="appero_accessibility_loading_indicator">Chargement, veuillez patienter</string>
+    <string name="appero_accessibility_thank_you_section">Section du message de remerciement</string>
+    
+    <!-- Accessibility Announcements - French -->
+    <string name="appero_accessibility_rating_selected">Note %1$d sélectionnée</string>
+    <string name="appero_accessibility_feedback_submitted">Commentaires envoyés avec succès</string>
+    <string name="appero_accessibility_feedback_error">Erreur lors de l\'envoi des commentaires</string>
+</resources>
