@@ -401,12 +401,12 @@ object Appero {
             // No Flutter callback, proceed with native Android UI
             ApperoLogger.logCriticalOperation("Auto-trigger", "Using native Android UI")
             val config = FeedbackPromptConfig(
-                title = feedbackUI?.title ?: context.getString(R.string.appero_feedback_default_title_fallback),
-                subtitle = feedbackUI?.subtitle ?: context.getString(R.string.appero_feedback_default_subtitle_fallback),
-                followUpQuestion = feedbackUI?.prompt ?: context.getString(R.string.appero_feedback_default_follow_up_fallback),
-                placeholder = context.getString(R.string.appero_feedback_default_placeholder_fallback),
-                submitText = context.getString(R.string.appero_feedback_default_submit_fallback),
-                secondaryButtonText = context.getString(R.string.appero_feedback_default_not_now_fallback)
+                title = feedbackUI?.title ?: appContext?.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_title_fallback) ?: "How was your experience?",
+                subtitle = feedbackUI?.subtitle ?: appContext?.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_subtitle_fallback) ?: "We'd love to hear your thoughts",
+                followUpQuestion = feedbackUI?.prompt ?: appContext?.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_follow_up_fallback) ?: "What made your experience positive?",
+                placeholder = appContext?.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_placeholder_fallback) ?: "Share your thoughts here",
+                submitText = appContext?.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_submit_fallback) ?: "Send feedback",
+                secondaryButtonText = appContext?.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_not_now_fallback) ?: "Not now"
             )
             val initialStep = when (flowType) {
                 "frustration" -> FeedbackStep.Frustration

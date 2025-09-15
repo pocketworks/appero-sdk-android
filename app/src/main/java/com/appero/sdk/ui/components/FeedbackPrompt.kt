@@ -130,6 +130,7 @@ fun FeedbackPrompt(
     onSubmissionResult: ((success: Boolean, message: String) -> Unit)? = null,
     onShowThankYou: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     var selectedRating by remember { mutableIntStateOf(0) }
     var feedbackText by remember { mutableStateOf("") }
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
@@ -194,7 +195,7 @@ fun FeedbackPrompt(
                 },
                 dragHandle = null,
                 modifier = modifier.semantics {
-                    contentDescription = LocalContext.current.getString(R.string.appero_compose_bottom_sheet)
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
                 },
                 containerColor = Color.White,
                 sheetState = bottomSheetState
@@ -282,13 +283,14 @@ private fun CloseButton(
     theme: ApperoTheme,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         IconButton(
             onClick = onDismiss, 
             modifier = Modifier
                 .size(FeedbackSpacing.iconSize)
                 .semantics {
-                    contentDescription = LocalContext.current.getString(R.string.appero_compose_close_button)
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_close_button)
                 }
         ) {
             Icon(
@@ -313,6 +315,7 @@ private fun FeedbackTextInput(
     maxCharacters: Int,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Column(modifier = modifier) {
         OutlinedTextField(
             value = value,
@@ -334,7 +337,7 @@ private fun FeedbackTextInput(
                     shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius)
                 )
                 .semantics {
-                    contentDescription = LocalContext.current.getString(R.string.appero_compose_feedback_input, maxCharacters)
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_feedback_input, maxCharacters)
                 },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             colors = OutlinedTextFieldDefaults.colors(
@@ -361,7 +364,7 @@ private fun FeedbackTextInput(
                 modifier = Modifier
                     .padding(top = FeedbackSpacing.tiny)
                     .semantics {
-                        contentDescription = LocalContext.current.getString(R.string.appero_compose_character_counter, value.length, maxCharacters)
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_character_counter, value.length, maxCharacters)
                     }
             )
         }
@@ -438,6 +441,7 @@ private fun RatingStepContent(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -460,7 +464,7 @@ private fun RatingStepContent(
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
                         heading()
-                        contentDescription = LocalContext.current.getString(R.string.appero_compose_prompt_title, config.title)
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_title, config.title)
                     },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
@@ -472,7 +476,7 @@ private fun RatingStepContent(
                 color = FeedbackTextStyles.titleColor, 
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.semantics {
-                        contentDescription = LocalContext.current.getString(R.string.appero_compose_prompt_subtitle, config.subtitle)
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_subtitle, config.subtitle)
                     },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
@@ -502,7 +506,7 @@ private fun RatingStepContent(
                                         .fillMaxWidth()
                     .padding(horizontal = FeedbackSpacing.medium)
                                         .semantics {
-                                            contentDescription = LocalContext.current.getString(R.string.appero_compose_follow_up_question, config.followUpQuestion)
+                                            contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_follow_up_question, config.followUpQuestion)
                                         },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
@@ -539,6 +543,7 @@ private fun FrustrationStepContent(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -562,7 +567,7 @@ private fun FrustrationStepContent(
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
                         heading()
-                        contentDescription = LocalContext.current.getString(R.string.appero_compose_frustration_title, config.title)
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_frustration_title, config.title)
                     }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
@@ -574,7 +579,7 @@ private fun FrustrationStepContent(
                 modifier = Modifier
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
-                        contentDescription = LocalContext.current.getString(R.string.appero_compose_frustration_subtitle, config.subtitle)
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_frustration_subtitle, config.subtitle)
                     }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
@@ -618,6 +623,7 @@ private fun ThankYouStepContent(
     onDismiss: () -> Unit,
     serverResponseMessage: String? = null
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -636,7 +642,7 @@ private fun ThankYouStepContent(
                 .padding(horizontal = FeedbackSpacing.medium)
                 .semantics {
                     heading()
-                    contentDescription = LocalContext.current.getString(R.string.appero_compose_thank_you_message, serverResponseMessage ?: flowConfig.thankYouTitle)
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_thank_you_message, serverResponseMessage ?: flowConfig.thankYouTitle)
                 }
         )
         Spacer(modifier = Modifier.height(FeedbackSpacing.small))
@@ -647,7 +653,7 @@ private fun ThankYouStepContent(
                 textAlign = TextAlign.Center, 
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics {
-                    contentDescription = LocalContext.current.getString(R.string.appero_compose_thank_you_subtitle, flowConfig.thankYouSubtitle)
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_thank_you_subtitle, flowConfig.thankYouSubtitle)
                 }
             )
         }
@@ -672,6 +678,7 @@ private fun LoadingStepContent(
     theme: ApperoTheme,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -687,7 +694,7 @@ private fun LoadingStepContent(
             modifier = Modifier
                 .size(48.dp)
                 .semantics {
-                    contentDescription = LocalContext.current.getString(R.string.appero_compose_loading)
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_loading)
                 },
             color = if (theme.accentColor != Color.Unspecified) theme.accentColor else MaterialTheme.colorScheme.primary,
             strokeWidth = 4.dp
@@ -710,7 +717,7 @@ internal fun EmojiRatingScale(
         modifier = modifier
             .fillMaxWidth()
             .semantics {
-                contentDescription = LocalContext.current.getString(R.string.appero_compose_rating_scale)
+                contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_rating_scale)
             }, 
         horizontalArrangement = Arrangement.SpaceEvenly, 
         verticalAlignment = Alignment.CenterVertically

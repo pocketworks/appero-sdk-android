@@ -80,12 +80,12 @@ internal class ExperienceTracker(
                 if (activity != null && !Appero.hasAutoTriggerCallback()) {
                     // Use legacy XML dialog for auto-triggering only if no Flutter callback is registered
                     val config = FeedbackPromptConfig(
-                        title = feedbackUI?.title ?: activity.getString(R.string.appero_feedback_default_title_fallback),
-                        subtitle = feedbackUI?.subtitle ?: activity.getString(R.string.appero_feedback_default_subtitle_fallback),
-                        followUpQuestion = feedbackUI?.prompt ?: activity.getString(R.string.appero_feedback_default_follow_up_fallback),
-                        placeholder = activity.getString(R.string.appero_feedback_default_placeholder_fallback),
-                        submitText = activity.getString(R.string.appero_feedback_default_submit_fallback),
-                        secondaryButtonText = activity.getString(R.string.appero_feedback_default_not_now_fallback)
+                        title = feedbackUI?.title ?: activity.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_title_fallback),
+                        subtitle = feedbackUI?.subtitle ?: activity.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_subtitle_fallback),
+                        followUpQuestion = feedbackUI?.prompt ?: activity.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_follow_up_fallback),
+                        placeholder = activity.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_placeholder_fallback),
+                        submitText = activity.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_submit_fallback),
+                        secondaryButtonText = activity.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_not_now_fallback)
                     )
                     val initialStep = when (flowType) {
                         "frustration" -> FeedbackStep.Frustration
