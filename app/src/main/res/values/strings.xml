@@ -68,4 +68,29 @@
     <string name="appero_feedback_default_placeholder_fallback">Share your thoughts here</string>
     <string name="appero_feedback_default_submit_fallback">Send feedback</string>
     <string name="appero_feedback_default_not_now_fallback">Not now</string>
+    
+    <!-- Legacy XML Layout Strings -->
+    <string name="appero_legacy_title">How was your experience?</string>
+    <string name="appero_legacy_subtitle">We\'d love to hear your thoughts</string>
+    <string name="appero_legacy_follow_up">Tell us more...</string>
+    <string name="appero_legacy_character_counter">0/240</string>
+    <string name="appero_legacy_submit">Send Feedback</string>
+    <string name="appero_legacy_not_now">Not now</string>
+    <string name="appero_legacy_thank_you">Thank you for your feedback!</string>
+    <string name="appero_legacy_close">Close</string>
+    
+    <!-- Compose UI Accessibility Strings -->
+    <string name="appero_compose_bottom_sheet">Feedback prompt bottom sheet</string>
+    <string name="appero_compose_close_button">Close button, dismisses feedback prompt</string>
+    <string name="appero_compose_feedback_input">Feedback input field, maximum %1$d characters</string>
+    <string name="appero_compose_character_counter">Character counter, %1$d of %2$d characters</string>
+    <string name="appero_compose_prompt_title">Feedback prompt title: %1$s</string>
+    <string name="appero_compose_prompt_subtitle">Feedback prompt subtitle: %1$s</string>
+    <string name="appero_compose_follow_up_question">Follow-up question: %1$s</string>
+    <string name="appero_compose_frustration_title">Frustration flow title: %1$s</string>
+    <string name="appero_compose_frustration_subtitle">Frustration flow subtitle: %1$s</string>
+    <string name="appero_compose_thank_you_message">Thank you message: %1$s</string>
+    <string name="appero_compose_thank_you_subtitle">Thank you subtitle: %1$s</string>
+    <string name="appero_compose_loading">Loading, please wait</string>
+    <string name="appero_compose_rating_scale">Rating scale from 1 to 5 stars</string>
 </resources>

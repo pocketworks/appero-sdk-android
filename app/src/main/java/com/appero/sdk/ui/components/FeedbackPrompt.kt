@@ -194,7 +194,7 @@ fun FeedbackPrompt(
                 },
                 dragHandle = null,
                 modifier = modifier.semantics {
-                    contentDescription = "Feedback prompt bottom sheet"
+                    contentDescription = LocalContext.current.getString(R.string.appero_compose_bottom_sheet)
                 },
                 containerColor = Color.White,
                 sheetState = bottomSheetState
@@ -288,7 +288,7 @@ private fun CloseButton(
             modifier = Modifier
                 .size(FeedbackSpacing.iconSize)
                 .semantics {
-                    contentDescription = "Close button, dismisses feedback prompt"
+                    contentDescription = LocalContext.current.getString(R.string.appero_compose_close_button)
                 }
         ) {
             Icon(
@@ -334,7 +334,7 @@ private fun FeedbackTextInput(
                     shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius)
                 )
                 .semantics {
-                    contentDescription = "Feedback input field, maximum $maxCharacters characters"
+                    contentDescription = LocalContext.current.getString(R.string.appero_compose_feedback_input, maxCharacters)
                 },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             colors = OutlinedTextFieldDefaults.colors(
@@ -361,7 +361,7 @@ private fun FeedbackTextInput(
                 modifier = Modifier
                     .padding(top = FeedbackSpacing.tiny)
                     .semantics {
-                        contentDescription = "Character counter, ${value.length} of $maxCharacters characters"
+                        contentDescription = LocalContext.current.getString(R.string.appero_compose_character_counter, value.length, maxCharacters)
                     }
             )
         }
@@ -460,7 +460,7 @@ private fun RatingStepContent(
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
                         heading()
-                        contentDescription = "Feedback prompt title: ${config.title}"
+                        contentDescription = LocalContext.current.getString(R.string.appero_compose_prompt_title, config.title)
                     },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
@@ -472,7 +472,7 @@ private fun RatingStepContent(
                 color = FeedbackTextStyles.titleColor, 
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.semantics {
-                        contentDescription = "Feedback prompt subtitle: ${config.subtitle}"
+                        contentDescription = LocalContext.current.getString(R.string.appero_compose_prompt_subtitle, config.subtitle)
                     },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
@@ -502,7 +502,7 @@ private fun RatingStepContent(
                                         .fillMaxWidth()
                     .padding(horizontal = FeedbackSpacing.medium)
                                         .semantics {
-                                            contentDescription = "Follow-up question: ${config.followUpQuestion}"
+                                            contentDescription = LocalContext.current.getString(R.string.appero_compose_follow_up_question, config.followUpQuestion)
                                         },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
@@ -562,7 +562,7 @@ private fun FrustrationStepContent(
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
                         heading()
-                        contentDescription = "Frustration flow title: ${config.title}"
+                        contentDescription = LocalContext.current.getString(R.string.appero_compose_frustration_title, config.title)
                     }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
@@ -574,7 +574,7 @@ private fun FrustrationStepContent(
                 modifier = Modifier
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
-                        contentDescription = "Frustration flow subtitle: ${config.subtitle}"
+                        contentDescription = LocalContext.current.getString(R.string.appero_compose_frustration_subtitle, config.subtitle)
                     }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
@@ -636,7 +636,7 @@ private fun ThankYouStepContent(
                 .padding(horizontal = FeedbackSpacing.medium)
                 .semantics {
                     heading()
-                    contentDescription = "Thank you message: ${serverResponseMessage ?: flowConfig.thankYouTitle}"
+                    contentDescription = LocalContext.current.getString(R.string.appero_compose_thank_you_message, serverResponseMessage ?: flowConfig.thankYouTitle)
                 }
         )
         Spacer(modifier = Modifier.height(FeedbackSpacing.small))
@@ -647,7 +647,7 @@ private fun ThankYouStepContent(
                 textAlign = TextAlign.Center, 
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics {
-                    contentDescription = "Thank you subtitle: ${flowConfig.thankYouSubtitle}"
+                    contentDescription = LocalContext.current.getString(R.string.appero_compose_thank_you_subtitle, flowConfig.thankYouSubtitle)
                 }
             )
         }
@@ -687,7 +687,7 @@ private fun LoadingStepContent(
             modifier = Modifier
                 .size(48.dp)
                 .semantics {
-                    contentDescription = "Loading, please wait"
+                    contentDescription = LocalContext.current.getString(R.string.appero_compose_loading)
                 },
             color = if (theme.accentColor != Color.Unspecified) theme.accentColor else MaterialTheme.colorScheme.primary,
             strokeWidth = 4.dp
@@ -710,7 +710,7 @@ internal fun EmojiRatingScale(
         modifier = modifier
             .fillMaxWidth()
             .semantics {
-                contentDescription = "Rating scale from 1 to 5 stars"
+                contentDescription = LocalContext.current.getString(R.string.appero_compose_rating_scale)
             }, 
         horizontalArrangement = Arrangement.SpaceEvenly, 
         verticalAlignment = Alignment.CenterVertically
