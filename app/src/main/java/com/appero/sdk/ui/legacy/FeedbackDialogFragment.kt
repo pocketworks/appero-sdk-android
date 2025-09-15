@@ -225,10 +225,6 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         // Show the loading container - this should now be visible
         val loadingContainer = view.findViewById<View>(R.id.loadingContainer)
         loadingContainer?.visibility = View.VISIBLE
-        
-        // Debug: Log the visibility state
-        android.util.Log.d("ApperoSDK", "showLoadingState: loadingContainer visibility = ${loadingContainer?.visibility}")
-        android.util.Log.d("ApperoSDK", "showLoadingState: loadingContainer found = ${loadingContainer != null}")
     }
     
     private fun hideLoadingState(view: View) {
@@ -300,9 +296,7 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
         // Show thank you section
         view.findViewById<View>(R.id.thankYouSection)?.visibility = View.VISIBLE
         
-        // Update thank you message with API response if available
-        // Note: API message functionality removed as subtitle was removed
-        
+        // Update thank you message with API response if available        
         // Update current step
         currentStep = FeedbackStep.ThankYou
     }

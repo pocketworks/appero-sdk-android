@@ -80,12 +80,12 @@ internal class ExperienceTracker(
                 if (activity != null && !Appero.hasAutoTriggerCallback()) {
                     // Use legacy XML dialog for auto-triggering only if no Flutter callback is registered
                     val config = FeedbackPromptConfig(
-                        title = feedbackUI?.title ?: "How was your experience?",
-                        subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
-                        followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
-                        placeholder = "Share your thoughts here",
-                        submitText = "Send feedback",
-                        secondaryButtonText = "Not now"
+                        title = feedbackUI?.title ?: activity.getString(R.string.appero_feedback_default_title_fallback),
+                        subtitle = feedbackUI?.subtitle ?: activity.getString(R.string.appero_feedback_default_subtitle_fallback),
+                        followUpQuestion = feedbackUI?.prompt ?: activity.getString(R.string.appero_feedback_default_follow_up_fallback),
+                        placeholder = activity.getString(R.string.appero_feedback_default_placeholder_fallback),
+                        submitText = activity.getString(R.string.appero_feedback_default_submit_fallback),
+                        secondaryButtonText = activity.getString(R.string.appero_feedback_default_not_now_fallback)
                     )
                     val initialStep = when (flowType) {
                         "frustration" -> FeedbackStep.Frustration

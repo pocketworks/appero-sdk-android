@@ -401,12 +401,12 @@ object Appero {
             // No Flutter callback, proceed with native Android UI
             ApperoLogger.logCriticalOperation("Auto-trigger", "Using native Android UI")
             val config = FeedbackPromptConfig(
-                title = feedbackUI?.title ?: "How was your experience?",
-                subtitle = feedbackUI?.subtitle ?: "We'd love to hear your thoughts",
-                followUpQuestion = feedbackUI?.prompt ?: "What made your experience positive?",
-                placeholder = "Share your thoughts here",
-                submitText = "Send feedback",
-                secondaryButtonText = "Not now"
+                title = feedbackUI?.title ?: context.getString(R.string.appero_feedback_default_title_fallback),
+                subtitle = feedbackUI?.subtitle ?: context.getString(R.string.appero_feedback_default_subtitle_fallback),
+                followUpQuestion = feedbackUI?.prompt ?: context.getString(R.string.appero_feedback_default_follow_up_fallback),
+                placeholder = context.getString(R.string.appero_feedback_default_placeholder_fallback),
+                submitText = context.getString(R.string.appero_feedback_default_submit_fallback),
+                secondaryButtonText = context.getString(R.string.appero_feedback_default_not_now_fallback)
             )
             val initialStep = when (flowType) {
                 "frustration" -> FeedbackStep.Frustration

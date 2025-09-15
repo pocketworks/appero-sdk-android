@@ -20,4 +20,12 @@
     <string name="appero_accessibility_rating_selected">Bewertung %1$d ausgewählt</string>
     <string name="appero_accessibility_feedback_submitted">Feedback erfolgreich gesendet</string>
     <string name="appero_accessibility_feedback_error">Fehler beim Senden des Feedbacks</string>
+    
+    <!-- Default Feedback UI Fallback Strings - German -->
+    <string name="appero_feedback_default_title_fallback">Wie war Ihre Erfahrung?</string>
+    <string name="appero_feedback_default_subtitle_fallback">Wir würden gerne Ihre Gedanken hören</string>
+    <string name="appero_feedback_default_follow_up_fallback">Was hat Ihre Erfahrung positiv gemacht?</string>
+    <string name="appero_feedback_default_placeholder_fallback">Teilen Sie Ihre Gedanken hier mit</string>
+    <string name="appero_feedback_default_submit_fallback">Feedback senden</string>
+    <string name="appero_feedback_default_not_now_fallback">Nicht jetzt</string>
 </resources>
