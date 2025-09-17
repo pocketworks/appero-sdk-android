@@ -66,6 +66,9 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     private fun setupUI(view: View) {
         val config = this.config ?: return
 
+        // Apply theme first
+        applyTheme(view)
+
         // Setup title and subtitle
         view.findViewById<TextView>(R.id.tvTitle)?.text = config.title
         view.findViewById<TextView>(R.id.tvSubtitle)?.text = config.subtitle
@@ -456,6 +459,44 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
     private fun applyTheme(view: View) {
         val theme = com.appero.sdk.Appero.theme
         
+        // Apply background color to the main container
+        val backgroundColor = if (theme.backgroundColor != androidx.compose.ui.graphics.Color.Transparent) {
+            theme.backgroundColor
+        } else {
+            theme.surfaceColor
+        }
+        view.setBackgroundColor(backgroundColor.toArgb())
+        
+        // Apply theme to text colors
+        val tvTitle = view.findViewById<TextView>(R.id.tvTitle)
+        tvTitle?.let { textView ->
+            if (theme.textColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                textView.setTextColor(theme.textColor.toArgb())
+            }
+        }
+        
+        val tvSubtitle = view.findViewById<TextView>(R.id.tvSubtitle)
+        tvSubtitle?.let { textView ->
+            if (theme.textColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                textView.setTextColor(theme.textColor.toArgb())
+            }
+        }
+        
+        val tvFollowUp = view.findViewById<TextView>(R.id.tvFollowUp)
+        tvFollowUp?.let { textView ->
+            if (theme.textColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                textView.setTextColor(theme.textColor.toArgb())
+            }
+        }
+        
+        // Apply theme to thank you title
+        val tvThankYouTitle = view.findViewById<TextView>(R.id.tvThankYouTitle)
+        tvThankYouTitle?.let { textView ->
+            if (theme.textColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                textView.setTextColor(theme.textColor.toArgb())
+            }
+        }
+        
         // Apply theme to submit button
         val btnSubmit = view.findViewById<Button>(R.id.btnSubmit)
         btnSubmit?.let { button ->
@@ -475,6 +516,29 @@ class FeedbackDialogFragment : BottomSheetDialogFragment() {
             }
             if (theme.buttonTextColor != androidx.compose.ui.graphics.Color.Unspecified) {
                 button.setTextColor(theme.buttonTextColor.toArgb())
+            }
+        }
+        
+        // Apply theme to text input
+        val etFeedback = view.findViewById<EditText>(R.id.etFeedback)
+        etFeedback?.let { editText ->
+            if (theme.textColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                editText.setTextColor(theme.textColor.toArgb())
+            }
+            if (theme.secondaryTextColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                editText.setHintTextColor(theme.secondaryTextColor.toArgb())
+            }
+            // Set background color dynamically
+            if (theme.textFieldBackgroundColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                editText.setBackgroundColor(theme.textFieldBackgroundColor.toArgb())
+            }
+        }
+        
+        // Apply theme to character counter
+        val tvCharacterCounter = view.findViewById<TextView>(R.id.tvCharacterCounter)
+        tvCharacterCounter?.let { textView ->
+            if (theme.secondaryTextColor != androidx.compose.ui.graphics.Color.Unspecified) {
+                textView.setTextColor(theme.secondaryTextColor.toArgb())
             }
         }
         

@@ -137,7 +137,8 @@ fun ApperoSampleApp() {
             text = "Appero SDK Demo",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = if (isDarkTheme) Color.White else Color.Black
         )
         
         // Theme selector (tab style)
