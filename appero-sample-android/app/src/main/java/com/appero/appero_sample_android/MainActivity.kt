@@ -1,14 +1,17 @@
 package com.appero.appero_sample_android
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,17 +25,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.appero.appero_sample_android.ui.theme.ApperoSampleAndroidTheme
 import android.app.Activity
+import androidx.fragment.app.FragmentActivity
 import com.appero.sdk.Appero
 import com.appero.sdk.debug.ApperoDebugMode
-import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
+import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.ui.theme.CustomTheme
 import com.appero.sdk.ui.theme.DarkTheme
 import com.appero.sdk.ui.theme.DefaultTheme
 import com.appero.sdk.ui.theme.LightTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -78,6 +82,10 @@ fun ApperoSampleApp() {
     var experienceState by remember { mutableStateOf(Appero.getExperienceState()) }
     val context = LocalContext.current
     
+    // Theme state management
+    var selectedTheme by remember { mutableStateOf(0) }
+    val isDarkTheme = selectedTheme == 2
+    
     // Configuration for the feedback prompt
     val feedbackConfig = remember {
         FeedbackPromptConfig(
@@ -110,6 +118,13 @@ fun ApperoSampleApp() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(
+                color = when (selectedTheme) {
+                    0 -> Color.Transparent // System - let MaterialTheme handle it
+                    1 -> Color.White // Light
+                    else -> Color.Black // Dark
+                }
+            )
             .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -125,584 +140,222 @@ fun ApperoSampleApp() {
             textAlign = TextAlign.Center
         )
         
-        // Prominent CTA to XML Demo
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))
+        // Theme selector (tab style)
+        Text(
+            text = "Appero UI theme:",
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center,
+            color = if (isDarkTheme) Color.White else Color.Black
+        )
+        val tabs = listOf("System", "Light", "Dark")
+        TabRow(
+            selectedTabIndex = selectedTheme,
+            containerColor = if (isDarkTheme) Color(0xFF1C1C1E) else Color.White,
+            contentColor = if (isDarkTheme) Color.White else Color.Black
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "🚀 Try the Hybrid Approach!",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "See how XML projects can adopt Compose gradually",
-                    fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.9f),
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Button(
-                    onClick = { 
-                        context.startActivity(Intent(context, XmlDemoActivity::class.java))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-                ) {
-                    Text(
-                        text = "🔄 View XML + ComposeView Demo",
-                        color = Color(0xFF4CAF50),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-        
-        // API Comparison Info
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "🚀 Dual API Support",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "This sample demonstrates both UI approaches:",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "• 🎛️ Compose UI: Modern bottom sheet (recommended)\n• 🏛️ XML Dialog: Traditional DialogFragment (legacy support)\n• 🔄 Same backend: Both use identical analytics & API integration",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-                
-
-            }
-        }
-        
-        // Hello World from SDK
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Appero SDK Demo",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "SDK Initialized: ${Appero.isInitialized()}",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-        
-        // Debug Mode Selector
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Debug Mode",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Current: DEBUG (check logcat for API errors)",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Available modes: PRODUCTION, DEBUG",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "• PRODUCTION: No logging\n• DEBUG: API errors and critical operations",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-        
-        // User Session Info
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "User Session",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text("• User ID: ${Appero.getCurrentUserId()?.take(8)}...", fontSize = 14.sp)
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { 
-                            Appero.setUser("test-user-123")
-                            experienceState = Appero.getExperienceState()
-                            Toast.makeText(context, "Set user to: test-user-123", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF9C27B0)
-                        )
-                    ) {
-                        Text("Set Test User", fontSize = 12.sp)
-                    }
-                    
-                    Button(
-                        onClick = { 
-                            Appero.resetUser()
-                            experienceState = Appero.getExperienceState()
-                            Toast.makeText(context, "Reset to new anonymous user", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF607D8B)
-                        )
-                    ) {
-                        Text("Reset User", fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-        
-        // Experience Tracking Status
-        experienceState?.let { state ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Experience Tracking",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text("• Points: ${state.experiencePoints}")
-                    Text("• Threshold: ${state.ratingThreshold}")
-                    Text("• Should Show Prompt: ${state.shouldShowPrompt}")
-                    Text("• Has Submitted Feedback: ${state.hasSubmittedFeedback}")
-                Text("• Queued Feedback: ${Appero.getQueuedFeedbackCount()}")
-                    
-                    if (state.shouldShowPrompt) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "🎉 Ready to ask for feedback!",
-                            color = Color(0xFF4CAF50),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        }
-        
-        // Experience Buttons
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Test Experience Logging",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { 
-                            Appero.log(Experience.VERY_POSITIVE)
-                            experienceState = Appero.getExperienceState()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4CAF50)
-                        )
-                    ) {
-                        Text("😍 +2")
-                    }
-                    
-                    Button(
-                        onClick = { 
-                            Appero.log(Experience.POSITIVE)
-                            experienceState = Appero.getExperienceState()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8BC34A)
-                        )
-                    ) {
-                        Text("😊 +1")
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { 
-                            Appero.log(Experience.NEGATIVE)
-                            experienceState = Appero.getExperienceState()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFF9800)
-                        )
-                    ) {
-                        Text("😕 -1")
-                    }
-                    
-                    Button(
-                        onClick = { 
-                            Appero.log(Experience.VERY_NEGATIVE)
-                            experienceState = Appero.getExperienceState()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFF44336)
-                        )
-                    ) {
-                        Text("😢 -2")
-                    }
-                }
-            }
-        }
-        
-        // Theme Selection
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "🎨 Theme Selection (iOS-Style)",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            Appero.theme = DefaultTheme()
-                            Toast.makeText(context, "🔄 System Theme Applied (Auto Light/Dark)", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF))
-                    ) {
-                        Text("System", fontSize = 10.sp)
-                    }
-                    
-                    Button(
-                        onClick = {
-                            Appero.theme = LightTheme()
-                            Toast.makeText(context, "☀️ Light Theme Applied", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFFFFF), contentColor = Color.Black)
-                    ) {
-                        Text("Light", fontSize = 10.sp)
-                    }
-                    
-                    Button(
-                        onClick = {
-                            Appero.theme = DarkTheme()
-                            Toast.makeText(context, "🌙 Dark Theme Applied", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1C1C1E))
-                    ) {
-                        Text("Dark", fontSize = 10.sp)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Button(
+            tabs.forEachIndexed { index, label ->
+                Tab(
+                    selected = selectedTheme == index,
                     onClick = {
-                        // Custom brand theme with purple/pink colors
-                        Appero.theme = CustomTheme(
-                            primaryColor = Color(0xFF6B46C1),
-                            accentColor = Color(0xFF8B5CF6),
-                            buttonBackgroundColor = Color(0xFF9333EA),
-                            veryPositiveColor = Color(0xFF10B981),
-                            positiveColor = Color(0xFF3B82F6),
-                            neutralColor = Color(0xFFF59E0B),
-                            negativeColor = Color(0xFFEF4444),
-                            veryNegativeColor = Color(0xFFDC2626)
-                        )
-                        Toast.makeText(context, "🎨 Custom Brand Theme Applied!", Toast.LENGTH_SHORT).show()
+                        selectedTheme = index
+                        Appero.theme = when (index) {
+                            0 -> DefaultTheme()
+                            1 -> LightTheme()
+                            else -> DarkTheme()
+                        }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9333EA))
-                ) {
-                    Text("Custom Brand Theme")
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "• Themes are applied instantly\n• Same API as iOS: Appero.theme = CustomTheme()\n• Supports light/dark/custom branding",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-        
-        // Themed Feedback Prompt Demos
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "🎨 Themed Feedback Demos",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Default System Theme Button
-                Button(
-                    onClick = { 
-                        // Set default theme and show prompt
-                        val originalTheme = Appero.theme
-                        Appero.theme = DefaultTheme()
-                        
-                        Appero.showFeedbackPrompt(
-                            config = feedbackConfig.copy(
-                                title = "Default System Theme 🔄",
-                                subtitle = "Using system colors (auto light/dark)"
-                            ),
-                            onResult = { success, message ->
-                                experienceState = Appero.getExperienceState()
-                                // Restore original theme
-                                Appero.theme = originalTheme
-                            }
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF007AFF) // iOS blue
-                    )
-                ) {
-                    Text("📱 Show with Default System Theme")
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Original Green Theme Button  
-                Button(
-                    onClick = { 
-                        // Set original green theme and show prompt
-                        val originalTheme = Appero.theme
-                        Appero.theme = CustomTheme(
-                            primaryColor = Color(0xFF4CAF50),
-                            accentColor = Color(0xFF4CAF50),
-                            buttonBackgroundColor = Color(0xFF4CAF50),
-                            veryNegativeColor = Color(0xFFFF6B6B),
-                            negativeColor = Color(0xFFFF9F43),
-                            neutralColor = Color(0xFFFECA57),
-                            positiveColor = Color(0xFF48CAE4),
-                            veryPositiveColor = Color(0xFF4CAF50)
-                        )
-                        
-                        Appero.showFeedbackPrompt(
-                            config = feedbackConfig.copy(
-                                title = "Original Green Theme 🟢",
-                                subtitle = "Using the classic green colors we had before"
-                            ),
-                            onResult = { success, message ->
-                                experienceState = Appero.getExperienceState()
-                                // Restore original theme
-                                Appero.theme = originalTheme
-                            }
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50) // Green
-                    )
-                ) {
-                    Text("🟢 Show with Original Green Theme")
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "• Each button temporarily applies its theme\n• Themes are restored after feedback submission\n• Test keyboard handling with both themes",
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    text = { 
+                        Text(
+                            label,
+                            color = if (isDarkTheme) Color.White else Color.Black
+                        ) 
+                    }
                 )
             }
         }
 
-        // Play Store Review Testing
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E1))
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "🧪 Play Store Review Testing",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Test in-app reviews with current package: ${context.packageName}",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Experience logging buttons
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = Color(0xFF4CAF50))
                 ) {
-                    Button(
-                        onClick = { 
-                            // Test with current app's package (should work if using a published app's package)
-                            Appero.requestPlayStoreReview(context as Activity) { result ->
-                                val message = when (result) {
-                                    is Appero.PlayStoreReviewResult.InAppReviewShown -> "✅ In-app review shown!"
-                                    is Appero.PlayStoreReviewResult.InAppReviewCompleted -> "✅ In-app review completed!"
-                                    is Appero.PlayStoreReviewResult.FallbackTriggered -> "✅ Fallback to Play Store"
-                                    is Appero.PlayStoreReviewResult.Failed -> "❌ Failed: ${result.reason}"
-                                }
-                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4CAF50)
-                        )
-                    ) {
-                        Text("Test Current Package", fontSize = 10.sp)
-                    }
-                    
-                    Button(
-                        onClick = { 
-                            // Test the feedback flow that triggers review
-                            Appero.showFeedbackPrompt(
-                                config = feedbackConfig.copy(
-                                    title = "Test In-App Review 🧪",
-                                    subtitle = "This should trigger a Play Store review"
-                                ),
-                                onResult = { success, message ->
-                                    experienceState = Appero.getExperienceState()
-                                }
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2196F3)
-                        )
-                    ) {
-                        Text("Test Full Flow", fontSize = 10.sp)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "• Use build variants to test with different package names\n• In-app reviews only work with published app packages\n• If using a published package, you should see the real review dialog!",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+                    Appero.log(Experience.VERY_POSITIVE)
+                    experienceState = Appero.getExperienceState()
+                },
+            color = if (isDarkTheme) Color(0xFF2D4A2D) else Color(0xFFE8F5E8),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("👍", fontSize = 18.sp)
+                Text("Very Positive", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
             }
         }
         
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = Color(0xFF4CAF50))
+                ) {
+                    Appero.log(Experience.POSITIVE)
+                    experienceState = Appero.getExperienceState()
+                },
+            color = if (isDarkTheme) Color(0xFF2D4A2D) else Color(0xFFE8F5E8),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("👍", fontSize = 18.sp, color = Color(0xFF4CAF50))
+                Text("Positive", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+            }
+        }
+        
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = Color(0xFFFF9800))
+                ) {
+                    Appero.log(Experience.NEUTRAL)
+                    experienceState = Appero.getExperienceState()
+                },
+            color = if (isDarkTheme) Color(0xFF4A3D2D) else Color(0xFFFFF3E0),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("⚪", fontSize = 18.sp, color = Color(0xFFFF9800))
+                Text("Neutral", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+            }
+        }
+        
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = Color(0xFFF44336))
+                ) {
+                    Appero.log(Experience.NEGATIVE)
+                    experienceState = Appero.getExperienceState()
+                },
+            color = if (isDarkTheme) Color(0xFF4A2D2D) else Color(0xFFFFEBEE),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("👎", fontSize = 18.sp, color = Color(0xFFF44336))
+                Text("Negative", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+            }
+        }
+        
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = Color(0xFFF44336))
+                ) {
+                    Appero.log(Experience.VERY_NEGATIVE)
+                    experienceState = Appero.getExperienceState()
+                },
+            color = if (isDarkTheme) Color(0xFF4A2D2D) else Color(0xFFFFEBEE),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("👎", fontSize = 18.sp)
+                Text("Very Negative", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Manual feedback buttons
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+                ) {
+                    Appero.showFeedbackPrompt(
+                        config = feedbackConfig,
+                        onResult = { _, _ ->
+                            experienceState = Appero.getExperienceState()
+                        }
+                    )
+                },
+            color = if (isDarkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = "Manually Trigger Feedback (Compose)",
+                color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF)
+            )
+        }
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+                ) {
+                    (context as? FragmentActivity)?.let { activity ->
+                        Appero.showFeedbackDialog(
+                            activity = activity,
+                            config = feedbackConfig,
+                            onResult = { _, _ ->
+                                experienceState = Appero.getExperienceState()
+                            }
+                        )
+                    }
+                },
+            color = if (isDarkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = "Manually Trigger Feedback (XML)", 
+                color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF)
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f))
     }
     

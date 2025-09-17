@@ -83,9 +83,7 @@ private object FeedbackSpacing {
 
 // Consistent text styles
 private object FeedbackTextStyles {
-    val titleColor = Color(0xFF003143)
     val cornerRadius = 8.dp
-    val inputBackgroundColor = Color(0xFFF5F5F5)
 }
 
 @Composable
@@ -197,7 +195,7 @@ fun FeedbackPrompt(
                 modifier = modifier.semantics {
                     contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
                 },
-                containerColor = Color.White,
+                containerColor = if (theme.backgroundColor != Color.Transparent) theme.backgroundColor else theme.surfaceColor,
                 sheetState = bottomSheetState
             ) {
                 when {
@@ -333,7 +331,7 @@ private fun FeedbackTextInput(
                 .fillMaxWidth()
                 .height(FeedbackSpacing.inputHeight)
                 .background(
-                    color = FeedbackTextStyles.inputBackgroundColor,
+                    color = theme.textFieldBackgroundColor,
                     shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius)
                 )
                 .semantics {
@@ -459,7 +457,7 @@ private fun RatingStepContent(
                                     fontSize = 18.sp, 
                                     fontWeight = FontWeight.Bold, 
                                     textAlign = TextAlign.Center, 
-                color = FeedbackTextStyles.titleColor, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
                 modifier = Modifier
                     .padding(horizontal = FeedbackSpacing.medium)
                     .semantics {
@@ -473,7 +471,7 @@ private fun RatingStepContent(
                                     text = config.subtitle, 
                                     fontSize = 16.sp, 
                                     fontWeight = FontWeight.Normal,
-                color = FeedbackTextStyles.titleColor, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.semantics {
                         contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_subtitle, config.subtitle)
@@ -500,7 +498,7 @@ private fun RatingStepContent(
                                     text = config.followUpQuestion, 
                                     fontSize = 16.sp, 
                                     fontWeight = FontWeight.Normal, 
-                color = FeedbackTextStyles.titleColor, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
                                     textAlign = TextAlign.Start, 
                                     modifier = Modifier
                                         .fillMaxWidth()
