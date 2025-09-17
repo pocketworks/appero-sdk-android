@@ -444,7 +444,8 @@ private fun RatingStepContent(
                             modifier = Modifier
                                 .fillMaxWidth()
             .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
@@ -526,6 +527,9 @@ private fun RatingStepContent(
                 theme = theme,
                 enabled = feedbackText.isNotBlank() && selectedRating > 0
             )
+            
+            // Add bottom padding to ensure button is above navigation bar
+            Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         }
     }
 }
@@ -607,6 +611,9 @@ private fun FrustrationStepContent(
             onClick = onDismiss,
             theme = theme
         )
+        
+        // Add bottom padding to ensure button is above navigation bar
+        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 
@@ -626,7 +633,8 @@ private fun ThankYouStepContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(FeedbackSpacing.large))
@@ -668,6 +676,9 @@ private fun ThankYouStepContent(
             },
             theme = theme
         )
+        
+        // Add bottom padding to ensure button is above navigation bar
+        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 
