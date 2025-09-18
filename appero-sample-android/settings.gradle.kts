@@ -16,7 +16,14 @@ dependencyResolutionManagement {
     repositories {
         mavenLocal()
         google()
-        mavenCentral()
+        mavenCentral()  // Required for other dependencies
+        maven {
+            url = uri("https://maven.pkg.github.com/pocketworks/appero-sdk-android")
+            credentials {
+                username = System.getenv("GITHUB_USERNAME")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 
