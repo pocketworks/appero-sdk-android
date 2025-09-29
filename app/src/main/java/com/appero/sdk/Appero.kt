@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -13,9 +14,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.appero.sdk.analytics.ApperoAnalyticsListener
-import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
 import com.appero.sdk.data.local.queue.OfflineExperienceQueue
+import com.appero.sdk.data.local.queue.OfflineFeedbackQueue
 import com.appero.sdk.data.remote.ApperoApiService
+import com.appero.sdk.data.remote.dto.FeedbackUI
 import com.appero.sdk.debug.ApperoDebugMode
 import com.appero.sdk.debug.ApperoLogger
 import com.appero.sdk.domain.model.Experience
@@ -34,17 +36,13 @@ import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.theme.ApperoTheme
 import com.appero.sdk.ui.theme.DefaultTheme
 import com.appero.sdk.util.PlayStoreReviewManager
-import com.google.android.gms.tasks.Task
-import com.google.android.play.core.review.ReviewInfo
-import com.google.android.play.core.review.ReviewManagerFactory
+import com.example.appero_sdk_android.R.string
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.fragment.app.FragmentActivity
-import com.appero.sdk.data.remote.dto.FeedbackUI
 
 /**
  * Public data class representing feedback prompt information for auto-trigger callbacks
@@ -72,6 +70,7 @@ interface ApperoAutoTriggerCallback {
  * Main Appero SDK class - singleton instance for global access
  * Provides intelligent in-app feedback collection and user experience tracking
  */
+@Suppress("detekt.TooManyFunctions")
 object Appero {
 
     private const val PREFS_NAME = "appero_sdk_prefs"
@@ -402,12 +401,13 @@ object Appero {
             ApperoLogger.logCriticalOperation("Auto-trigger", "Using native Android UI")
             appContext?.let {  
                 val config = FeedbackPromptConfig(
-                    title = feedbackUI?.title ?: it.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_title_fallback),
-                    subtitle = feedbackUI?.subtitle ?: it.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_subtitle_fallback),
-                    followUpQuestion = feedbackUI?.prompt ?: it.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_follow_up_fallback),
-                    placeholder = it.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_placeholder_fallback),
-                    submitText = it.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_submit_fallback),
-                    secondaryButtonText = it.getString(com.example.appero_sdk_android.R.string.appero_feedback_default_not_now_fallback)
+                    title = feedbackUI?.title ?: it.getString(string.appero_feedback_default_title_fallback),
+                    subtitle = feedbackUI?.subtitle ?: it.getString(string.appero_feedback_default_subtitle_fallback),
+                    followUpQuestion = feedbackUI?.prompt
+                        ?: it.getString(string.appero_feedback_default_follow_up_fallback),
+                    placeholder = it.getString(string.appero_feedback_default_placeholder_fallback),
+                    submitText = it.getString(string.appero_feedback_default_submit_fallback),
+                    secondaryButtonText = it.getString(string.appero_feedback_default_not_now_fallback)
                 )
                 val initialStep = when (flowType) {
                     "frustration" -> FeedbackStep.Frustration
@@ -505,7 +505,8 @@ object Appero {
             // Convert internal result to public result
             val publicResult = when (result) {
                 is PlayStoreReviewManager.ReviewResult.InAppReviewShown -> PlayStoreReviewResult.InAppReviewShown
-                is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted -> PlayStoreReviewResult.InAppReviewCompleted
+                is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted ->
+                    PlayStoreReviewResult.InAppReviewCompleted
                 is PlayStoreReviewManager.ReviewResult.FallbackTriggered -> PlayStoreReviewResult.FallbackTriggered
                 is PlayStoreReviewManager.ReviewResult.Failed -> PlayStoreReviewResult.Failed(result.reason)
             }
@@ -536,7 +537,8 @@ object Appero {
         requireInitialized()
         
         if (rating >= threshold) {
-            ApperoLogger.logCriticalOperation("Play Store Review", "Rating $rating meets threshold $threshold, requesting review")
+            ApperoLogger.logCriticalOperation("Play Store Review",
+                "Rating $rating meets threshold $threshold, requesting review")
             requestPlayStoreReview(activity, fallbackToExternalStore) { result ->
                 onComplete?.invoke(result)
             }
@@ -693,7 +695,8 @@ object Appero {
         }
 
         if (rating >= reviewThreshold) {
-            ApperoLogger.logCriticalOperation("Play Store Review", "Auto-triggering review for rating $rating (threshold: $reviewThreshold)")
+            ApperoLogger.logCriticalOperation("Play Store Review",
+                "Auto-triggering review for rating $rating (threshold: $reviewThreshold)")
             
 
             
@@ -715,7 +718,8 @@ object Appero {
 
                      }
                      is PlayStoreReviewResult.FallbackTriggered -> {
-                         ApperoLogger.logCriticalOperation("Play Store Review", "Fallback to external Play Store triggered")
+                         ApperoLogger.logCriticalOperation(
+                             "Play Store Review", "Fallback to external Play Store triggered")
                          
 
                      }
@@ -971,7 +975,8 @@ object Appero {
      * This is useful for SDK development when your app isn't published yet
      * 
      * @param activity The current activity
-     * @param testPackageName Package name of a published app to test with (e.g., "com.whatsapp", "com.instagram.android")
+     * @param testPackageName Package name of a published app to test with
+     * (e.g., "com.whatsapp", "com.instagram.android")
      * @param onComplete Optional callback with the result of the review request
      */
     fun testPlayStoreReviewWithPublishedApp(
@@ -982,13 +987,14 @@ object Appero {
         requireInitialized()
         
         if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-            android.widget.Toast.makeText(activity, "🧪 Testing Play Store review with: $testPackageName", android.widget.Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, "🧪 Testing Play Store review with: $testPackageName", Toast.LENGTH_SHORT).show()
         }
         
         playStoreReviewManager?.testWithPublishedApp(activity, testPackageName) { result ->
             val playStoreResult = when (result) {
                 is PlayStoreReviewManager.ReviewResult.InAppReviewShown -> PlayStoreReviewResult.InAppReviewShown
-                is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted -> PlayStoreReviewResult.InAppReviewCompleted
+                is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted ->
+                    PlayStoreReviewResult.InAppReviewCompleted
                 is PlayStoreReviewManager.ReviewResult.FallbackTriggered -> PlayStoreReviewResult.FallbackTriggered
                 is PlayStoreReviewManager.ReviewResult.Failed -> PlayStoreReviewResult.Failed(result.reason)
             }
@@ -1003,6 +1009,4 @@ object Appero {
     private fun requireInitialized() {
         require(isInitialized) { "Appero SDK must be initialized before use. Call Appero.start() first." }
     }
-
-
 } 
