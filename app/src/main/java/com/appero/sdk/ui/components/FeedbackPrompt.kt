@@ -52,6 +52,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -79,9 +83,7 @@ private object FeedbackSpacing {
 
 // Consistent text styles
 private object FeedbackTextStyles {
-    val titleColor = Color(0xFF003143)
     val cornerRadius = 8.dp
-    val inputBackgroundColor = Color(0xFFF5F5F5)
 }
 
 @Composable
@@ -126,6 +128,7 @@ fun FeedbackPrompt(
     onSubmissionResult: ((success: Boolean, message: String) -> Unit)? = null,
     onShowThankYou: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     var selectedRating by remember { mutableIntStateOf(0) }
     var feedbackText by remember { mutableStateOf("") }
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
@@ -174,6 +177,8 @@ fun FeedbackPrompt(
             bottomSheetState.expand()
         }
     }
+    
+    // Note: Accessibility announcements moved to RatingStepContent for proper Composable context
 
     if (visible) {
         Column(
@@ -187,8 +192,10 @@ fun FeedbackPrompt(
                     onDismiss()
                 },
                 dragHandle = null,
-                modifier = modifier,
-                containerColor = Color.White,
+                modifier = modifier.semantics {
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
+                },
+                containerColor = if (theme.backgroundColor != Color.Transparent) theme.backgroundColor else theme.surfaceColor,
                 sheetState = bottomSheetState
             ) {
                 when {
@@ -274,11 +281,19 @@ private fun CloseButton(
     theme: ApperoTheme,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        IconButton(onClick = onDismiss, modifier = Modifier.size(FeedbackSpacing.iconSize)) {
+        IconButton(
+            onClick = onDismiss, 
+            modifier = Modifier
+                .size(FeedbackSpacing.iconSize)
+                .semantics {
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_close_button)
+                }
+        ) {
             Icon(
                 Icons.Default.Close, 
-                contentDescription = "Close", 
+                contentDescription = null, // Handled by semantics
                 tint = if (theme.secondaryTextColor != Color.Unspecified) 
                     theme.secondaryTextColor 
                 else 
@@ -298,6 +313,7 @@ private fun FeedbackTextInput(
     maxCharacters: Int,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Column(modifier = modifier) {
         OutlinedTextField(
             value = value,
@@ -315,9 +331,12 @@ private fun FeedbackTextInput(
                 .fillMaxWidth()
                 .height(FeedbackSpacing.inputHeight)
                 .background(
-                    color = FeedbackTextStyles.inputBackgroundColor,
+                    color = theme.textFieldBackgroundColor,
                     shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius)
-                ),
+                )
+                .semantics {
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_feedback_input, maxCharacters)
+                },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = theme.textColor,
@@ -340,7 +359,11 @@ private fun FeedbackTextInput(
                     theme.secondaryTextColor 
                 else 
                     MaterialTheme.colorScheme.onSurfaceVariant, 
-                modifier = Modifier.padding(top = FeedbackSpacing.tiny)
+                modifier = Modifier
+                    .padding(top = FeedbackSpacing.tiny)
+                    .semantics {
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_character_counter, value.length, maxCharacters)
+                    }
             )
         }
     }
@@ -358,7 +381,15 @@ private fun PrimaryButton(
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = when {
+                    text.contains("feedback", ignoreCase = true) -> "Submit feedback button"
+                    text.contains("close", ignoreCase = true) -> "Close button, dismisses thank you message"
+                    else -> "$text button"
+                }
+            },
         colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
     ) { 
         Text(text = text, color = theme.buttonTextColor) 
@@ -375,7 +406,14 @@ private fun SecondaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = when {
+                    text.contains("not now", ignoreCase = true) -> "Not now button, dismisses feedback prompt"
+                    else -> "$text button"
+                }
+            },
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
     ) { 
         Text(
@@ -401,11 +439,13 @@ private fun RatingStepContent(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
             .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
@@ -418,8 +458,13 @@ private fun RatingStepContent(
                                     fontSize = 18.sp, 
                                     fontWeight = FontWeight.Bold, 
                                     textAlign = TextAlign.Center, 
-                color = FeedbackTextStyles.titleColor, 
-                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium),
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
+                modifier = Modifier
+                    .padding(horizontal = FeedbackSpacing.medium)
+                    .semantics {
+                        heading()
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_title, config.title)
+                    },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
@@ -427,8 +472,11 @@ private fun RatingStepContent(
                                     text = config.subtitle, 
                                     fontSize = 16.sp, 
                                     fontWeight = FontWeight.Normal,
-                color = FeedbackTextStyles.titleColor, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
                                     textAlign = TextAlign.Center,
+                                    modifier = Modifier.semantics {
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_subtitle, config.subtitle)
+                    },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
@@ -451,11 +499,14 @@ private fun RatingStepContent(
                                     text = config.followUpQuestion, 
                                     fontSize = 16.sp, 
                                     fontWeight = FontWeight.Normal, 
-                color = FeedbackTextStyles.titleColor, 
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
                                     textAlign = TextAlign.Start, 
                                     modifier = Modifier
                                         .fillMaxWidth()
-                    .padding(horizontal = FeedbackSpacing.medium),
+                    .padding(horizontal = FeedbackSpacing.medium)
+                                        .semantics {
+                                            contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_follow_up_question, config.followUpQuestion)
+                                        },
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Default
                                 )
             Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
@@ -476,6 +527,9 @@ private fun RatingStepContent(
                 theme = theme,
                 enabled = feedbackText.isNotBlank() && selectedRating > 0
             )
+            
+            // Add bottom padding to ensure button is above navigation bar
+            Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         }
     }
 }
@@ -491,6 +545,7 @@ private fun FrustrationStepContent(
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -510,7 +565,12 @@ private fun FrustrationStepContent(
                 fontWeight = FontWeight.SemiBold, 
                 textAlign = TextAlign.Center, 
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+                modifier = Modifier
+                    .padding(horizontal = FeedbackSpacing.medium)
+                    .semantics {
+                        heading()
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_frustration_title, config.title)
+                    }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.small))
             Text(
@@ -518,7 +578,11 @@ private fun FrustrationStepContent(
                 fontSize = 16.sp, 
                 textAlign = TextAlign.Center, 
                 color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+                modifier = Modifier
+                    .padding(horizontal = FeedbackSpacing.medium)
+                    .semantics {
+                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_frustration_subtitle, config.subtitle)
+                    }
             )
             Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         }
@@ -547,6 +611,9 @@ private fun FrustrationStepContent(
             onClick = onDismiss,
             theme = theme
         )
+        
+        // Add bottom padding to ensure button is above navigation bar
+        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 
@@ -561,11 +628,13 @@ private fun ThankYouStepContent(
     onDismiss: () -> Unit,
     serverResponseMessage: String? = null
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars),
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .windowInsetsPadding(WindowInsets.ime),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(FeedbackSpacing.large))
@@ -575,7 +644,12 @@ private fun ThankYouStepContent(
             fontWeight = FontWeight.Bold, 
             textAlign = TextAlign.Center, 
             color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-            modifier = Modifier.padding(horizontal = FeedbackSpacing.medium)
+            modifier = Modifier
+                .padding(horizontal = FeedbackSpacing.medium)
+                .semantics {
+                    heading()
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_thank_you_message, serverResponseMessage ?: flowConfig.thankYouTitle)
+                }
         )
         Spacer(modifier = Modifier.height(FeedbackSpacing.small))
         if (serverResponseMessage == null) {
@@ -583,7 +657,10 @@ private fun ThankYouStepContent(
                 text = flowConfig.thankYouSubtitle, 
                 fontSize = 16.sp, 
                 textAlign = TextAlign.Center, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface
+                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.semantics {
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_thank_you_subtitle, flowConfig.thankYouSubtitle)
+                }
             )
         }
         Spacer(modifier = Modifier.height(FeedbackSpacing.xlarge))
@@ -599,6 +676,9 @@ private fun ThankYouStepContent(
             },
             theme = theme
         )
+        
+        // Add bottom padding to ensure button is above navigation bar
+        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 
@@ -607,6 +687,7 @@ private fun LoadingStepContent(
     theme: ApperoTheme,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -619,7 +700,11 @@ private fun LoadingStepContent(
         
         // Circular loading indicator
         CircularProgressIndicator(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier
+                .size(48.dp)
+                .semantics {
+                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_loading)
+                },
             color = if (theme.accentColor != Color.Unspecified) theme.accentColor else MaterialTheme.colorScheme.primary,
             strokeWidth = 4.dp
         )
@@ -638,7 +723,11 @@ internal fun EmojiRatingScale(
     val context = LocalContext.current
 
     Row(
-        modifier = modifier.fillMaxWidth(), 
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_rating_scale)
+            }, 
         horizontalArrangement = Arrangement.SpaceEvenly, 
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -649,7 +738,21 @@ internal fun EmojiRatingScale(
                 modifier = Modifier
                     .size(FeedbackSpacing.ratingSize)
                     .clip(RoundedCornerShape(25.dp))
-                    .clickable { onRatingSelected(rating) },
+                    .clickable { onRatingSelected(rating) }
+                    .semantics {
+                        val ratingDescription = when (rating) {
+                            1 -> "Very negative experience, 1 star"
+                            2 -> "Negative experience, 2 stars"
+                            3 -> "Neutral experience, 3 stars"
+                            4 -> "Positive experience, 4 stars"
+                            5 -> "Very positive experience, 5 stars"
+                            else -> "Rating $rating"
+                        }
+                        contentDescription = ratingDescription
+                        stateDescription = if (isSelected) "Selected" else "Not selected"
+                        // Note: accessibilityAction not available in current Compose version
+                        // Using contentDescription and stateDescription for accessibility
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 val drawableId = context.resources.getIdentifier(
@@ -668,7 +771,7 @@ internal fun EmojiRatingScale(
                 // SVG icon with original colors
                 Icon(
                     painter = painterResource(id = drawableId),
-                    contentDescription = "Rating ${rating}",
+                    contentDescription = null, // Handled by semantics
                     modifier = Modifier.size(FeedbackSpacing.ratingSize),
                     tint = Color.Unspecified
                 )

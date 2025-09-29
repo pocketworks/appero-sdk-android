@@ -48,7 +48,7 @@ android {
 
 dependencies {
     // Appero SDK - use local for development, published for production
-    implementation(project(":appero-sdk"))
+    implementation("com.pocketworks:appero-sdk-android:1.0.2")
     
     // Core Android
     implementation("androidx.core:core-ktx:1.10.1")

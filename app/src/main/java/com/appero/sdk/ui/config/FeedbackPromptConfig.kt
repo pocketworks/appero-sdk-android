@@ -41,9 +41,9 @@ data class FeedbackPromptConfig(
     
     /**
      * Maximum number of characters allowed in the feedback text
-     * Default: 120
+     * Default: 240
      */
-    val maxCharacters: Int = 120,
+    val maxCharacters: Int = 240,
     
     /**
      * Text shown on the secondary button (e.g., "Not now" button in frustration flow)

@@ -7,6 +7,8 @@
 - **UI Components**: 100% Complete ✅ (Compose + Legacy)
 - **Offline Support**: 100% Complete ✅
 - **Analytics Integration**: 100% Complete ✅
+- **Dark Mode Theming**: 100% Complete ✅
+- **Navigation & Keyboard Handling**: 100% Complete ✅
 - **Documentation**: 80% Complete (README done, KDoc pending)
 
 ### **🚀 Production Ready Features**
@@ -18,12 +20,15 @@ The Android SDK is **production-ready** with full iOS SDK parity:
 - ✅ Feedback collection API with offline support
 - ✅ Jetpack Compose UI components
 - ✅ Legacy View system support
-- ✅ Customizable theming system
+- ✅ Customizable theming system with complete dark mode support
 - ✅ Analytics integration
 - ✅ Debug mode and logging
-- ✅ Play Store review integration
+- ✅ Play Store review integration (with limitations - see Known Issues)
 - ✅ Experience reset functionality
 - ✅ String management and localization
+- ✅ Multi-language accessibility support (English, Spanish, French, German)
+- ✅ Proper navigation bar and keyboard handling
+- ✅ Consistent UI behavior across Compose and XML implementations
 
 ---
 
@@ -77,11 +82,12 @@ The Android SDK is **production-ready** with full iOS SDK parity:
   - Full lifecycle integration
 
 ### **4. Advanced Features**
-- [x] **Play Store Review Integration**
+- [x] **Play Store Review Integration** (Limited Functionality)
   - Google Play In-App Review API integration
   - Configurable rating threshold (default: 4)
   - Automatic triggering after feedback submission
   - Fallback to external store when needed
+  - ⚠️ **Known Issue**: Review prompts may not always appear due to Google's quota system
 
 - [x] **Experience Reset Functionality**
   - `resetExperienceAndPrompt()` method
@@ -141,6 +147,45 @@ The Android SDK is **production-ready** with full iOS SDK parity:
   - Document theme properties and customization options
   - Add parameter descriptions and return value explanations
   - Include @since annotations for version tracking
+
+### **UI/UX Enhancements**
+- [x] **Complete Dark Mode Theming**
+  - Fixed app title color in dark mode
+  - Fixed XML bottom sheet background theming
+  - Fixed text input background colors for readability
+  - Fixed thank you message colors (no more blue text in dark mode)
+  - Added comprehensive theming for all UI elements
+
+- [x] **Navigation Bar & Keyboard Handling**
+  - Fixed CTA buttons appearing below system navigation bar
+  - Added proper window insets handling for both Compose and XML
+  - Fixed bottom sheet visibility when keyboard opens
+  - Added proper spacing between buttons and navigation bar
+  - Ensured consistent behavior between Compose and XML implementations
+
+- [ ] **Custom Fonts, Colors & Icons Support**
+  - Add support for custom font families in feedback prompts
+  - Allow custom color schemes beyond the current theme system
+  - Support custom icons for rating scales and buttons
+  - Provide API for complete UI customization
+  - Maintain backward compatibility with existing theme system
+
+- [ ] **Content & Copy Review & Standardization**
+  - Review all text content flowing between SDK, sample apps, and Flutter integration
+  - Standardize feedback prompt titles, subtitles, and button text
+  - Ensure consistent messaging across all platforms (Android SDK, iOS SDK, Flutter)
+  - Review and align placeholder text, error messages, and success messages
+  - Validate that sample app content matches production-ready SDK content
+  - Ensure proper localization support for all text content
+  - Document content guidelines for future SDK updates
+
+### **Known Issues & Limitations**
+- [ ] **In-App Reviews Not Fully Working** ⚠️
+  - Google Play In-App Review API integration exists but has limitations
+  - Review prompts may not always appear due to Google's quota system
+  - Fallback to external Play Store works but breaks user flow
+  - Need to investigate alternative approaches or improve fallback handling
+  - Consider implementing custom review flow for better reliability
 
 ---
 

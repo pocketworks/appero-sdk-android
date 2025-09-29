@@ -22,11 +22,21 @@ import java.net.SocketTimeoutException
 /**
  * Repository for handling feedback submission to the Appero backend
  */
-internal class FeedbackRepository(
-    private val sharedPreferences: SharedPreferences,
-    private val apiService: ApperoApiService,
-    private val context: Context
-) {
+internal class FeedbackRepository {
+    private val apiService: ApperoApiService
+    private val sharedPreferences: SharedPreferences
+    private val buildVersion: String
+    private val gson = Gson()
+
+    constructor(
+        sharedPreferences: SharedPreferences,
+        apiService: ApperoApiService,
+        context: Context
+    ) {
+        this.sharedPreferences = sharedPreferences
+        this.apiService = apiService
+        this.buildVersion = AppVersionUtils.getBuildVersion(context)
+    }
 
     companion object {
         private const val KEY_QUEED_FEEDBACK = "queued_feedback_list"
@@ -34,8 +44,6 @@ internal class FeedbackRepository(
         private const val RETRY_DELAY_MS = 1000L
         private const val TIMEOUT = 30L
     }
-
-    private val gson = Gson()
 
     /**
      * Submit feedback to the backend with retry logic
@@ -58,7 +66,7 @@ internal class FeedbackRepository(
                 val feedbackBody = feedback.toRequestBody(mediaType)
                 val sentAtBody = getCurrentTimestamp().toRequestBody(mediaType)
                 val sourceBody = AppVersionUtils.getSource().toRequestBody(mediaType)
-                val buildVersionBody = AppVersionUtils.getBuildVersion(context).toRequestBody(mediaType)
+                val buildVersionBody = buildVersion.toRequestBody(mediaType)
 
                 val response = try {
                     // Use withTimeout to prevent hanging indefinitely
@@ -131,7 +139,6 @@ internal class FeedbackRepository(
     }
 
 
-    
     /**
      * Generate current timestamp in ISO 8601 format
      * @return Formatted timestamp string

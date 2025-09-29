@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility Labels for Rating System - Spanish -->
+    <string name="appero_accessibility_rating_1">Experiencia muy negativa</string>
+    <string name="appero_accessibility_rating_2">Experiencia negativa</string>
+    <string name="appero_accessibility_rating_3">Experiencia neutral</string>
+    <string name="appero_accessibility_rating_4">Experiencia positiva</string>
+    <string name="appero_accessibility_rating_5">Experiencia muy positiva</string>
+    
+    <!-- Accessibility Labels for UI Elements - Spanish -->
+    <string name="appero_accessibility_feedback_input">Campo de entrada de comentarios, máximo 240 caracteres</string>
+    <string name="appero_accessibility_character_counter">Contador de caracteres, %1$d de %2$d caracteres</string>
+    <string name="appero_accessibility_submit_button">Botón para enviar comentarios</string>
+    <string name="appero_accessibility_not_now_button">Botón no ahora, descarta el prompt de comentarios</string>
+    <string name="appero_accessibility_close_button">Botón cerrar, descarta el mensaje de agradecimiento</string>
+    <string name="appero_accessibility_loading_indicator">Cargando, por favor espere</string>
+    <string name="appero_accessibility_thank_you_section">Sección de mensaje de agradecimiento</string>
+    
+    <!-- Accessibility Announcements - Spanish -->
+    <string name="appero_accessibility_rating_selected">Calificación %1$d seleccionada</string>
+    <string name="appero_accessibility_feedback_submitted">Comentarios enviados exitosamente</string>
+    <string name="appero_accessibility_feedback_error">Error al enviar comentarios</string>
+    
+    <!-- Default Feedback UI Fallback Strings - Spanish -->
+    <string name="appero_feedback_default_title_fallback">¿Cómo fue tu experiencia?</string>
+    <string name="appero_feedback_default_subtitle_fallback">Nos encantaría conocer tus pensamientos</string>
+    <string name="appero_feedback_default_follow_up_fallback">¿Qué hizo que tu experiencia fuera positiva?</string>
+    <string name="appero_feedback_default_placeholder_fallback">Comparte tus pensamientos aquí</string>
+    <string name="appero_feedback_default_submit_fallback">Enviar comentarios</string>
+    <string name="appero_feedback_default_not_now_fallback">Ahora no</string>
+    
+    <!-- Legacy XML Layout Strings - Spanish -->
+    <string name="appero_legacy_title">¿Cómo fue tu experiencia?</string>
+    <string name="appero_legacy_subtitle">Nos encantaría conocer tus pensamientos</string>
+    <string name="appero_legacy_follow_up">Cuéntanos más...</string>
+    <string name="appero_legacy_character_counter">0/240</string>
+    <string name="appero_legacy_submit">Enviar Comentarios</string>
+    <string name="appero_legacy_not_now">Ahora no</string>
+    <string name="appero_legacy_thank_you">¡Gracias por tus comentarios!</string>
+    <string name="appero_legacy_close">Cerrar</string>
+    
+    <!-- Compose UI Accessibility Strings - Spanish -->
+    <string name="appero_compose_bottom_sheet">Hoja inferior de solicitud de comentarios</string>
+    <string name="appero_compose_close_button">Botón cerrar, descarta la solicitud de comentarios</string>
+    <string name="appero_compose_feedback_input">Campo de entrada de comentarios, máximo %1$d caracteres</string>
+    <string name="appero_compose_character_counter">Contador de caracteres, %1$d de %2$d caracteres</string>
+    <string name="appero_compose_prompt_title">Título de solicitud de comentarios: %1$s</string>
+    <string name="appero_compose_prompt_subtitle">Subtítulo de solicitud de comentarios: %1$s</string>
+    <string name="appero_compose_follow_up_question">Pregunta de seguimiento: %1$s</string>
+    <string name="appero_compose_frustration_title">Título de flujo de frustración: %1$s</string>
+    <string name="appero_compose_frustration_subtitle">Subtítulo de flujo de frustración: %1$s</string>
+    <string name="appero_compose_thank_you_message">Mensaje de agradecimiento: %1$s</string>
+    <string name="appero_compose_thank_you_subtitle">Subtítulo de agradecimiento: %1$s</string>
+    <string name="appero_compose_loading">Cargando, por favor espere</string>
+    <string name="appero_compose_rating_scale">Escala de calificación de 1 a 5 estrellas</string>
+</resources> 

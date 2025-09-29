@@ -55,6 +55,7 @@ android {
 detekt {
     toolVersion = "1.23.8"
     config.setFrom(file("../config/detekt/detekt.yml"))
+    autoCorrect = true
 }
 
 afterEvaluate {
@@ -64,7 +65,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.pocketworks"
                 artifactId = "appero-sdk-android"
-                version = "1.0.0"
+                version = "1.0.2"
                 
                 pom {
                     name.set("Appero Android SDK")
