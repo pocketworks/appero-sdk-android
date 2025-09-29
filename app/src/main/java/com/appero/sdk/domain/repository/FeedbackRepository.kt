@@ -26,6 +26,7 @@ internal class FeedbackRepository {
     private val apiService: ApperoApiService
     private val sharedPreferences: SharedPreferences
     private val buildVersion: String
+    private val gson = Gson()
 
     constructor(
         sharedPreferences: SharedPreferences,
@@ -43,8 +44,6 @@ internal class FeedbackRepository {
         private const val RETRY_DELAY_MS = 1000L
         private const val TIMEOUT = 30L
     }
-
-    private val gson = Gson()
 
     /**
      * Submit feedback to the backend with retry logic

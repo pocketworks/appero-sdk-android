@@ -23,11 +23,22 @@ import java.net.SocketTimeoutException
  * Note: This class does not queue on failure; queuing is performed by the caller (ExperienceTracker)
  * to avoid duplicate enqueues.
  */
-internal class ExperienceRepository(
-	private val sharedPreferences: SharedPreferences,
-	private val apiService: ApperoApiService,
-	private val context: Context
-) {
+internal class ExperienceRepositor {
+
+	private val buildVersion: String
+	private val apiService: ApperoApiService
+	private val sharedPreferences: SharedPreferences
+	private val gson = Gson()
+
+	constructor(
+        sharedPreferences: SharedPreferences,
+        apiService: ApperoApiService,
+        context: Context
+    ) {
+        this.sharedPreferences = sharedPreferences
+        this.apiService = apiService
+        this.buildVersion = AppVersionUtils.getBuildVersion(context)
+    }
 
 	companion object {
 		private const val MAX_RETRY_ATTEMPTS = 3
@@ -35,8 +46,6 @@ internal class ExperienceRepository(
 		private const val TIMEOUT = 30L
 		private const val KEY_QUEUED_EXPERIENCES = "queued_experiences_list"
 	}
-
-	private val gson = Gson()
 
 	/**
 	 * Submit experience points to the backend with retry logic (configurable)
