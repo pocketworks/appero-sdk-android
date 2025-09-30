@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.appero.sdk.analytics.ApperoAnalyticsListener
+import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.theme.ApperoTheme
@@ -791,46 +792,26 @@ internal fun EmojiRatingScale(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        (1..5).forEach { rating ->
-            val isSelected = selectedRating == rating
+        Experience.entries.forEach { entry ->
+            val isSelected = selectedRating == entry.rating
 
             Box(
                 modifier = Modifier
                     .size(FeedbackSpacing.ratingSize)
                     .clip(RoundedCornerShape(25.dp))
-                    .clickable { onRatingSelected(rating) }
+                    .clickable { onRatingSelected(entry.rating) }
                     .semantics {
-                        val ratingDescription = when (rating) {
-                            1 -> "Very negative experience, 1 star"
-                            2 -> "Negative experience, 2 stars"
-                            3 -> "Neutral experience, 3 stars"
-                            4 -> "Positive experience, 4 stars"
-                            5 -> "Very positive experience, 5 stars"
-                            else -> "Rating $rating"
-                        }
-                        contentDescription = ratingDescription
+                        val descriptionId = entry.description
+                        contentDescription = context.getString(descriptionId)
                         stateDescription = if (isSelected) "Selected" else "Not selected"
                         // Note: accessibilityAction not available in current Compose version
                         // Using contentDescription and stateDescription for accessibility
                     },
                 contentAlignment = Alignment.Center
             ) {
-                val drawableId = context.resources.getIdentifier(
-                    when (rating) {
-                        1 -> "ic_rating_very_negative"
-                        2 -> "ic_rating_negative"
-                        3 -> "ic_rating_neutral"
-                        4 -> "ic_rating_positive"
-                        5 -> "ic_rating_very_positive"
-                        else -> "ic_rating_neutral"
-                    },
-                    "drawable",
-                    context.packageName
-                )
-
                 // SVG icon with original colors
                 Icon(
-                    painter = painterResource(id = drawableId),
+                    painter = painterResource(id = entry.icon),
                     contentDescription = null, // Handled by semantics
                     modifier = Modifier.size(FeedbackSpacing.ratingSize),
                     tint = Color.Unspecified

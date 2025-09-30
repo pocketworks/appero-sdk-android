@@ -4,15 +4,15 @@ import android.util.Log
 
 /**
  * Internal logger for the Appero SDK.
- * 
+ *
  * This class handles all logging based on the current debug mode.
  * Focuses on essential API request errors and critical SDK operations.
  */
 internal object ApperoLogger {
-    
+
     private const val TAG = "ApperoSDK"
     private var currentMode: ApperoDebugMode = ApperoDebugMode.PRODUCTION
-    
+
     // String constants for better organization
     private object Strings {
         const val DEBUG_MODE_SET = "Debug mode set to: %s"
@@ -23,7 +23,7 @@ internal object ApperoLogger {
         const val CRITICAL_OPERATION_FORMAT = "%s: %s"
         const val CRITICAL_OPERATION_NO_DETAILS = "%s"
     }
-    
+
     /**
      * Set the current debug mode for the SDK.
      * This should be called during SDK initialization.
@@ -34,12 +34,12 @@ internal object ApperoLogger {
             Log.i(TAG, String.format(Strings.DEBUG_MODE_SET, mode.name))
         }
     }
-    
+
     /**
      * Get the current debug mode.
      */
     fun getDebugMode(): ApperoDebugMode = currentMode
-    
+
     /**
      * Log an info message.
      * Only logs if debug mode is enabled.
@@ -49,7 +49,7 @@ internal object ApperoLogger {
             Log.i(TAG, message)
         }
     }
-    
+
     /**
      * Log a debug message.
      * Only logs if debug mode is enabled.
@@ -59,7 +59,7 @@ internal object ApperoLogger {
             Log.d(TAG, message)
         }
     }
-    
+
     /**
      * Log a warning message.
      * Always logs regardless of debug mode.
@@ -67,7 +67,7 @@ internal object ApperoLogger {
     fun warning(message: String) {
         Log.w(TAG, message)
     }
-    
+
     /**
      * Log an error message.
      * Always logs regardless of debug mode.
@@ -79,7 +79,7 @@ internal object ApperoLogger {
             Log.e(TAG, message)
         }
     }
-    
+
     /**
      * Log API request errors.
      * Only logs in DEBUG mode.
@@ -94,7 +94,7 @@ internal object ApperoLogger {
             Log.e(TAG, message)
         }
     }
-    
+
     /**
      * Log API request success for critical operations.
      * Only logs in DEBUG mode.
@@ -105,7 +105,7 @@ internal object ApperoLogger {
             Log.d(TAG, message)
         }
     }
-    
+
     /**
      * Log network connectivity issues.
      * Only logs in DEBUG mode.
@@ -116,7 +116,7 @@ internal object ApperoLogger {
             Log.e(TAG, message)
         }
     }
-    
+
     /**
      * Log critical SDK operations.
      * Only logs in DEBUG mode.
@@ -131,7 +131,7 @@ internal object ApperoLogger {
             Log.i(TAG, message)
         }
     }
-    
+
     /**
      * Determine if logging should occur based on the current debug mode.
      */

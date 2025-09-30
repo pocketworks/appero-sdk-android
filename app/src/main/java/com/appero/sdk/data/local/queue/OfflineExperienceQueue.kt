@@ -1,11 +1,10 @@
 package com.appero.sdk.data.local.queue
 
-import android.util.Log
+import com.appero.sdk.debug.ApperoLogger
 import com.appero.sdk.domain.repository.ExperienceRepository
 import com.appero.sdk.domain.repository.ExperienceSubmissionResult
 import com.appero.sdk.domain.repository.QueuedExperience
 import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
-import com.appero.sdk.debug.ApperoLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -27,7 +26,9 @@ internal class OfflineExperienceQueue(
     private var isNetworkAvailable = false
     private val isProcessing = AtomicBoolean(false)
 
-    init { startRetryTimer() }
+    init {
+        startRetryTimer()
+    }
 
     private fun startRetryTimer() {
         stopRetryTimer()
@@ -39,7 +40,9 @@ internal class OfflineExperienceQueue(
         ) { scope.launch { processQueue() } }
     }
 
-    private fun stopRetryTimer() { retryTimer?.cancel(); retryTimer = null }
+    private fun stopRetryTimer() {
+        retryTimer?.cancel(); retryTimer = null
+    }
 
     fun onNetworkStateChanged(isAvailable: Boolean) {
         isNetworkAvailable = isAvailable
@@ -102,11 +105,14 @@ internal class OfflineExperienceQueue(
                             is ExperienceSubmissionResult.Success -> {
                                 // Successfully submitted
                             }
+
                             is ExperienceSubmissionResult.Error -> {
                                 if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                                     remaining.add(item.copy(retryCount = item.retryCount + 1))
                                 } else {
-                                    ApperoLogger.logApiError("/api/experience", "POST", "Max retries reached for item ${item.id}")
+                                    ApperoLogger.logApiError(
+                                        "/api/experience", "POST", "Max retries reached for item ${item.id}"
+                                    )
                                 }
                             }
                         }
@@ -114,7 +120,9 @@ internal class OfflineExperienceQueue(
                         if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                             remaining.add(item.copy(retryCount = item.retryCount + 1))
                         } else {
-                            ApperoLogger.logNetworkError("Experience Queue Processing", "Max retries reached for item ${item.id}")
+                            ApperoLogger.logNetworkError(
+                                "Experience Queue Processing", "Max retries reached for item ${item.id}"
+                            )
                         }
                     }
                 }

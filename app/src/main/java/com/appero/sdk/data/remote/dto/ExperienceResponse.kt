@@ -4,6 +4,7 @@ package com.appero.sdk.data.remote.dto
  * Response model for experience submission
  * Matches the actual API response format from /api/v1/experiences
  */
+@Suppress("detekt:ConstructorParameterNaming")
 internal data class ExperienceResponse(
     val status: String,
     val message: String? = null,
