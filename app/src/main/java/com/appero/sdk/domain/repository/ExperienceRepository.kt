@@ -23,7 +23,7 @@ import java.net.SocketTimeoutException
  * Note: This class does not queue on failure; queuing is performed by the caller (ExperienceTracker)
  * to avoid duplicate enqueues.
  */
-internal class ExperienceRepositor {
+internal class ExperienceRepository {
 
 	private val buildVersion: String
 	private val apiService: ApperoApiService
@@ -66,7 +66,7 @@ internal class ExperienceRepositor {
 				val contextBody = context.toRequestBody(mediaType)
 				val sentAtBody = sentAt.toRequestBody(mediaType)
 				val sourceBody = AppVersionUtils.getSource().toRequestBody(mediaType)
-				val buildVersionBody = AppVersionUtils.getBuildVersion(this.context).toRequestBody(mediaType)
+				val buildVersionBody = buildVersion.toRequestBody(mediaType)
 				
 				val response = try {
 					withTimeout(TIMEOUT * 1000) {

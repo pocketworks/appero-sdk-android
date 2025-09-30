@@ -7,13 +7,13 @@ import android.content.pm.PackageManager
  * Utility class for getting app version and build information
  */
 internal object AppVersionUtils {
-    
+
     /**
      * Get the source platform identifier
      * @return "android" for Android platform
      */
     fun getSource(): String = "android"
-    
+
     /**
      * Get the build version in format "versionName.versionCode"
      * @param context Application context

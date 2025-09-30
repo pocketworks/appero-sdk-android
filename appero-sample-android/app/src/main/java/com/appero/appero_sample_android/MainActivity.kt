@@ -1,7 +1,6 @@
 package com.appero.appero_sample_android
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -80,7 +79,7 @@ class MainActivity : FragmentActivity() {
 @Composable
 fun ApperoSampleApp() {
     var experienceState by remember { mutableStateOf(Appero.getExperienceState()) }
-    val context = LocalContext.current
+    val activity = LocalContext.current as Activity
     
     // Theme state management
     var selectedTheme by remember { mutableStateOf(0) }
@@ -337,7 +336,7 @@ fun ApperoSampleApp() {
                     interactionSource = remember { MutableInteractionSource() },
                     indication = rememberRipple(color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
                 ) {
-                    (context as? FragmentActivity)?.let { activity ->
+                    (activity as? FragmentActivity)?.let { activity ->
                         Appero.showFeedbackDialog(
                             activity = activity,
                             config = feedbackConfig,
@@ -367,14 +366,12 @@ fun ApperoSampleApp() {
         reviewPromptThreshold = reviewPromptThreshold,
         onRequestReview = {
             // Trigger Play Store review prompt
-            if (context is Activity) {
-                Appero.requestPlayStoreReview(context as Activity)
-            }
+                Appero.requestPlayStoreReview(activity)
         },
         onResult = { success, message ->
             experienceState = Appero.getExperienceState()
         },
-        activity = context as? Activity
+        activity = activity
     )
 }
 
