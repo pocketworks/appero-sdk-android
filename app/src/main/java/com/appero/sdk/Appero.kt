@@ -279,8 +279,6 @@ object Appero {
     fun log(experience: Experience) {
         requireInitialized()
         experienceTracker?.log(experience)
-
-
     }
 
     /**
@@ -290,8 +288,6 @@ object Appero {
     fun log(points: Int) {
         requireInitialized()
         experienceTracker?.log(points)
-
-
     }
 
     /**
@@ -839,64 +835,26 @@ object Appero {
     // ==========================================
 
     /**
-     * Show feedback dialog for legacy XML-based projects
-     * This creates a DialogFragment with traditional Android Views
-     *
-     * @param activity The current Activity (required for FragmentManager)
-     * @param config Configuration object containing all text content for the dialog
-     * @param onResult Optional callback to receive feedback submission results
-     */
-    fun showFeedbackDialog(
-        activity: androidx.fragment.app.FragmentActivity,
-        config: FeedbackPromptConfig,
-        onResult: ((success: Boolean, message: String) -> Unit)? = null
-    ) {
-        requireInitialized()
-
-        val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
-        dialogFragment.setConfig(config)
-        dialogFragment.setAnalyticsListener(analyticsListener)
-        dialogFragment.setFlowConfig(FeedbackFlowConfig())
-        dialogFragment.setReviewPromptThreshold(playStoreReviewThreshold)
-        dialogFragment.setOnRequestReview {
-            requestPlayStoreReview(activity)
-        }
-
-        dialogFragment.setOnSubmitCallback { rating, feedback ->
-            handleFeedbackSubmission(rating, feedback, { success, message ->
-                // Call the provided onResult callback
-                onResult?.invoke(success, message)
-                // Also call the dialog's feedback submission callback
-                dialogFragment.handleFeedbackSubmissionResult(success, message)
-            }, activity)
-        }
-
-        dialogFragment.setOnDismissCallback {
-            // Dialog dismissed without submission
-        }
-
-        dialogFragment.show(activity.supportFragmentManager, "ApperoFeedbackDialog")
-    }
-
-    /**
      * Show feedback dialog with initial step for legacy XML-based projects
      *
      * @param activity The current Activity (required for FragmentManager)
      * @param config Configuration object containing all text content for the dialog
-     * @param initialStep The initial step to show (currently not implemented for legacy)
+     * @param initialStep The initial step to show (will start with the default, rating, step, if null)
      * @param onResult Optional callback to receive feedback submission results
      */
     fun showFeedbackDialog(
         activity: androidx.fragment.app.FragmentActivity,
         config: FeedbackPromptConfig,
-        initialStep: FeedbackStep,
+        initialStep: FeedbackStep? = null,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
 
         val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
         dialogFragment.setConfig(config)
-        dialogFragment.setInitialStep(initialStep)
+        initialStep?.let {
+            dialogFragment.setInitialStep(it)
+        }
         dialogFragment.setAnalyticsListener(analyticsListener)
         dialogFragment.setFlowConfig(FeedbackFlowConfig())
         dialogFragment.setReviewPromptThreshold(playStoreReviewThreshold)
