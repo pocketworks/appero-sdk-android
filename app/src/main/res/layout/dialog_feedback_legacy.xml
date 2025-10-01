@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@drawable/bottom_sheet_background">
+    android:background="@drawable/bottom_sheet_background"
+    android:orientation="vertical">
 
     <!-- Content -->
     <LinearLayout
@@ -14,241 +14,241 @@
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp">
 
-                <!-- Title -->
+        <!-- Title -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/appero_legacy_title"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textColor="#FF003143"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="@string/appero_legacy_title"
+            android:textColor="#FF003143"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <!-- Subtitle -->
         <TextView
             android:id="@+id/tvSubtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
             android:text="@string/appero_legacy_subtitle"
-            android:textSize="16sp"
-            android:gravity="center"
             android:textColor="#FF003143"
-            android:layout_marginBottom="24dp" />
+            android:textSize="16sp" />
 
-    <!-- Rating Buttons (SpaceEvenly like Compose) -->
-    <LinearLayout
-        android:id="@+id/ratingContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="24dp"
-        android:weightSum="5">
-
-        <ImageButton
-            android:id="@+id/btnRating1"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_rating_very_negative"
-            android:contentDescription="@string/appero_accessibility_rating_1"
-            android:importantForAccessibility="yes"
-            android:focusable="true"
-            android:clickable="true"
-            android:scaleType="centerInside" />
-
-        <ImageButton
-            android:id="@+id/btnRating2"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_rating_negative"
-            android:contentDescription="@string/appero_accessibility_rating_2"
-            android:importantForAccessibility="yes"
-            android:focusable="true"
-            android:clickable="true"
-            android:scaleType="centerInside" />
-
-        <ImageButton
-            android:id="@+id/btnRating3"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_rating_neutral"
-            android:contentDescription="@string/appero_accessibility_rating_3"
-            android:importantForAccessibility="yes"
-            android:focusable="true"
-            android:clickable="true"
-            android:scaleType="centerInside" />
-
-        <ImageButton
-            android:id="@+id/btnRating4"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_rating_positive"
-            android:contentDescription="@string/appero_accessibility_rating_4"
-            android:importantForAccessibility="yes"
-            android:focusable="true"
-            android:clickable="true"
-            android:scaleType="centerInside" />
-
-        <ImageButton
-            android:id="@+id/btnRating5"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_rating_very_positive"
-            android:contentDescription="@string/appero_accessibility_rating_5"
-            android:importantForAccessibility="yes"
-            android:focusable="true"
-            android:clickable="true"
-            android:scaleType="centerInside" />
-
-    </LinearLayout>
-
-    <!-- Feedback Section (Initially Hidden) -->
-    <LinearLayout
-        android:id="@+id/feedbackSection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <!-- Follow-up Question -->
-        <TextView
-            android:id="@+id/tvFollowUp"
+        <!-- Rating Buttons (SpaceEvenly like Compose) -->
+        <LinearLayout
+            android:id="@+id/ratingContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/appero_legacy_follow_up"
-            android:textSize="16sp"
-            android:textColor="#FF003143"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="24dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:weightSum="5">
 
-        <!-- Feedback Input -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="88dp"
-            android:layout_marginBottom="4dp"
-            app:boxBackgroundMode="none"
-            app:boxStrokeColor="@android:color/transparent"
-            app:boxStrokeWidth="0dp"
-            app:boxStrokeWidthFocused="0dp"
-            app:hintEnabled="false">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etFeedback"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:minLines="4"
-                android:maxLines="4"
-                android:gravity="top"
-                android:inputType="textMultiLine|textCapSentences"
-                android:hint="@string/appero_legacy_follow_up"
-                android:textColorHint="@color/gray_text"
-                android:background="@drawable/text_input_background"
-                android:padding="16dp"
-                android:contentDescription="@string/appero_accessibility_feedback_input"
+            <ImageButton
+                android:id="@+id/btnRating1"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/appero_accessibility_rating_1"
+                android:focusable="true"
                 android:importantForAccessibility="yes"
-                android:accessibilityLiveRegion="polite" />
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_rating_very_negative" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+            <ImageButton
+                android:id="@+id/btnRating2"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/appero_accessibility_rating_2"
+                android:focusable="true"
+                android:importantForAccessibility="yes"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_rating_negative" />
 
-        <!-- Character Counter (like Compose) -->
-        <TextView
-            android:id="@+id/tvCharacterCounter"
+            <ImageButton
+                android:id="@+id/btnRating3"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/appero_accessibility_rating_3"
+                android:focusable="true"
+                android:importantForAccessibility="yes"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_rating_neutral" />
+
+            <ImageButton
+                android:id="@+id/btnRating4"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/appero_accessibility_rating_4"
+                android:focusable="true"
+                android:importantForAccessibility="yes"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_rating_positive" />
+
+            <ImageButton
+                android:id="@+id/btnRating5"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="@string/appero_accessibility_rating_5"
+                android:focusable="true"
+                android:importantForAccessibility="yes"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_rating_very_positive" />
+
+        </LinearLayout>
+
+        <!-- Feedback Section (Initially Hidden) -->
+        <LinearLayout
+            android:id="@+id/feedbackSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/appero_legacy_character_counter"
-            android:textSize="12sp"
-            android:textColor="@color/gray_text"
-            android:gravity="end"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="16dp"
-            android:contentDescription="@string/appero_accessibility_character_counter"
-            android:importantForAccessibility="yes"
-            android:accessibilityLiveRegion="polite" />
+            android:orientation="vertical"
+            android:visibility="gone">
 
-        <!-- Submit Button (full width like Compose) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSubmit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/appero_legacy_submit"
-            style="@style/Widget.Material3.Button"
-            android:contentDescription="@string/appero_accessibility_submit_button"
-            android:importantForAccessibility="yes" />
+            <!-- Follow-up Question -->
+            <TextView
+                android:id="@+id/tvFollowUp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="@string/appero_legacy_follow_up"
+                android:textColor="#FF003143"
+                android:textSize="16sp" />
 
-                <!-- Not Now Button (for frustration flow) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNotNow"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/appero_legacy_not_now"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:visibility="gone"
-            android:contentDescription="@string/appero_accessibility_not_now_button"
-            android:importantForAccessibility="yes" />
+            <!-- Feedback Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="88dp"
+                android:layout_marginBottom="4dp"
+                app:boxBackgroundMode="none"
+                app:boxStrokeColor="@android:color/transparent"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="0dp"
+                app:hintEnabled="false">
 
-    </LinearLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFeedback"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:accessibilityLiveRegion="polite"
+                    android:background="@drawable/text_input_background"
+                    android:contentDescription="@string/appero_accessibility_feedback_input"
+                    android:gravity="top"
+                    android:hint="@string/appero_legacy_follow_up"
+                    android:importantForAccessibility="yes"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLines="4"
+                    android:minLines="4"
+                    android:padding="16dp"
+                    android:textColorHint="@color/gray_text" />
 
-    <!-- Loading Progress Bar (initially hidden) - positioned independently -->
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/loadingContainer"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="24dp"
-        android:indeterminate="true"
-        android:visibility="gone"
-        android:contentDescription="@string/appero_accessibility_loading_indicator"
-        android:importantForAccessibility="yes" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Thank You Section (Initially Hidden) -->
-    <LinearLayout
-        android:id="@+id/thankYouSection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:contentDescription="@string/appero_accessibility_thank_you_section"
-        android:importantForAccessibility="yes">
+            <!-- Character Counter (like Compose) -->
+            <TextView
+                android:id="@+id/tvCharacterCounter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:accessibilityLiveRegion="polite"
+                android:contentDescription="@string/appero_accessibility_character_counter"
+                android:gravity="end"
+                android:importantForAccessibility="yes"
+                android:text="@string/appero_legacy_character_counter"
+                android:textColor="@color/gray_text"
+                android:textSize="12sp" />
 
-        <!-- Thank You Title -->
-        <TextView
-            android:id="@+id/tvThankYouTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/appero_legacy_thank_you"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textColor="#FF003143"
+            <!-- Submit Button (full width like Compose) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmit"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:contentDescription="@string/appero_accessibility_submit_button"
+                android:importantForAccessibility="yes"
+                android:text="@string/appero_legacy_submit" />
+
+            <!-- Not Now Button (for frustration flow) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNotNow"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:contentDescription="@string/appero_accessibility_not_now_button"
+                android:importantForAccessibility="yes"
+                android:text="@string/appero_legacy_not_now"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- Loading Progress Bar (initially hidden) - positioned independently -->
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loadingContainer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="32dp" />
+            android:layout_marginBottom="24dp"
+            android:contentDescription="@string/appero_accessibility_loading_indicator"
+            android:importantForAccessibility="yes"
+            android:indeterminate="true"
+            android:visibility="gone" />
 
-        <!-- Close Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnClose"
+        <!-- Thank You Section (Initially Hidden) -->
+        <LinearLayout
+            android:id="@+id/thankYouSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/appero_legacy_close"
-            style="@style/Widget.Material3.Button"
-            android:contentDescription="@string/appero_accessibility_close_button"
-            android:importantForAccessibility="yes" />
+            android:contentDescription="@string/appero_accessibility_thank_you_section"
+            android:importantForAccessibility="yes"
+            android:orientation="vertical"
+            android:visibility="gone">
 
-    </LinearLayout>
+            <!-- Thank You Title -->
+            <TextView
+                android:id="@+id/tvThankYouTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="32dp"
+                android:gravity="center"
+                android:text="@string/appero_legacy_thank_you"
+                android:textColor="#FF003143"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Close Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClose"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/appero_accessibility_close_button"
+                android:importantForAccessibility="yes"
+                android:text="@string/appero_legacy_close" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

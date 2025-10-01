@@ -43,8 +43,8 @@ class MainActivity : FragmentActivity() {
         // Initialize the Appero SDK with DEBUG mode for development
         Appero.start(
             context = this,
-            apiKey = "Cu8i7jOIm1cN2IhDO3iqV2cLSzcdI9/zUaws7+d19Rs", // Updated API key to match curl
-            clientId = "beeec9b8-3908-4605-9b45-faded129d41e", // Sample client ID
+            apiKey = "mLqKSXRmDHgf0bumN3hkxBAO6idIA4KB9nXkyA1nkc4", // Updated API key to match curl
+            clientId = "tester_01", // Sample client ID
             debugMode = ApperoDebugMode.DEBUG // Enable debug logging for development
         )
         
@@ -77,8 +77,49 @@ class MainActivity : FragmentActivity() {
 }
 
 @Composable
+fun ExperienceButton(
+    experience: Experience,
+    icon: String,
+    label: String,
+    rippleColor: Color,
+    backgroundColor: Color,
+    iconColor: Color,
+    isDarkTheme: Boolean,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(color = rippleColor)
+            ) {
+                Appero.log(experience)
+            },
+        color = backgroundColor,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = icon,
+                fontSize = 18.sp,
+                color = if (iconColor == Color.Unspecified) Color.Unspecified else iconColor
+            )
+            Text(
+                text = label,
+                color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF)
+            )
+        }
+    }
+}
+
+@Composable
 fun ApperoSampleApp() {
-    var experienceState by remember { mutableStateOf(Appero.getExperienceState()) }
     val activity = LocalContext.current as Activity
     
     // Theme state management
@@ -105,13 +146,7 @@ fun ApperoSampleApp() {
             thankYouCtaText = "Close"
         )
     }
-    val reviewPromptThreshold = 4
 
-    // Update experience state when it changes
-    LaunchedEffect(Unit) {
-        experienceState = Appero.getExperienceState()
-    }
-    
     val scrollState = rememberScrollState()
     
     Column(
@@ -177,130 +212,55 @@ fun ApperoSampleApp() {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Experience logging buttons
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = Color(0xFF4CAF50))
-                ) {
-                    Appero.log(Experience.VERY_POSITIVE)
-                    experienceState = Appero.getExperienceState()
-                },
-            color = if (isDarkTheme) Color(0xFF2D4A2D) else Color(0xFFE8F5E8),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("👍", fontSize = 18.sp)
-                Text("Very Positive", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-            }
-        }
+        ExperienceButton(
+            experience = Experience.VERY_POSITIVE,
+            icon = "👍",
+            label = "Very Positive",
+            rippleColor = Color(0xFF4CAF50),
+            backgroundColor = if (isDarkTheme) Color(0xFF2D4A2D) else Color(0xFFE8F5E8),
+            iconColor = Color.Unspecified,
+            isDarkTheme = isDarkTheme,
+        )
         
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = Color(0xFF4CAF50))
-                ) {
-                    Appero.log(Experience.POSITIVE)
-                    experienceState = Appero.getExperienceState()
-                },
-            color = if (isDarkTheme) Color(0xFF2D4A2D) else Color(0xFFE8F5E8),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("👍", fontSize = 18.sp, color = Color(0xFF4CAF50))
-                Text("Positive", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-            }
-        }
+        ExperienceButton(
+            experience = Experience.POSITIVE,
+            icon = "👍",
+            label = "Positive",
+            rippleColor = Color(0xFF4CAF50),
+            backgroundColor = if (isDarkTheme) Color(0xFF2D4A2D) else Color(0xFFE8F5E8),
+            iconColor = Color(0xFF4CAF50),
+            isDarkTheme = isDarkTheme,
+        )
         
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = Color(0xFFFF9800))
-                ) {
-                    Appero.log(Experience.NEUTRAL)
-                    experienceState = Appero.getExperienceState()
-                },
-            color = if (isDarkTheme) Color(0xFF4A3D2D) else Color(0xFFFFF3E0),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("⚪", fontSize = 18.sp, color = Color(0xFFFF9800))
-                Text("Neutral", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-            }
-        }
+        ExperienceButton(
+            experience = Experience.NEUTRAL,
+            icon = "⚪",
+            label = "Neutral",
+            rippleColor = Color(0xFFFF9800),
+            backgroundColor = if (isDarkTheme) Color(0xFF4A3D2D) else Color(0xFFFFF3E0),
+            iconColor = Color(0xFFFF9800),
+            isDarkTheme = isDarkTheme,
+        )
         
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = Color(0xFFF44336))
-                ) {
-                    Appero.log(Experience.NEGATIVE)
-                    experienceState = Appero.getExperienceState()
-                },
-            color = if (isDarkTheme) Color(0xFF4A2D2D) else Color(0xFFFFEBEE),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("👎", fontSize = 18.sp, color = Color(0xFFF44336))
-                Text("Negative", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-            }
-        }
+        ExperienceButton(
+            experience = Experience.NEGATIVE,
+            icon = "👎",
+            label = "Negative",
+            rippleColor = Color(0xFFF44336),
+            backgroundColor = if (isDarkTheme) Color(0xFF4A2D2D) else Color(0xFFFFEBEE),
+            iconColor = Color(0xFFF44336),
+            isDarkTheme = isDarkTheme,
+        )
         
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = Color(0xFFF44336))
-                ) {
-                    Appero.log(Experience.VERY_NEGATIVE)
-                    experienceState = Appero.getExperienceState()
-                },
-            color = if (isDarkTheme) Color(0xFF4A2D2D) else Color(0xFFFFEBEE),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("👎", fontSize = 18.sp)
-                Text("Very Negative", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-            }
-        }
+        ExperienceButton(
+            experience = Experience.VERY_NEGATIVE,
+            icon = "👎",
+            label = "Very Negative",
+            rippleColor = Color(0xFFF44336),
+            backgroundColor = if (isDarkTheme) Color(0xFF4A2D2D) else Color(0xFFFFEBEE),
+            iconColor = Color.Unspecified,
+            isDarkTheme = isDarkTheme,
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -314,9 +274,7 @@ fun ApperoSampleApp() {
                 ) {
                     Appero.showFeedbackPrompt(
                         config = feedbackConfig,
-                        onResult = { _, _ ->
-                            experienceState = Appero.getExperienceState()
-                        }
+                        onResult = { _, _ ->}
                     )
                 },
             color = if (isDarkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
@@ -340,9 +298,7 @@ fun ApperoSampleApp() {
                         Appero.showFeedbackDialog(
                             activity = activity,
                             config = feedbackConfig,
-                            onResult = { _, _ ->
-                                experienceState = Appero.getExperienceState()
-                            }
+                            onResult = { _, _ -> }
                         )
                     }
                 },
@@ -363,14 +319,11 @@ fun ApperoSampleApp() {
     Appero.FeedbackPromptUI(
         config = feedbackConfig,
         flowConfig = feedbackFlowConfig,
-        reviewPromptThreshold = reviewPromptThreshold,
         onRequestReview = {
             // Trigger Play Store review prompt
                 Appero.requestPlayStoreReview(activity)
         },
-        onResult = { success, message ->
-            experienceState = Appero.getExperienceState()
-        },
+        onResult = { _, _ -> },
         activity = activity
     )
 }
