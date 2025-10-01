@@ -131,7 +131,7 @@ object Appero {
         // Recreate Play Store review manager with new listener
         playStoreReviewManager = PlayStoreReviewManager(analyticsListener)
     }
-    
+
     /**
      * Set the auto-trigger callback for Flutter integration
      * When this is set, auto-triggers will call this callback instead of showing native Android UI
@@ -139,9 +139,12 @@ object Appero {
      */
     fun setAutoTriggerCallback(callback: ApperoAutoTriggerCallback?) {
         autoTriggerCallback = callback
-        ApperoLogger.logCriticalOperation("Auto-trigger callback", if (callback != null) "registered" else "unregistered")
+        ApperoLogger.logCriticalOperation(
+            "Auto-trigger callback",
+            if (callback != null) "registered" else "unregistered"
+        )
     }
-    
+
     /**
      * Check if auto-trigger callback is registered (useful for Flutter integration)
      * @return true if callback is registered, false otherwise
@@ -157,7 +160,7 @@ object Appero {
 
     // Callback for feedback submission results
     private var onFeedbackSubmissionResult: ((Boolean, String) -> Unit)? = null
-    
+
     // Flutter auto-trigger callback
     private var autoTriggerCallback: ApperoAutoTriggerCallback? = null
 
@@ -190,11 +193,11 @@ object Appero {
         defaultPlaceholderFallback = context.getString(string.appero_feedback_default_placeholder_fallback)
         defaultSubmitFallback = context.getString(string.appero_feedback_default_submit_fallback)
         defaultNotNowFallback = context.getString(string.appero_feedback_default_not_now_fallback)
-        
+
         // Set debug mode first so we can log initialization
         ApperoLogger.setDebugMode(debugMode)
         ApperoLogger.logCriticalOperation("SDK Initialization", "Starting with debug mode: $debugMode")
-        
+
         val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         // Teardown any previous setup to avoid duplicate callbacks/queues
@@ -203,7 +206,8 @@ object Appero {
                 (connectivityManager ?: context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
                     ?.unregisterNetworkCallback(callback)
             }
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
         networkCallback = null
         offlineFeedbackQueue?.cleanup()
         offlineExperienceQueue?.cleanup()
@@ -211,20 +215,20 @@ object Appero {
         offlineExperienceQueue = null
 
         initializeClient(apiKey, clientId, sharedPreferences)
-        
+
         // Create API service with authentication credentials from the initialized client
         val apiService = ApperoApiService.create(
             apiKey = getApiKey()
         )
-        
+
         feedbackRepository = FeedbackRepository(sharedPreferences, apiService, context).also {
             offlineFeedbackQueue = OfflineFeedbackQueue(it, scope)
         }
-        
+
         experienceRepository = ExperienceRepository(sharedPreferences, apiService, context)
-        
+
         offlineExperienceQueue = experienceRepository?.let { OfflineExperienceQueue(it, scope) }
-        
+
         experienceTracker = ExperienceTracker(
             UserRepository(sharedPreferences),
             experienceRepository!!,
@@ -275,8 +279,6 @@ object Appero {
     fun log(experience: Experience) {
         requireInitialized()
         experienceTracker?.log(experience)
-        
-
     }
 
     /**
@@ -286,8 +288,6 @@ object Appero {
     fun log(points: Int) {
         requireInitialized()
         experienceTracker?.log(points)
-        
-
     }
 
     /**
@@ -351,34 +351,16 @@ object Appero {
     }
 
     /**
-     * Show the feedback prompt UI
-     * This will display the modal bottom sheet with emoji rating and text input
-     *
-     * @param config Configuration object containing all text content for the prompt
-     * @param onResult Optional callback to receive feedback submission results
-     */
-    fun showFeedbackPrompt(
-        config: FeedbackPromptConfig,
-        onResult: ((success: Boolean, message: String) -> Unit)? = null
-    ) {
-        requireInitialized()
-        _feedbackPromptConfig.value = config
-        _initialFeedbackStep.value = null
-        _showFeedbackPrompt.value = true
-        onFeedbackSubmissionResult = onResult
-    }
-
-    /**
      * Show the feedback prompt UI with a specific initial step
      * This will display the modal bottom sheet starting from the specified step
      *
      * @param config Configuration object containing all text content for the prompt
-     * @param initialStep The initial step to show (e.g., FeedbackStep.Frustration for frustration flow)
+     * @param initialStep The initial step to show (will show the Rating step, if null)
      * @param onResult Optional callback to receive feedback submission results
      */
     fun showFeedbackPrompt(
         config: FeedbackPromptConfig,
-        initialStep: FeedbackStep,
+        initialStep: FeedbackStep? = null,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
@@ -387,7 +369,7 @@ object Appero {
         _showFeedbackPrompt.value = true
         onFeedbackSubmissionResult = onResult
     }
-    
+
     /**
      * Internal method to trigger auto-feedback prompt
      * This checks if a Flutter callback is registered and uses it instead of native UI
@@ -396,7 +378,7 @@ object Appero {
      */
     internal fun triggerAutoFeedbackPrompt(feedbackUI: FeedbackUI?, flowType: String?) {
         requireInitialized()
-        
+
         val callback = autoTriggerCallback
         if (callback != null) {
             // Flutter callback is registered, use it instead of native UI
@@ -450,7 +432,7 @@ object Appero {
         val currentConfig = _feedbackPromptConfig.value ?: config
         val initialStep = _initialFeedbackStep.value
         var serverResponseMessage by remember { mutableStateOf<String?>(null) }
-        
+
         FeedbackPrompt(
             visible = _showFeedbackPrompt.value,
             config = currentConfig,
@@ -482,41 +464,42 @@ object Appero {
             serverResponseMessage = serverResponseMessage,
             onSubmissionResult = onResult,
             onShowThankYou = { message ->
-                android.util.Log.d("ApperoSDK", "Thank you callback triggered with message: $message")
+                ApperoLogger.debug("Thank you callback triggered with message: $message")
             }
         )
     }
 
     /**
      * Request Play Store review with comprehensive fallback handling
-     * 
+     *
      * This method follows Google's best practices:
      * 1. Attempts Google Play In-App Review API first
      * 2. Falls back to external Play Store if in-app review fails
      * 3. Provides analytics callbacks for all scenarios
-     * 
+     *
      * @param activity The current Activity context
      * @param fallbackToExternalStore Whether to fallback to external Play Store (default: true)
      * @param onComplete Optional callback with the result of the review request
      */
     fun requestPlayStoreReview(
-        activity: Activity, 
+        activity: Activity,
         fallbackToExternalStore: Boolean = true,
         onComplete: ((PlayStoreReviewResult) -> Unit)? = null
     ) {
         requireInitialized()
-        
+
         val config = PlayStoreReviewManager.ReviewConfig(
             fallbackToExternalStore = fallbackToExternalStore,
             enableAnalytics = analyticsListener != null
         )
-        
+
         playStoreReviewManager?.requestReview(activity, config) { result ->
             // Convert internal result to public result
             val publicResult = when (result) {
                 is PlayStoreReviewManager.ReviewResult.InAppReviewShown -> PlayStoreReviewResult.InAppReviewShown
                 is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted ->
                     PlayStoreReviewResult.InAppReviewCompleted
+
                 is PlayStoreReviewManager.ReviewResult.FallbackTriggered -> PlayStoreReviewResult.FallbackTriggered
                 is PlayStoreReviewManager.ReviewResult.Failed -> PlayStoreReviewResult.Failed(result.reason)
             }
@@ -530,7 +513,7 @@ object Appero {
     /**
      * Request Play Store review based on rating threshold
      * Only shows review prompt if rating meets or exceeds the threshold
-     * 
+     *
      * @param activity The current Activity context
      * @param rating The user's rating (1-5)
      * @param threshold The minimum rating to show the review prompt (default: 4)
@@ -545,10 +528,12 @@ object Appero {
         onComplete: ((PlayStoreReviewResult?) -> Unit)? = null
     ) {
         requireInitialized()
-        
+
         if (rating >= threshold) {
-            ApperoLogger.logCriticalOperation("Play Store Review",
-                "Rating $rating meets threshold $threshold, requesting review")
+            ApperoLogger.logCriticalOperation(
+                "Play Store Review",
+                "Rating $rating meets threshold $threshold, requesting review"
+            )
             requestPlayStoreReview(activity, fallbackToExternalStore) { result ->
                 onComplete?.invoke(result)
             }
@@ -561,13 +546,13 @@ object Appero {
     /**
      * Check if Google Play In-App Review is available on this device
      * This can be used to determine the best review strategy
-     * 
-     * @param activity The current Activity context
+     *
+     * @param context The current context
      * @return true if in-app review is likely available, false otherwise
      */
-    fun isInAppReviewAvailable(activity: Activity): Boolean {
+    fun isInAppReviewAvailable(context: Context): Boolean {
         requireInitialized()
-        return playStoreReviewManager?.isInAppReviewAvailable(activity) ?: false
+        return playStoreReviewManager?.isInAppReviewAvailable(context) ?: false
     }
 
     /**
@@ -627,7 +612,6 @@ object Appero {
     }
 
 
-
     /**
      * Clear all queued feedback (for testing/reset purposes)
      * WARNING: This will permanently delete all queued feedback
@@ -651,7 +635,7 @@ object Appero {
         activity: Activity
     ) {
         ApperoLogger.debug("Submitting feedback: rating=$rating, feedback length=${feedback.length}")
-        
+
         // Submit feedback to backend asynchronously using SDK scope
         scope.launch(Dispatchers.IO) {
             val result = submitFeedbackToBackend(rating, feedback)
@@ -663,17 +647,18 @@ object Appero {
                         onResult?.invoke(true, result.message)
                         onFeedbackSubmissionResult?.invoke(true, result.message)
                         ApperoLogger.logApiSuccess("/api/feedback", "POST", 200)
-                        
+
                         // Task 12: Automatic Play Store review integration
                         // This happens after successful feedback submission
                         triggerPlayStoreReviewIfEligible(rating, playStoreReviewThreshold, activity)
                     }
+
                     is FeedbackSubmissionResult.Error -> {
                         onResult?.invoke(false, result.message)
                         onFeedbackSubmissionResult?.invoke(false, result.message)
                         offlineFeedbackQueue?.queueFeedback(rating, feedback)
                         ApperoLogger.logApiError("/api/feedback", "POST", result.message)
-                        
+
                     }
                 }
                 onFeedbackSubmissionResult = null
@@ -684,7 +669,7 @@ object Appero {
     /**
      * Trigger Play Store review if the user's rating is eligible
      * This is called automatically after successful feedback submission (Task 12)
-     * 
+     *
      * @param rating The user's submitted rating
      * @param reviewThreshold The minimum rating to trigger review (default: 4)
      * @param activity The current Activity context
@@ -695,42 +680,49 @@ object Appero {
         activity: Activity
     ) {
         if (rating >= reviewThreshold) {
-            ApperoLogger.logCriticalOperation("Play Store Review",
-                "Auto-triggering review for rating $rating (threshold: $reviewThreshold)")
-            
-                         requestPlayStoreReviewIfRating(
-                 activity = activity,
-                 rating = rating,
-                 threshold = reviewThreshold,
-                 fallbackToExternalStore = true
-             ) { result ->
-                 when (result) {
-                     is PlayStoreReviewResult.InAppReviewShown -> {
-                         ApperoLogger.logCriticalOperation("Play Store Review", "In-app review dialog shown")
-                         
-                     }
-                     is PlayStoreReviewResult.InAppReviewCompleted -> {
-                         ApperoLogger.logCriticalOperation("Play Store Review", "In-app review completed")
-                         
-                     }
-                     is PlayStoreReviewResult.FallbackTriggered -> {
-                         ApperoLogger.logCriticalOperation(
-                             "Play Store Review", "Fallback to external Play Store triggered")
-                         
-                     }
-                     is PlayStoreReviewResult.Failed -> {
-                         ApperoLogger.logNetworkError("Play Store Review", "Review failed: ${result.reason}")
-                         
-                     }
-                     null -> {
-                         // Rating below threshold - this shouldn't happen since we check above
-                         ApperoLogger.debug("Play Store Review not triggered - rating below threshold")
-                     }
-                 }
-             }
+            ApperoLogger.logCriticalOperation(
+                "Play Store Review",
+                "Auto-triggering review for rating $rating (threshold: $reviewThreshold)"
+            )
+
+            requestPlayStoreReviewIfRating(
+                activity = activity,
+                rating = rating,
+                threshold = reviewThreshold,
+                fallbackToExternalStore = true
+            ) { result ->
+                when (result) {
+                    is PlayStoreReviewResult.InAppReviewShown -> {
+                        ApperoLogger.logCriticalOperation("Play Store Review", "In-app review dialog shown")
+
+                    }
+
+                    is PlayStoreReviewResult.InAppReviewCompleted -> {
+                        ApperoLogger.logCriticalOperation("Play Store Review", "In-app review completed")
+
+                    }
+
+                    is PlayStoreReviewResult.FallbackTriggered -> {
+                        ApperoLogger.logCriticalOperation(
+                            "Play Store Review", "Fallback to external Play Store triggered"
+                        )
+
+                    }
+
+                    is PlayStoreReviewResult.Failed -> {
+                        ApperoLogger.logNetworkError("Play Store Review", "Review failed: ${result.reason}")
+
+                    }
+
+                    null -> {
+                        // Rating below threshold - this shouldn't happen since we check above
+                        ApperoLogger.debug("Play Store Review not triggered - rating below threshold")
+                    }
+                }
+            }
         } else {
             ApperoLogger.debug("Play Store Review not triggered - rating $rating below threshold $reviewThreshold")
-            
+
         }
     }
 
@@ -766,7 +758,7 @@ object Appero {
     internal fun markFeedbackSubmitted() {
         experienceTracker?.markFeedbackSubmitted()
     }
-    
+
     /**
      * Setup network monitoring similar to iOS SDK's NWPathMonitor
      * Monitors network connectivity and triggers immediate queue processing when connectivity returns
@@ -812,7 +804,8 @@ object Appero {
             networkCallback?.let { callback ->
                 connectivityManager?.unregisterNetworkCallback(callback)
             }
-        } catch (_: Exception) { }
+        } catch (_: Exception) {
+        }
         networkCallback = null
         offlineFeedbackQueue?.cleanup()
         offlineExperienceQueue?.cleanup()
@@ -824,71 +817,33 @@ object Appero {
     // ==========================================
 
     /**
-     * Show feedback dialog for legacy XML-based projects
-     * This creates a DialogFragment with traditional Android Views
-     * 
-     * @param activity The current Activity (required for FragmentManager)
-     * @param config Configuration object containing all text content for the dialog
-     * @param onResult Optional callback to receive feedback submission results
-     */
-    fun showFeedbackDialog(
-        activity: androidx.fragment.app.FragmentActivity,
-        config: FeedbackPromptConfig,
-        onResult: ((success: Boolean, message: String) -> Unit)? = null
-    ) {
-        requireInitialized()
-        
-        val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
-        dialogFragment.setConfig(config)
-        dialogFragment.setAnalyticsListener(analyticsListener)
-        dialogFragment.setFlowConfig(FeedbackFlowConfig())
-        dialogFragment.setReviewPromptThreshold(playStoreReviewThreshold)
-        dialogFragment.setOnRequestReview {
-            requestPlayStoreReview(activity)
-        }
-        
-        dialogFragment.setOnSubmitCallback { rating, feedback ->
-            handleFeedbackSubmission(rating, feedback, { success, message ->
-                // Call the provided onResult callback
-                onResult?.invoke(success, message)
-                // Also call the dialog's feedback submission callback
-                dialogFragment.handleFeedbackSubmissionResult(success, message)
-            }, activity)
-        }
-        
-        dialogFragment.setOnDismissCallback {
-            // Dialog dismissed without submission
-        }
-        
-        dialogFragment.show(activity.supportFragmentManager, "ApperoFeedbackDialog")
-    }
-
-    /**
      * Show feedback dialog with initial step for legacy XML-based projects
-     * 
+     *
      * @param activity The current Activity (required for FragmentManager)
      * @param config Configuration object containing all text content for the dialog
-     * @param initialStep The initial step to show (currently not implemented for legacy)
+     * @param initialStep The initial step to show (will start with the default, rating, step, if null)
      * @param onResult Optional callback to receive feedback submission results
      */
     fun showFeedbackDialog(
         activity: androidx.fragment.app.FragmentActivity,
         config: FeedbackPromptConfig,
-        initialStep: FeedbackStep,
+        initialStep: FeedbackStep? = null,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
-        
+
         val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
         dialogFragment.setConfig(config)
-        dialogFragment.setInitialStep(initialStep)
+        initialStep?.let {
+            dialogFragment.setInitialStep(it)
+        }
         dialogFragment.setAnalyticsListener(analyticsListener)
         dialogFragment.setFlowConfig(FeedbackFlowConfig())
         dialogFragment.setReviewPromptThreshold(playStoreReviewThreshold)
         dialogFragment.setOnRequestReview {
             requestPlayStoreReview(activity)
         }
-        
+
         dialogFragment.setOnSubmitCallback { rating, feedback ->
             handleFeedbackSubmission(rating, feedback, { success, message ->
                 // Call the provided onResult callback
@@ -897,18 +852,18 @@ object Appero {
                 dialogFragment.handleFeedbackSubmissionResult(success, message)
             }, activity)
         }
-        
+
         dialogFragment.setOnDismissCallback {
             // Dialog dismissed without submission
         }
-        
+
         dialogFragment.show(activity.supportFragmentManager, "ApperoFeedbackDialog")
     }
 
     /**
      * Create a feedback DialogFragment for manual management
      * This is for advanced users who want to control the dialog lifecycle
-     * 
+     *
      * @param config Configuration object containing all text content for the dialog
      * @param onResult Optional callback to receive feedback submission results
      * @param activity The current Activity
@@ -920,11 +875,11 @@ object Appero {
         activity: Activity
     ): androidx.fragment.app.DialogFragment {
         requireInitialized()
-        
+
         val dialogFragment = com.appero.sdk.ui.legacy.FeedbackDialogFragment.newInstance()
         dialogFragment.setConfig(config)
         dialogFragment.setAnalyticsListener(analyticsListener)
-        
+
         dialogFragment.setOnSubmitCallback { rating, feedback ->
             handleFeedbackSubmission(rating, feedback, { success, message ->
                 // Call the provided onResult callback
@@ -933,24 +888,24 @@ object Appero {
                 dialogFragment.handleFeedbackSubmissionResult(success, message)
             }, activity)
         }
-        
+
         return dialogFragment
     }
 
     // Legacy XML Auto-Triggering Support
-    
+
     /**
      * Register a FragmentActivity for automatic legacy XML dialog triggering
-     * When experience thresholds are crossed (positive or frustration), the feedback dialog 
+     * When experience thresholds are crossed (positive or frustration), the feedback dialog
      * will be shown automatically using XML layouts instead of Compose
-     * 
+     *
      * @param activity The FragmentActivity to use for showing dialogs
      */
     fun registerLegacyActivity(activity: androidx.fragment.app.FragmentActivity) {
         requireInitialized()
         experienceTracker?.registerLegacyActivity(activity)
     }
-    
+
     /**
      * Unregister the current legacy activity (should be called in onDestroy)
      * After unregistering, auto-triggering will fall back to Compose dialogs
@@ -962,7 +917,7 @@ object Appero {
     /**
      * Test in-app review functionality with a published app
      * This is useful for SDK development when your app isn't published yet
-     * 
+     *
      * @param activity The current activity
      * @param testPackageName Package name of a published app to test with
      * (e.g., "com.whatsapp", "com.instagram.android")
@@ -974,20 +929,21 @@ object Appero {
         onComplete: ((PlayStoreReviewResult) -> Unit)? = null
     ) {
         requireInitialized()
-        
+
         if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
             Toast.makeText(activity, "🧪 Testing Play Store review with: $testPackageName", Toast.LENGTH_SHORT).show()
         }
-        
+
         playStoreReviewManager?.testWithPublishedApp(activity, testPackageName) { result ->
             val playStoreResult = when (result) {
                 is PlayStoreReviewManager.ReviewResult.InAppReviewShown -> PlayStoreReviewResult.InAppReviewShown
                 is PlayStoreReviewManager.ReviewResult.InAppReviewCompleted ->
                     PlayStoreReviewResult.InAppReviewCompleted
+
                 is PlayStoreReviewManager.ReviewResult.FallbackTriggered -> PlayStoreReviewResult.FallbackTriggered
                 is PlayStoreReviewManager.ReviewResult.Failed -> PlayStoreReviewResult.Failed(result.reason)
             }
-            
+
             onComplete?.invoke(playStoreResult)
         }
     }

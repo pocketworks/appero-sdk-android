@@ -1,5 +1,6 @@
 package com.appero.sdk.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,8 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -30,44 +29,40 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.appero.sdk.analytics.ApperoAnalyticsListener
+import com.appero.sdk.domain.model.Experience
 import com.appero.sdk.ui.config.FeedbackFlowConfig
 import com.appero.sdk.ui.config.FeedbackPromptConfig
 import com.appero.sdk.ui.theme.ApperoTheme
 import com.appero.sdk.ui.theme.DefaultTheme
+import kotlinx.coroutines.launch
 
 // Consistent spacing constants
 private object FeedbackSpacing {
@@ -86,24 +81,6 @@ private object FeedbackTextStyles {
     val cornerRadius = 8.dp
 }
 
-@Composable
-fun rememberImeState(): State<Boolean> {
-    val view = LocalView.current
-    var isImeVisible by remember { mutableStateOf(false) }
-
-    DisposableEffect(Unit) {
-        val listener = android.view.ViewTreeObserver.OnPreDrawListener {
-            isImeVisible = ViewCompat.getRootWindowInsets(view)
-                ?.isVisible(WindowInsetsCompat.Type.ime()) == true
-            true
-        }
-        view.viewTreeObserver.addOnPreDrawListener(listener)
-        onDispose { view.viewTreeObserver.removeOnPreDrawListener(listener) }
-    }
-
-    return remember { derivedStateOf { isImeVisible } }
-}
-
 sealed class FeedbackStep {
     object Rating : FeedbackStep()
     object Frustration : FeedbackStep()
@@ -113,13 +90,13 @@ sealed class FeedbackStep {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedbackPrompt(
+    modifier: Modifier = Modifier,
     visible: Boolean,
     config: FeedbackPromptConfig,
     theme: ApperoTheme = DefaultTheme(),
     analyticsListener: ApperoAnalyticsListener? = null,
     onSubmit: (rating: Int, feedback: String, onSuccess: (String) -> Unit) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
     flowConfig: FeedbackFlowConfig = FeedbackFlowConfig(),
     reviewPromptThreshold: Int = 4,
     onRequestReview: () -> Unit = {},
@@ -134,9 +111,9 @@ fun FeedbackPrompt(
     var currentStep by remember { mutableStateOf<FeedbackStep>(initialStep ?: FeedbackStep.Rating) }
     var isSubmitting by remember { mutableStateOf(false) }
     var internalServerResponseMessage by remember { mutableStateOf<String?>(null) }
-    val imeState = rememberImeState()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+    val scope = rememberCoroutineScope()
+
     // Function to reset all state to initial values
     fun resetState() {
         selectedRating = 0
@@ -146,8 +123,18 @@ fun FeedbackPrompt(
         internalServerResponseMessage = null
     }
 
+    LaunchedEffect(visible) {
+        if (visible) {
+            scope.launch {
+                bottomSheetState.expand()
+            }
+        } else {
+            bottomSheetState.hide()
+        }
+    }
+
     LaunchedEffect(initialStep) { if (initialStep != null) currentStep = initialStep }
-    
+
     // Function to transition to thank you step
     fun transitionToThankYou(message: String) {
         internalServerResponseMessage = message
@@ -155,120 +142,97 @@ fun FeedbackPrompt(
         currentStep = FeedbackStep.ThankYou
     }
 
-    
-    // Expand bottom sheet when rating is selected to ensure CTA is visible
-    LaunchedEffect(selectedRating) {
-        if (selectedRating > 0) {
-            bottomSheetState.expand()
-        }
-    }
-    
-    // Expand bottom sheet for frustration flow to ensure all content is visible
-    LaunchedEffect(currentStep) {
-        if (currentStep is FeedbackStep.Frustration) {
-            bottomSheetState.expand()
-        }
-    }
-    
-    // Keep sheet expanded when keyboard hides or user tries to collapse
-    LaunchedEffect(bottomSheetState.targetValue, selectedRating, currentStep) {
-        if ((selectedRating > 0 || currentStep is FeedbackStep.Frustration) && 
-            bottomSheetState.targetValue != SheetValue.Expanded) {
-            bottomSheetState.expand()
-        }
-    }
-    
     // Note: Accessibility announcements moved to RatingStepContent for proper Composable context
 
     if (visible) {
-        Column(
-            modifier = Modifier.fillMaxSize().background(Color.Transparent),
-            verticalArrangement = Arrangement.Bottom
+        ModalBottomSheet(
+            windowInsets = WindowInsets.navigationBars,
+            onDismissRequest = {
+                resetState()
+                onDismiss()
+            },
+            dragHandle = null,
+            modifier = modifier.semantics {
+                contentDescription =
+                    context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
+            },
+            containerColor = if (theme.backgroundColor != Color.Transparent)
+                theme.backgroundColor
+            else
+                theme.surfaceColor,
+            sheetState = bottomSheetState
         ) {
-            ModalBottomSheet(
-                windowInsets = WindowInsets.ime,
-                onDismissRequest = {
-                    resetState()
-                    onDismiss()
-                },
-                dragHandle = null,
-                modifier = modifier.semantics {
-                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
-                },
-                containerColor = if (theme.backgroundColor != Color.Transparent) theme.backgroundColor else theme.surfaceColor,
-                sheetState = bottomSheetState
-            ) {
-                when {
-                    isSubmitting -> {
-                        LoadingStepContent(
-                            theme = theme,
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
+            when {
+                isSubmitting -> {
+                    LoadingStepContent(
+                        theme = theme,
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        }
+                    )
+                }
+
+                currentStep is FeedbackStep.Rating -> {
+                    RatingStepContent(
+                        config = config,
+                        theme = theme,
+                        selectedRating = selectedRating,
+                        feedbackText = feedbackText,
+                        onRatingSelected = { rating ->
+                            selectedRating = rating
+                            analyticsListener?.onRatingSelected(rating)
+                        },
+                        onFeedbackTextChanged = { text ->
+                            if (text.length <= config.maxCharacters) feedbackText = text
+                        },
+                        onSubmit = {
+                            isSubmitting = true
+                            onSubmit(selectedRating, feedbackText) { message ->
+                                transitionToThankYou(message)
                             }
-                        )
-                    }
-                    currentStep is FeedbackStep.Rating -> {
-                        RatingStepContent(
-                            config = config,
-                            theme = theme,
-                            imeState = imeState,
-                            selectedRating = selectedRating,
-                            feedbackText = feedbackText,
-                            onRatingSelected = { rating ->
-                                selectedRating = rating
-                                analyticsListener?.onRatingSelected(rating)
-                            },
-                            onFeedbackTextChanged = { text ->
-                                if (text.length <= config.maxCharacters) feedbackText = text
-                            },
-                            onSubmit = {
-                                isSubmitting = true
-                                onSubmit(selectedRating, feedbackText) { message ->
-                                    transitionToThankYou(message)
-                                }
-                            },
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
+                        },
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        }
+                    )
+                }
+
+                currentStep is FeedbackStep.Frustration -> {
+                    FrustrationStepContent(
+                        config = config,
+                        theme = theme,
+                        feedbackText = feedbackText,
+                        onFeedbackTextChanged = { text ->
+                            if (text.length <= config.maxCharacters) feedbackText = text
+                        },
+                        onSubmit = {
+                            isSubmitting = true
+                            onSubmit(0, feedbackText) { message ->
+                                transitionToThankYou(message)
                             }
-                        )
-                    }
-                    currentStep is FeedbackStep.Frustration -> {
-                        FrustrationStepContent(
-                            config = config,
-                            theme = theme,
-                            imeState = imeState,
-                            feedbackText = feedbackText,
-                            onFeedbackTextChanged = { text ->
-                                if (text.length <= config.maxCharacters) feedbackText = text
-                            },
-                            onSubmit = {
-                                isSubmitting = true
-                                onSubmit(0, feedbackText) { message ->
-                                    transitionToThankYou(message)
-                                }
-                            },
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
-                            }
-                        )
-                    }
-                    currentStep is FeedbackStep.ThankYou -> {
-                        ThankYouStepContent(
-                            flowConfig = flowConfig,
-                            theme = theme,
-                            selectedRating = selectedRating,
-                            reviewPromptThreshold = reviewPromptThreshold,
-                            onRequestReview = onRequestReview,
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
-                            },
-                            serverResponseMessage = internalServerResponseMessage
-                        )
-                    }
+                        },
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        }
+                    )
+                }
+
+                currentStep is FeedbackStep.ThankYou -> {
+                    ThankYouStepContent(
+                        flowConfig = flowConfig,
+                        theme = theme,
+                        selectedRating = selectedRating,
+                        reviewPromptThreshold = reviewPromptThreshold,
+                        onRequestReview = onRequestReview,
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        },
+                        serverResponseMessage = internalServerResponseMessage
+                    )
                 }
             }
         }
@@ -284,19 +248,20 @@ private fun CloseButton(
     val context = LocalContext.current
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         IconButton(
-            onClick = onDismiss, 
+            onClick = onDismiss,
             modifier = Modifier
                 .size(FeedbackSpacing.iconSize)
                 .semantics {
-                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_close_button)
+                    contentDescription =
+                        context.getString(com.example.appero_sdk_android.R.string.appero_compose_close_button)
                 }
         ) {
             Icon(
-                Icons.Default.Close, 
+                Icons.Default.Close,
                 contentDescription = null, // Handled by semantics
-                tint = if (theme.secondaryTextColor != Color.Unspecified) 
-                    theme.secondaryTextColor 
-                else 
+                tint = if (theme.secondaryTextColor != Color.Unspecified)
+                    theme.secondaryTextColor
+                else
                     MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -318,14 +283,14 @@ private fun FeedbackTextInput(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = { 
+            placeholder = {
                 Text(
-                    text = placeholder, 
-                    color = if (theme.secondaryTextColor != Color.Unspecified) 
-                        theme.secondaryTextColor 
-                    else 
+                    text = placeholder,
+                    color = if (theme.secondaryTextColor != Color.Unspecified)
+                        theme.secondaryTextColor
+                    else
                         MaterialTheme.colorScheme.onSurfaceVariant
-                ) 
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -335,7 +300,10 @@ private fun FeedbackTextInput(
                     shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius)
                 )
                 .semantics {
-                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_feedback_input, maxCharacters)
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_feedback_input,
+                        maxCharacters
+                    )
                 },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             colors = OutlinedTextFieldDefaults.colors(
@@ -349,20 +317,24 @@ private fun FeedbackTextInput(
             shape = RoundedCornerShape(FeedbackTextStyles.cornerRadius),
             maxLines = 4
         )
-        
+
         // Character counter
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Text(
-                text = "${value.length}/$maxCharacters", 
-                fontSize = 12.sp, 
-                color = if (theme.secondaryTextColor != Color.Unspecified) 
-                    theme.secondaryTextColor 
-                else 
-                    MaterialTheme.colorScheme.onSurfaceVariant, 
+                text = "${value.length}/$maxCharacters",
+                fontSize = 12.sp,
+                color = if (theme.secondaryTextColor != Color.Unspecified)
+                    theme.secondaryTextColor
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(top = FeedbackSpacing.tiny)
                     .semantics {
-                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_character_counter, value.length, maxCharacters)
+                        contentDescription = context.getString(
+                            com.example.appero_sdk_android.R.string.appero_compose_character_counter,
+                            value.length,
+                            maxCharacters
+                        )
                     }
             )
         }
@@ -372,11 +344,11 @@ private fun FeedbackTextInput(
 // Reusable Primary Button Component
 @Composable
 private fun PrimaryButton(
+    modifier: Modifier = Modifier,
     text: String,
     onClick: () -> Unit,
     theme: ApperoTheme,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
+    enabled: Boolean = true
 ) {
     Button(
         onClick = onClick,
@@ -391,8 +363,8 @@ private fun PrimaryButton(
                 }
             },
         colors = ButtonDefaults.buttonColors(containerColor = theme.accentColor)
-    ) { 
-        Text(text = text, color = theme.buttonTextColor) 
+    ) {
+        Text(text = text, color = theme.buttonTextColor)
     }
 }
 
@@ -415,14 +387,14 @@ private fun SecondaryButton(
                 }
             },
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-    ) { 
+    ) {
         Text(
-            text = text, 
-            color = if (theme.textColor != Color.Unspecified) 
-                theme.textColor 
-            else 
+            text = text,
+            color = if (theme.textColor != Color.Unspecified)
+                theme.textColor
+            else
                 MaterialTheme.colorScheme.onSurface
-        ) 
+        )
     }
 }
 
@@ -431,7 +403,6 @@ private fun SecondaryButton(
 private fun RatingStepContent(
     config: FeedbackPromptConfig,
     theme: ApperoTheme,
-    imeState: State<Boolean>,
     selectedRating: Int,
     feedbackText: String,
     onRatingSelected: (Int) -> Unit,
@@ -440,96 +411,101 @@ private fun RatingStepContent(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-            .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.medium)
             .windowInsetsPadding(WindowInsets.ime),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
-                            
-                            // Only show title and subtitle when keyboard is not visible
-                            if (!imeState.value) {
-            Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-                                Text(
-                                    text = config.title, 
-                                    fontSize = 18.sp, 
-                                    fontWeight = FontWeight.Bold, 
-                                    textAlign = TextAlign.Center, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier
-                    .padding(horizontal = FeedbackSpacing.medium)
-                    .semantics {
-                        heading()
-                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_title, config.title)
-                    },
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
-                                )
-            Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-                                Text(
-                                    text = config.subtitle, 
-                                    fontSize = 16.sp, 
-                                    fontWeight = FontWeight.Normal,
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.semantics {
-                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_prompt_subtitle, config.subtitle)
-                    },
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
-                                )
-            Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-                            }
-                            
-                            // Only show emoji rating when keyboard is not visible
-                            if (!imeState.value) {
-                                EmojiRatingScale(
-                                    selectedRating = selectedRating,
-                                    theme = theme,
-                onRatingSelected = onRatingSelected
-                                )
-            Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-                            }
-                            
-                            // Only show feedback input and CTA after a rating is selected
-                            if (selectedRating > 0) {
-                                // Show follow-up question (always visible when input is shown)
-                                Text(
-                                    text = config.followUpQuestion, 
-                                    fontSize = 16.sp, 
-                                    fontWeight = FontWeight.Normal, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                                    textAlign = TextAlign.Start, 
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                    .padding(horizontal = FeedbackSpacing.medium)
-                                        .semantics {
-                                            contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_follow_up_question, config.followUpQuestion)
-                                        },
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Default
-                                )
+
+        Spacer(modifier = Modifier.height(FeedbackSpacing.small))
+        Text(
+            text = config.title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = if (theme.textColor != Color.Unspecified)
+                theme.textColor
+            else
+                MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .semantics {
+                    heading()
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_prompt_title,
+                        config.title
+                    )
+                },
+            fontFamily = FontFamily.Default
+        )
+        Spacer(modifier = Modifier.height(FeedbackSpacing.small))
+        Text(
+            text = config.subtitle,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Normal,
+            color = if (theme.textColor != Color.Unspecified)
+                theme.textColor
+            else
+                MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics {
+                contentDescription = context.getString(
+                    com.example.appero_sdk_android.R.string.appero_compose_prompt_subtitle,
+                    config.subtitle
+                )
+            },
+            fontFamily = FontFamily.Default
+        )
+        Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
+
+        EmojiRatingScale(
+            selectedRating = selectedRating,
+            theme = theme,
+            onRatingSelected = onRatingSelected
+        )
+        Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
+
+
+        // Only show feedback input and CTA after a rating is selected
+        if (selectedRating > 0) {
+            // Show follow-up question (always visible when input is shown)
+            Text(
+                text = config.followUpQuestion,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                color = if (theme.textColor != Color.Unspecified)
+                    theme.textColor
+                else
+                    MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.semantics {
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_follow_up_question,
+                        config.followUpQuestion
+                    )
+                },
+                fontFamily = FontFamily.Default
+            )
             Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
-                                
+
             FeedbackTextInput(
-                                    value = feedbackText,
+                value = feedbackText,
                 onValueChange = onFeedbackTextChanged,
                 placeholder = config.placeholder,
                 theme = theme,
                 maxCharacters = config.maxCharacters
             )
-            
-                                Spacer(modifier = Modifier.height(20.dp))
-            
+            Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
+
             PrimaryButton(
                 text = config.submitText,
                 onClick = onSubmit,
                 theme = theme,
-                enabled = feedbackText.isNotBlank() && selectedRating > 0
+                enabled = feedbackText.isNotBlank()
             )
-            
-            // Add bottom padding to ensure button is above navigation bar
-            Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         }
     }
 }
@@ -539,81 +515,84 @@ private fun RatingStepContent(
 private fun FrustrationStepContent(
     config: FeedbackPromptConfig,
     theme: ApperoTheme,
-    imeState: State<Boolean>,
     feedbackText: String,
     onFeedbackTextChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-            .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .padding(horizontal = FeedbackSpacing.large, vertical = FeedbackSpacing.medium)
             .windowInsetsPadding(WindowInsets.ime),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         CloseButton(theme = theme, onDismiss = onDismiss)
-                            
-                            // Only show title and subtitle when keyboard is not visible
-                            if (!imeState.value) {
-            Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-            Text(
-                text = config.title, 
-                fontSize = 20.sp, 
-                fontWeight = FontWeight.SemiBold, 
-                textAlign = TextAlign.Center, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier
-                    .padding(horizontal = FeedbackSpacing.medium)
-                    .semantics {
-                        heading()
-                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_frustration_title, config.title)
-                    }
-            )
-            Spacer(modifier = Modifier.height(FeedbackSpacing.small))
-            Text(
-                text = config.subtitle, 
-                fontSize = 16.sp, 
-                textAlign = TextAlign.Center, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
-                modifier = Modifier
-                    .padding(horizontal = FeedbackSpacing.medium)
-                    .semantics {
-                        contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_frustration_subtitle, config.subtitle)
-                    }
-            )
-            Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-        }
-        
+
+        Spacer(modifier = Modifier.height(FeedbackSpacing.small))
+        Text(
+            text = config.title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            color = if (theme.textColor != Color.Unspecified)
+                theme.textColor
+            else
+                MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .padding(horizontal = FeedbackSpacing.medium)
+                .semantics {
+                    heading()
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_frustration_title,
+                        config.title
+                    )
+                }
+        )
+        Spacer(modifier = Modifier.height(FeedbackSpacing.small))
+        Text(
+            text = config.subtitle,
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+            color = if (theme.textColor != Color.Unspecified)
+                theme.textColor
+            else
+                MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .padding(horizontal = FeedbackSpacing.medium)
+                .semantics {
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_frustration_subtitle,
+                        config.subtitle
+                    )
+                }
+        )
+        Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
+
         FeedbackTextInput(
-                                value = feedbackText,
+            value = feedbackText,
             onValueChange = onFeedbackTextChanged,
             placeholder = config.placeholder,
             theme = theme,
             maxCharacters = config.maxCharacters
         )
-        
-        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-        
+        Spacer(modifier = Modifier.height(FeedbackSpacing.medium))
+
         PrimaryButton(
             text = config.submitText,
             onClick = onSubmit,
             theme = theme,
             enabled = feedbackText.isNotBlank()
         )
-        
-                                Spacer(modifier = Modifier.height(12.dp))
-        
+        Spacer(modifier = Modifier.height(FeedbackSpacing.small))
+
         SecondaryButton(
             text = config.secondaryButtonText,
             onClick = onDismiss,
             theme = theme
         )
-        
-        // Add bottom padding to ensure button is above navigation bar
-        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 
@@ -633,52 +612,57 @@ private fun ThankYouStepContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(FeedbackSpacing.large)
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .windowInsetsPadding(WindowInsets.ime),
+            .windowInsetsPadding(WindowInsets.navigationBars),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(FeedbackSpacing.large))
         Text(
-            text = serverResponseMessage ?: flowConfig.thankYouTitle, 
-            fontSize = 18.sp, 
-            fontWeight = FontWeight.Bold, 
-            textAlign = TextAlign.Center, 
-            color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface, 
+            text = serverResponseMessage ?: flowConfig.thankYouTitle,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .padding(horizontal = FeedbackSpacing.medium)
                 .semantics {
                     heading()
-                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_thank_you_message, serverResponseMessage ?: flowConfig.thankYouTitle)
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_thank_you_message,
+                        serverResponseMessage ?: flowConfig.thankYouTitle
+                    )
                 }
         )
         Spacer(modifier = Modifier.height(FeedbackSpacing.small))
         if (serverResponseMessage == null) {
             Text(
-                text = flowConfig.thankYouSubtitle, 
-                fontSize = 16.sp, 
-                textAlign = TextAlign.Center, 
-                color = if (theme.textColor != Color.Unspecified) theme.textColor else MaterialTheme.colorScheme.onSurface,
+                text = flowConfig.thankYouSubtitle,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                color = if (theme.textColor != Color.Unspecified)
+                    theme.textColor
+                else
+                    MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.semantics {
-                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_thank_you_subtitle, flowConfig.thankYouSubtitle)
+                    contentDescription = context.getString(
+                        com.example.appero_sdk_android.R.string.appero_compose_thank_you_subtitle,
+                        flowConfig.thankYouSubtitle
+                    )
                 }
             )
         }
         Spacer(modifier = Modifier.height(FeedbackSpacing.xlarge))
-        
+
         PrimaryButton(
             text = flowConfig.thankYouCtaText,
-            onClick = { 
+            onClick = {
                 // Trigger Play Store review if eligible before dismissing
                 if (selectedRating >= reviewPromptThreshold) {
                     onRequestReview()
                 }
-                onDismiss() 
+                onDismiss()
             },
             theme = theme
         )
-        
-        // Add bottom padding to ensure button is above navigation bar
-        Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
 
@@ -697,18 +681,22 @@ private fun LoadingStepContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(FeedbackSpacing.large))
-        
+
         // Circular loading indicator
         CircularProgressIndicator(
             modifier = Modifier
                 .size(48.dp)
                 .semantics {
-                    contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_loading)
+                    contentDescription =
+                        context.getString(com.example.appero_sdk_android.R.string.appero_compose_loading)
                 },
-            color = if (theme.accentColor != Color.Unspecified) theme.accentColor else MaterialTheme.colorScheme.primary,
+            color = if (theme.accentColor != Color.Unspecified)
+                theme.accentColor
+            else
+                MaterialTheme.colorScheme.primary,
             strokeWidth = 4.dp
         )
-        
+
         Spacer(modifier = Modifier.height(FeedbackSpacing.large))
     }
 }
@@ -726,56 +714,37 @@ internal fun EmojiRatingScale(
         modifier = modifier
             .fillMaxWidth()
             .semantics {
-                contentDescription = context.getString(com.example.appero_sdk_android.R.string.appero_compose_rating_scale)
-            }, 
-        horizontalArrangement = Arrangement.SpaceEvenly, 
+                contentDescription =
+                    context.getString(com.example.appero_sdk_android.R.string.appero_compose_rating_scale)
+            },
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        (1..5).forEach { rating ->
-            val isSelected = selectedRating == rating
+        Experience.entries.forEach { entry ->
+            val isSelected = selectedRating == entry.rating
 
             Box(
                 modifier = Modifier
                     .size(FeedbackSpacing.ratingSize)
                     .clip(RoundedCornerShape(25.dp))
-                    .clickable { onRatingSelected(rating) }
+                    .clickable { onRatingSelected(entry.rating) }
                     .semantics {
-                        val ratingDescription = when (rating) {
-                            1 -> "Very negative experience, 1 star"
-                            2 -> "Negative experience, 2 stars"
-                            3 -> "Neutral experience, 3 stars"
-                            4 -> "Positive experience, 4 stars"
-                            5 -> "Very positive experience, 5 stars"
-                            else -> "Rating $rating"
-                        }
-                        contentDescription = ratingDescription
+                        val descriptionId = entry.description
+                        contentDescription = context.getString(descriptionId)
                         stateDescription = if (isSelected) "Selected" else "Not selected"
                         // Note: accessibilityAction not available in current Compose version
                         // Using contentDescription and stateDescription for accessibility
                     },
                 contentAlignment = Alignment.Center
             ) {
-                val drawableId = context.resources.getIdentifier(
-                    when (rating) {
-                        1 -> "ic_rating_very_negative"
-                        2 -> "ic_rating_negative"
-                        3 -> "ic_rating_neutral"
-                        4 -> "ic_rating_positive"
-                        5 -> "ic_rating_very_positive"
-                        else -> "ic_rating_neutral"
-                    },
-                    "drawable",
-                    context.packageName
-                )
-                
                 // SVG icon with original colors
                 Icon(
-                    painter = painterResource(id = drawableId),
+                    painter = painterResource(id = entry.icon),
                     contentDescription = null, // Handled by semantics
                     modifier = Modifier.size(FeedbackSpacing.ratingSize),
                     tint = Color.Unspecified
                 )
-                
+
                 // Semi-transparent overlay for unselected icons (only when a rating is selected)
                 if (selectedRating > 0 && !isSelected) {
                     Box(

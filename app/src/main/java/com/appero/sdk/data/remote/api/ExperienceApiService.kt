@@ -1,5 +1,6 @@
 package com.appero.sdk.data.remote.api
 
+import com.appero.sdk.data.remote.dto.ExperienceResponse
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Multipart
@@ -9,6 +10,7 @@ import retrofit2.http.Part
 /**
  * Retrofit API service for submitting experiences to the Appero backend
  */
+@Suppress("detekt:LongParameterList")
 internal interface ExperienceApiService {
     
     /**
@@ -32,5 +34,5 @@ internal interface ExperienceApiService {
         @Part("sent_at") sentAt: RequestBody,
         @Part("source") source: RequestBody,
         @Part("build_version") buildVersion: RequestBody
-    ): Response<com.appero.sdk.data.remote.dto.ExperienceResponse>
+    ): Response<ExperienceResponse>
 } 

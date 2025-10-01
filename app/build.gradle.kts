@@ -65,7 +65,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.pocketworks"
                 artifactId = "appero-sdk-android"
-                version = "1.0.2"
+                version = "1.0.3"
                 
                 pom {
                     name.set("Appero Android SDK")

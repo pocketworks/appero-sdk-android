@@ -78,7 +78,9 @@ enum class HttpStatusCode(val value: Int, val description: String) {
 
     companion object {
         private val map = HttpStatusCode.entries.associateBy(HttpStatusCode::value)
-        fun getByValue(value: Int): HttpStatusCode = map[value] ?: throw IllegalArgumentException("Invalid status code: $value")
+        fun getByValue(value: Int): HttpStatusCode =
+            map[value] ?: throw IllegalArgumentException("Invalid status code: $value")
+
         fun getByValueOrNull(value: Int): HttpStatusCode? = map[value]
     }
 } 

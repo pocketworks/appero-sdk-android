@@ -1,16 +1,15 @@
 package com.appero.sdk.data.local.queue
 
+import com.appero.sdk.debug.ApperoLogger
 import com.appero.sdk.domain.repository.FeedbackRepository
 import com.appero.sdk.domain.repository.FeedbackSubmissionResult
 import com.appero.sdk.util.DateTimeUtils.getCurrentTimestamp
-import com.appero.sdk.debug.ApperoLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.timer
-import android.util.Log
 
 /**
  * Data model for queued feedback
@@ -99,7 +98,7 @@ internal class OfflineFeedbackQueue(
         )
 
         val currentQueue = feedbackRepository.getQueuedFeedback().toMutableList()
-        
+
         if (currentQueue.size >= MAX_QUEUE_SIZE) {
             ApperoLogger.warning("Queue full, removing oldest item")
             currentQueue.removeAt(0) // Remove oldest item
@@ -151,8 +150,10 @@ internal class OfflineFeedbackQueue(
                                     // Add back to queue with incremented retry count
                                     updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
                                 } else {
-                                    ApperoLogger.logApiError("/api/feedback", "POST", 
-                                        "Max retries reached for item ${item.id}")
+                                    ApperoLogger.logApiError(
+                                        "/api/feedback", "POST",
+                                        "Max retries reached for item ${item.id}"
+                                    )
                                 }
                                 // If max retries reached, item is dropped (not added to updatedQueue)
                             }
@@ -162,8 +163,10 @@ internal class OfflineFeedbackQueue(
                         if (item.retryCount < MAX_RETRY_ATTEMPTS) {
                             updatedQueue.add(item.copy(retryCount = item.retryCount + 1))
                         } else {
-                            ApperoLogger.logNetworkError("Feedback Queue Processing", 
-                                "Max retries reached for item ${item.id}")
+                            ApperoLogger.logNetworkError(
+                                "Feedback Queue Processing",
+                                "Max retries reached for item ${item.id}"
+                            )
                         }
                     }
                 }
