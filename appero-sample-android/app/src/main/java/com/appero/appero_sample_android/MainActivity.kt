@@ -43,8 +43,8 @@ class MainActivity : FragmentActivity() {
         // Initialize the Appero SDK with DEBUG mode for development
         Appero.start(
             context = this,
-            apiKey = "mLqKSXRmDHgf0bumN3hkxBAO6idIA4KB9nXkyA1nkc4", // Updated API key to match curl
-            clientId = "tester_01", // Sample client ID
+            apiKey = "your_appero_api_key", // Your appeor API key
+            clientId = "client_id", // An id to identify the client in the appero web app
             debugMode = ApperoDebugMode.DEBUG // Enable debug logging for development
         )
         

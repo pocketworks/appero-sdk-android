@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -31,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -123,7 +121,14 @@ fun FeedbackPrompt(
         currentStep = initialStep ?: FeedbackStep.Rating
         isSubmitting = false
         internalServerResponseMessage = null
-        scope.launch {
+    }
+
+    LaunchedEffect(visible) {
+        if (visible) {
+            scope.launch {
+                bottomSheetState.expand()
+            }
+        } else {
             bottomSheetState.hide()
         }
     }
@@ -137,128 +142,97 @@ fun FeedbackPrompt(
         currentStep = FeedbackStep.ThankYou
     }
 
-
-    // Expand bottom sheet when rating is selected to ensure CTA is visible
-    LaunchedEffect(selectedRating) {
-        if (selectedRating > 0) {
-            bottomSheetState.expand()
-        }
-    }
-
-    // Expand bottom sheet for frustration flow to ensure all content is visible
-    LaunchedEffect(currentStep) {
-        if (currentStep is FeedbackStep.Frustration) {
-            bottomSheetState.expand()
-        }
-    }
-
-    // Keep sheet expanded when keyboard hides or user tries to collapse
-    LaunchedEffect(bottomSheetState.targetValue, selectedRating, currentStep) {
-        if ((selectedRating > 0 || currentStep is FeedbackStep.Frustration) &&
-            bottomSheetState.targetValue != SheetValue.Expanded
-        ) {
-            bottomSheetState.expand()
-        }
-    }
-
     // Note: Accessibility announcements moved to RatingStepContent for proper Composable context
 
     if (visible) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Transparent),
-            verticalArrangement = Arrangement.Bottom
+        ModalBottomSheet(
+            windowInsets = WindowInsets.navigationBars,
+            onDismissRequest = {
+                resetState()
+                onDismiss()
+            },
+            dragHandle = null,
+            modifier = modifier.semantics {
+                contentDescription =
+                    context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
+            },
+            containerColor = if (theme.backgroundColor != Color.Transparent)
+                theme.backgroundColor
+            else
+                theme.surfaceColor,
+            sheetState = bottomSheetState
         ) {
-            ModalBottomSheet(
-                windowInsets = WindowInsets.navigationBars,
-                onDismissRequest = {
-                    resetState()
-                    onDismiss()
-                },
-                dragHandle = null,
-                modifier = modifier.semantics {
-                    contentDescription =
-                        context.getString(com.example.appero_sdk_android.R.string.appero_compose_bottom_sheet)
-                },
-                containerColor = if (theme.backgroundColor != Color.Transparent)
-                    theme.backgroundColor
-                else
-                    theme.surfaceColor,
-                sheetState = bottomSheetState
-            ) {
-                when {
-                    isSubmitting -> {
-                        LoadingStepContent(
-                            theme = theme,
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
-                            }
-                        )
-                    }
+            when {
+                isSubmitting -> {
+                    LoadingStepContent(
+                        theme = theme,
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        }
+                    )
+                }
 
-                    currentStep is FeedbackStep.Rating -> {
-                        RatingStepContent(
-                            config = config,
-                            theme = theme,
-                            selectedRating = selectedRating,
-                            feedbackText = feedbackText,
-                            onRatingSelected = { rating ->
-                                selectedRating = rating
-                                analyticsListener?.onRatingSelected(rating)
-                            },
-                            onFeedbackTextChanged = { text ->
-                                if (text.length <= config.maxCharacters) feedbackText = text
-                            },
-                            onSubmit = {
-                                isSubmitting = true
-                                onSubmit(selectedRating, feedbackText) { message ->
-                                    transitionToThankYou(message)
-                                }
-                            },
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
+                currentStep is FeedbackStep.Rating -> {
+                    RatingStepContent(
+                        config = config,
+                        theme = theme,
+                        selectedRating = selectedRating,
+                        feedbackText = feedbackText,
+                        onRatingSelected = { rating ->
+                            selectedRating = rating
+                            analyticsListener?.onRatingSelected(rating)
+                        },
+                        onFeedbackTextChanged = { text ->
+                            if (text.length <= config.maxCharacters) feedbackText = text
+                        },
+                        onSubmit = {
+                            isSubmitting = true
+                            onSubmit(selectedRating, feedbackText) { message ->
+                                transitionToThankYou(message)
                             }
-                        )
-                    }
+                        },
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        }
+                    )
+                }
 
-                    currentStep is FeedbackStep.Frustration -> {
-                        FrustrationStepContent(
-                            config = config,
-                            theme = theme,
-                            feedbackText = feedbackText,
-                            onFeedbackTextChanged = { text ->
-                                if (text.length <= config.maxCharacters) feedbackText = text
-                            },
-                            onSubmit = {
-                                isSubmitting = true
-                                onSubmit(0, feedbackText) { message ->
-                                    transitionToThankYou(message)
-                                }
-                            },
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
+                currentStep is FeedbackStep.Frustration -> {
+                    FrustrationStepContent(
+                        config = config,
+                        theme = theme,
+                        feedbackText = feedbackText,
+                        onFeedbackTextChanged = { text ->
+                            if (text.length <= config.maxCharacters) feedbackText = text
+                        },
+                        onSubmit = {
+                            isSubmitting = true
+                            onSubmit(0, feedbackText) { message ->
+                                transitionToThankYou(message)
                             }
-                        )
-                    }
+                        },
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        }
+                    )
+                }
 
-                    currentStep is FeedbackStep.ThankYou -> {
-                        ThankYouStepContent(
-                            flowConfig = flowConfig,
-                            theme = theme,
-                            selectedRating = selectedRating,
-                            reviewPromptThreshold = reviewPromptThreshold,
-                            onRequestReview = onRequestReview,
-                            onDismiss = {
-                                resetState()
-                                onDismiss()
-                            },
-                            serverResponseMessage = internalServerResponseMessage
-                        )
-                    }
+                currentStep is FeedbackStep.ThankYou -> {
+                    ThankYouStepContent(
+                        flowConfig = flowConfig,
+                        theme = theme,
+                        selectedRating = selectedRating,
+                        reviewPromptThreshold = reviewPromptThreshold,
+                        onRequestReview = onRequestReview,
+                        onDismiss = {
+                            resetState()
+                            onDismiss()
+                        },
+                        serverResponseMessage = internalServerResponseMessage
+                    )
                 }
             }
         }
