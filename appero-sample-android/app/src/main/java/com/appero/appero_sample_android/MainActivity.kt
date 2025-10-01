@@ -119,6 +119,32 @@ fun ExperienceButton(
 }
 
 @Composable
+fun ManualFeedbackButton(
+    text: String,
+    isDarkTheme: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
+            ) {
+                onClick()
+            },
+        color = if (isDarkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            modifier = Modifier.padding(16.dp),
+            text = text,
+            color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF)
+        )
+    }
+}
+
+@Composable
 fun ApperoSampleApp() {
     val activity = LocalContext.current as Activity
     
@@ -265,52 +291,30 @@ fun ApperoSampleApp() {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Manual feedback buttons
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-                ) {
-                    Appero.showFeedbackPrompt(
-                        config = feedbackConfig,
-                        onResult = { _, _ ->}
-                    )
-                },
-            color = if (isDarkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "Manually Trigger Feedback (Compose)",
-                color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF)
-            )
-        }
+        ManualFeedbackButton(
+            text = "Manually Trigger Feedback (Compose)",
+            isDarkTheme = isDarkTheme,
+            onClick = {
+                Appero.showFeedbackPrompt(
+                    config = feedbackConfig,
+                    onResult = { _, _ -> }
+                )
+            }
+        )
 
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF))
-                ) {
-                    (activity as? FragmentActivity)?.let { activity ->
-                        Appero.showFeedbackDialog(
-                            activity = activity,
-                            config = feedbackConfig,
-                            onResult = { _, _ -> }
-                        )
-                    }
-                },
-            color = if (isDarkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "Manually Trigger Feedback (XML)", 
-                color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF007AFF)
-            )
-        }
+        ManualFeedbackButton(
+            text = "Manually Trigger Feedback (XML)",
+            isDarkTheme = isDarkTheme,
+            onClick = {
+                (activity as? FragmentActivity)?.let { activity ->
+                    Appero.showFeedbackDialog(
+                        activity = activity,
+                        config = feedbackConfig,
+                        onResult = { _, _ -> }
+                    )
+                }
+            }
+        )
 
         Spacer(modifier = Modifier.weight(1f))
     }
