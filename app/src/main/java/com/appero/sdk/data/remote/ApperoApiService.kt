@@ -49,10 +49,7 @@ internal class ApperoApiService private constructor(
         // Create HTTP client with logging for debugging
         val loggingInterceptor = HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
             override fun log(message: String) {
-                // Only log if debug mode is enabled
-                if (ApperoLogger.getDebugMode() == ApperoDebugMode.DEBUG) {
-                    android.util.Log.d("ApperoSDK", message)
-                }
+                ApperoLogger.debug(message)
             }
         }).apply {
             level = HttpLoggingInterceptor.Level.BODY

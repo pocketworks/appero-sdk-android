@@ -351,34 +351,16 @@ object Appero {
     }
 
     /**
-     * Show the feedback prompt UI
-     * This will display the modal bottom sheet with emoji rating and text input
-     *
-     * @param config Configuration object containing all text content for the prompt
-     * @param onResult Optional callback to receive feedback submission results
-     */
-    fun showFeedbackPrompt(
-        config: FeedbackPromptConfig,
-        onResult: ((success: Boolean, message: String) -> Unit)? = null
-    ) {
-        requireInitialized()
-        _feedbackPromptConfig.value = config
-        _initialFeedbackStep.value = null
-        _showFeedbackPrompt.value = true
-        onFeedbackSubmissionResult = onResult
-    }
-
-    /**
      * Show the feedback prompt UI with a specific initial step
      * This will display the modal bottom sheet starting from the specified step
      *
      * @param config Configuration object containing all text content for the prompt
-     * @param initialStep The initial step to show (e.g., FeedbackStep.Frustration for frustration flow)
+     * @param initialStep The initial step to show (will show the Rating step, if null)
      * @param onResult Optional callback to receive feedback submission results
      */
     fun showFeedbackPrompt(
         config: FeedbackPromptConfig,
-        initialStep: FeedbackStep,
+        initialStep: FeedbackStep? = null,
         onResult: ((success: Boolean, message: String) -> Unit)? = null
     ) {
         requireInitialized()
@@ -482,7 +464,7 @@ object Appero {
             serverResponseMessage = serverResponseMessage,
             onSubmissionResult = onResult,
             onShowThankYou = { message ->
-                android.util.Log.d("ApperoSDK", "Thank you callback triggered with message: $message")
+                ApperoLogger.debug("Thank you callback triggered with message: $message")
             }
         )
     }
